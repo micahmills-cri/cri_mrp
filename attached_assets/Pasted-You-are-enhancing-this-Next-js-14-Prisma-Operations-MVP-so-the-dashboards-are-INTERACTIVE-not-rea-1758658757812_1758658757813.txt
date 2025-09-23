@@ -1,0 +1,143 @@
+You are enhancing this Next.js 14 + Prisma Operations MVP so the dashboards are INTERACTIVE, not read-only.
+Keep the existing database schema/data and routes. Implement the operator and supervisor interactions exactly as below.
+
+DO NOT:
+- Do NOT upgrade frameworks (stay on Next 14.x + React 18.3.x).
+- Do NOT change Prisma models or run destructive migrations (no schema changes unless absolutely required; if so, justify in DIAGNOSIS.md).
+- Do NOT add heavy UI libraries.
+
+KEEP:
+- Auth via httpOnly JWT cookie `token`.
+- Middleware gating: protect `/operator`, `/supervisor`, `/api/work-orders/*`; allow `/login`, `/api/auth/*`.
+- Department scoping via `User.departmentId`.
+- Existing dashboard pages for Operator and Supervisor (replace internals as needed, keep routes stable).
+
+RUNTIME:
+- Ensure dev script uses the port env: 
+  "dev": "sh -c 'PORT=${PORT:-3000} next dev -p $PORT'",
+  "start": "sh -c 'PORT=${PORT:-3000} next start -p $PORT'"
+- Run config should execute `npm run dev`.
+
+WHAT TO ADD (end-to-end):
+
+1) OPERATOR CONSOLE — actionable queue (route: /operator)
+- Top bar:
+  - Department (pre-filled from JWT), Station selector (only stations in that Department). Persist selected Station in localStorage.
+  - Single search field (accepts WO number or Hull ID). On Enter → fetch WO and open action panel.
+- Queue table:
+  - Shows READY and IN_PROGRESS WOs for the operator’s Department.
+  - Each row has an **Open** button to open the action panel for that WO.
+- Action panel (ONLY for the current enabled stage):
+  - Display: WO #, Hull ID, SKU, current stage (name/seq), last event time, link to Work Instruction (if any).
+  - Inputs: Good Qty (number), Scrap Qty (optional), Note (optional).
+  - Buttons:
+    - **Start** → POST `/api/work-orders/start` with `{ workOrderId, stationId }`
+    - **Pause** → POST `/api/work-orders/pause` with `{ workOrderId, stationId, note? }`
+    - **Complete** → POST `/api/work-orders/complete` with `{ workOrderId, stationId, goodQty, scrapQty?, note? }`
+  - Guardrails:
+    - Only the **current enabled stage** (by `currentStageIndex` and `enabled=true`) is actionable.
+    - First Start sets `WorkOrder.status=IN_PROGRESS`.
+    - On Complete: write WOStageLog, increment `currentStageIndex`; if last enabled stage, set `WorkOrder.status=COMPLETED`.
+  - UX: inline errors + success toasts; optimistic refresh of the row/panel.
+- Supporting APIs (create if missing):
+  - `GET /api/work-orders/find?query=<wo-or-hull>` → WO summary + current stage info.
+  - `GET /api/queues/my-department` → READY/IN_PROGRESS WOs for caller’s Department.
+- Validation in start/pause/complete endpoints:
+  - Verify JWT.
+  - Enforce Department match between caller and stage’s WorkCenter Department.
+  - Enforce stage gating (only current enabled stage).
+- Refresh strategy: re-fetch queue after actions and poll every 5s (no websockets).
+
+2) SUPERVISOR VIEW — plan + control (route: /supervisor)
+- Tabs: **Board** and **Plan** (default Board).
+- Board (department-scoped):
+  - Filter: Department (Admin can switch; Supervisor locked to own).
+  - Table or simple Kanban with columns: RELEASED, IN_PROGRESS, COMPLETED (today).
+  - Row actions:
+    - **Hold / Unhold** → toggle `WorkOrder.status` to/from HOLD (store prior status); write AuditLog with reason.
+    - **Open** → detail drawer with stage timeline (WOStageLog), notes, and current stage.
+  - KPIs top row: counts of RELEASED / IN_PROGRESS / COMPLETED (today); avg stage time per Work Center (START→COMPLETE pairs); avg queue time before current stage.
+- Plan tab (minimal planning):
+  - **Create WO** modal: fields for WO number (optional → auto), Hull ID (required), SKU (optional), Qty (default 1), Model, Trim, Features (free text/json).
+  - **Clone routing version** from template/current:
+    - Show all stages ON by default with checkboxes to disable.
+    - Reorder with Up/Down arrows (no drag lib).
+    - Edit `standardStageSeconds`.
+  - **Release**:
+    - Creates/uses cloned **RoutingVersion** (status=RELEASED).
+    - Assign to WO, freeze `specSnapshot` (model, trim, features, routingVersionId, ordered enabled stages).
+    - Set `WorkOrder.status=RELEASED`, `currentStageIndex=0`.
+    - Write AuditLog.
+- Planning/Control APIs:
+  - `POST /api/work-orders` → create WO (Supervisor/Admin only).
+  - `POST /api/routing-versions/clone` → toggle `enabled`, reorder `sequence`, edit `standardStageSeconds`.
+  - `POST /api/work-orders/:id/release`
+  - `POST /api/work-orders/:id/hold` (with `{reason}`) and `/unhold`
+  - `GET /api/work-orders/:id` → detail with stage timeline and notes
+- Permissions:
+  - Supervisor/Admin only on the above planning/control endpoints.
+  - Department scoping enforced (Admin bypasses).
+
+3) AUTH + MIDDLEWARE STABILITY PASS
+- `/api/auth/login` (POST): verify bcrypt password; set cookie:
+  - `httpOnly:true`, `secure: process.env.NODE_ENV==="production"`, `sameSite:"lax"`, `path:"/"`, `maxAge: 7d`
+  - Return JSON: `{ ok:true, role, redirectTo: role==="OPERATOR" ? "/operator" : "/supervisor" }`
+- `/api/auth/logout` clears cookie.
+- `/api/auth/me` (GET) for debugging: returns `{ ok:true, user:{ userId, role, departmentId } }` if cookie valid.
+- `middleware.ts` verifies JWT and gates the protected paths; do not block `/login` or `/api/auth/*`.
+
+4) UX POLISH & ERROR HANDLING
+- Disable action buttons while pending; clear, human error messages on 4xx.
+- Show success toasts.
+- Keep styling minimal; no big UI kits.
+
+ACCEPTANCE TESTS (must pass & be documented verbatim in DIAGNOSIS.md)
+- Use the public Replit URL. Use cookie jar flags `-c cookies.txt -b cookies.txt`.
+- Include HTTP status lines, response JSON, and DB assertions (via a tiny Prisma script `scripts/assert.ts` you create).
+
+1) Operator queue is actionable & gated
+  a) Login as Operator (`operator@cri.local / Operator123!`), save cookie.
+  b) GET `/api/queues/my-department` → only READY/IN_PROGRESS WOs for operator’s Department.
+  c) Try to Start a WO in a different Department → expect 403; assert no WOStageLog was written.
+  d) Start current enabled stage → 200; if first start, `WorkOrder.status=IN_PROGRESS`; a `WOStageLog` with `START` exists.
+  e) Try to Start next stage early → 409.
+  f) Complete with note → 200; `WOStageLog` with `COMPLETE` + note; `currentStageIndex` increments.
+  g) Drive last enabled stage to completion → `WorkOrder.status=COMPLETED`.
+  *Show curl outputs and run `scripts/assert.ts` printing WO status, currentStageIndex, and log counts.*
+
+2) Department scoping enforced
+  - Operator sees only their Department in queue; actions on other Departments → 403 (assert via API + script).
+
+3) Supervisor planning: clone, edit, release, freeze spec
+  a) Login as Supervisor (`supervisor@cri.local / Supervisor123!`).
+  b) POST `/api/work-orders` → status PLANNED.
+  c) POST `/api/routing-versions/clone` → disable one stage, reorder two, edit seconds.
+  d) POST `/api/work-orders/:id/release` → `status=RELEASED`, `currentStageIndex=0`, and `specSnapshot` includes `{ model, trim, features, routingVersionId, stages:[{code, sequence, enabled}] }` reflecting edits (immutable thereafter).
+  e) As Operator, fetch this WO → current enabled stage matches the edited sequence.
+  *Paste the specSnapshot JSON into DIAGNOSIS.md.*
+
+4) Supervisor control: hold / unhold with audit
+  a) POST `/api/work-orders/:id/hold { reason:"Material shortage" }` → status HOLD; AuditLog row written.
+  b) POST `/api/work-orders/:id/unhold` → status returns to prior; AuditLog row written.
+  c) Operator attempts Start/Complete while HOLD → 409.
+
+5) Notes persist & are visible to supervisors
+  - Operator completes with `note:"alignment ok"`.
+  - Supervisor detail (`GET /api/work-orders/:id`) shows that note.
+
+6) Permissions & error paths
+  - No cookie → protected endpoints return 401.
+  - Planning endpoints → 403 for Operator, 200 for Supervisor/Admin.
+  - Invalid action (e.g., negative qty) → 400 with validation message.
+
+7) Basic resilience
+  - Refreshing /operator persists selected Station (localStorage).
+  - After successful actions, the queue updates (re-fetch/poll) without full reload.
+
+OUTPUTS
+- Create/append `DIAGNOSIS.md` with:
+  - What you changed/added.
+  - The exact curl commands + outputs proving each acceptance test.
+  - Any migrations performed (should be none).
+- Update README with short usage notes.
+- Commit with message: `feat: actionable operator queue + supervisor planning/controls (no schema changes)`

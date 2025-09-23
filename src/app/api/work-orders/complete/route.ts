@@ -5,7 +5,7 @@ import { z } from 'zod'
 import { WOStatus, WOEvent } from '@prisma/client'
 
 const completeWOSchema = z.object({
-  workOrderNumber: z.string(),
+  workOrderId: z.string(),
   stationId: z.string(),
   goodQty: z.number().min(0),
   scrapQty: z.number().min(0).optional(),
@@ -20,11 +20,11 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { workOrderNumber, stationId, goodQty, scrapQty = 0, note } = completeWOSchema.parse(body)
+    const { workOrderId, stationId, goodQty, scrapQty = 0, note } = completeWOSchema.parse(body)
 
     // Find work order with current stage
     const workOrder = await prisma.workOrder.findUnique({
-      where: { number: workOrderNumber },
+      where: { id: workOrderId },
       include: {
         routingVersion: {
           include: {
@@ -41,9 +41,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Work order not found' }, { status: 404 })
     }
 
-    const currentStage = workOrder.routingVersion.stages[workOrder.currentStageIndex]
+    // Check work order status - can't complete if on HOLD
+    if (workOrder.status === WOStatus.HOLD) {
+      return NextResponse.json({ error: 'Work order is on hold' }, { status: 409 })
+    }
+
+    // Get only enabled stages
+    const enabledStages = workOrder.routingVersion.stages.filter(s => s.enabled).sort((a, b) => a.sequence - b.sequence)
+    const currentStage = enabledStages[workOrder.currentStageIndex]
     if (!currentStage) {
       return NextResponse.json({ error: 'No current stage found' }, { status: 400 })
+    }
+
+    // Check if user is in the correct department for current stage
+    if (user.departmentId !== currentStage.workCenter.department.id) {
+      return NextResponse.json({ error: 'Not authorized for this stage' }, { status: 403 })
     }
 
     // Verify station
@@ -74,7 +86,6 @@ export async function POST(request: NextRequest) {
     })
 
     // Check if this is the last enabled stage
-    const enabledStages = workOrder.routingVersion.stages.filter(s => s.enabled)
     const isLastStage = workOrder.currentStageIndex >= enabledStages.length - 1
 
     let newStatus = workOrder.status
@@ -99,8 +110,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ 
       success: true, 
       message: isLastStage 
-        ? `Completed work order ${workOrderNumber}` 
-        : `Completed stage ${currentStage.name} for ${workOrderNumber}`,
+        ? `Completed work order ${workOrder.number}` 
+        : `Completed stage ${currentStage.name} for ${workOrder.number}`,
       isComplete: isLastStage
     })
   } catch (error) {

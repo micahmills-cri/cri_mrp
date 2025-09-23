@@ -5,7 +5,7 @@ import { z } from 'zod'
 import { WOStatus, WOEvent } from '@prisma/client'
 
 const startWOSchema = z.object({
-  workOrderNumber: z.string(),
+  workOrderId: z.string(),
   stationId: z.string(),
   note: z.string().optional()
 })
@@ -18,11 +18,11 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { workOrderNumber, stationId, note } = startWOSchema.parse(body)
+    const { workOrderId, stationId, note } = startWOSchema.parse(body)
 
     // Find work order
     const workOrder = await prisma.workOrder.findUnique({
-      where: { number: workOrderNumber },
+      where: { id: workOrderId },
       include: {
         routingVersion: {
           include: {
@@ -39,8 +39,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Work order not found' }, { status: 404 })
     }
 
-    // Check if user is in the correct department for current stage
-    const currentStage = workOrder.routingVersion.stages[workOrder.currentStageIndex]
+    // Check work order status - can't start if on HOLD
+    if (workOrder.status === WOStatus.HOLD) {
+      return NextResponse.json({ error: 'Work order is on hold' }, { status: 409 })
+    }
+
+    // Get only enabled stages
+    const enabledStages = workOrder.routingVersion.stages.filter(s => s.enabled).sort((a, b) => a.sequence - b.sequence)
+    const currentStage = enabledStages[workOrder.currentStageIndex]
     if (!currentStage) {
       return NextResponse.json({ error: 'No current stage found' }, { status: 400 })
     }
@@ -84,7 +90,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ 
       success: true, 
-      message: `Started work on ${workOrderNumber} at station ${station.code}` 
+      message: `Started work on ${workOrder.number} at station ${station.code}` 
     })
   } catch (error) {
     console.error('Start work order error:', error)

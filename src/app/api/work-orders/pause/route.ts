@@ -5,7 +5,7 @@ import { z } from 'zod'
 import { WOStatus, WOEvent } from '@prisma/client'
 
 const pauseWOSchema = z.object({
-  workOrderNumber: z.string(),
+  workOrderId: z.string(),
   stationId: z.string(),
   note: z.string().optional()
 })
@@ -18,11 +18,11 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { workOrderNumber, stationId, note } = pauseWOSchema.parse(body)
+    const { workOrderId, stationId, note } = pauseWOSchema.parse(body)
 
     // Find work order
     const workOrder = await prisma.workOrder.findUnique({
-      where: { number: workOrderNumber },
+      where: { id: workOrderId },
       include: {
         routingVersion: {
           include: {
@@ -39,10 +39,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Work order not found' }, { status: 404 })
     }
 
-    // Verify station and create log entry
-    const currentStage = workOrder.routingVersion.stages[workOrder.currentStageIndex]
+    // Check work order status - can't pause if on HOLD
+    if (workOrder.status === WOStatus.HOLD) {
+      return NextResponse.json({ error: 'Work order is already on hold' }, { status: 409 })
+    }
+
+    // Get only enabled stages
+    const enabledStages = workOrder.routingVersion.stages.filter(s => s.enabled).sort((a, b) => a.sequence - b.sequence)
+    const currentStage = enabledStages[workOrder.currentStageIndex]
     if (!currentStage) {
       return NextResponse.json({ error: 'No current stage found' }, { status: 400 })
+    }
+
+    // Check if user is in the correct department for current stage
+    if (user.departmentId !== currentStage.workCenter.department.id) {
+      return NextResponse.json({ error: 'Not authorized for this stage' }, { status: 403 })
     }
 
     const station = await prisma.station.findFirst({
@@ -68,15 +79,12 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    // Update work order status to HOLD
-    await prisma.workOrder.update({
-      where: { id: workOrder.id },
-      data: { status: WOStatus.HOLD }
-    })
+    // Don't update work order status for pause - it stays as is
+    // Pause is just logged, not a status change
 
     return NextResponse.json({ 
       success: true, 
-      message: `Paused work on ${workOrderNumber}` 
+      message: `Paused work on ${workOrder.number}` 
     })
   } catch (error) {
     console.error('Pause work order error:', error)
