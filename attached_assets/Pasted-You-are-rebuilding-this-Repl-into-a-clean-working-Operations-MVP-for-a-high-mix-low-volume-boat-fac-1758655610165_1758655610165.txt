@@ -1,0 +1,65 @@
+You are rebuilding this Repl into a clean, working Operations MVP for a high-mix/low-volume boat factory. 
+Preserve the database schema and data. Throw away existing pages/components that are not required. 
+Design a simple, reliable UX and ensure login actually works (JWT httpOnly cookie). 
+Make minimal backend changes; do not upgrade React or Next.
+
+### HARD REQUIREMENTS
+- Keep **Next 14.x** and **React 18.3.x** (do NOT bump to React 19 / Next 15).
+- Keep Prisma models and seeded data as-is (Department, WorkCenter, Station, RoutingVersion, RoutingStage, WorkOrder, WOStageLog, WorkInstructionVersion, AuditLog, User). 
+- DO NOT break the current database; migrations only if absolutely necessary, and justify them in DIAGNOSIS.md.
+- Use JWT in an **httpOnly** cookie named `token`. 
+- Middleware must gate `/operator`, `/supervisor`, and `/api/work-orders/*` and allow `/login` and `/api/auth/*`.
+- Dev server must use `$PORT` when present: `"dev": "sh -c 'PORT=${PORT:-3000} next dev -p $PORT'"`.
+
+### DELETE/REPLACE
+- **Remove all existing pages and UI** under `src/app/` except the `/api` folder.
+- Keep or recreate small libs in `src/lib/` (auth, db, rbac) in minimal working form.
+
+### WHAT TO BUILD (UX you design, functionality fixed)
+1) **Login page** `/login`
+   - Minimal form, client component.
+   - POST to `/api/auth/login`.
+   - On `{ ok:true, redirectTo }`, `router.push(redirectTo)`.
+   - Show inline error for bad creds.
+   - Test accounts shown (operator/supervisor/admin).
+
+2) **Operator Console** `/operator` (department-scoped)
+   - Search field that accepts **WO number or Hull ID**.
+   - When a valid WO is found, show the **current enabled stage** for that WO, limited to the logged-in user’s **Department**.
+   - Station dropdown (only stations in user’s Department).
+   - Buttons: **Start**, **Pause**, **Complete**. Note textarea (optional).
+   - On Start → write `WOStageLog { START }` and set WO.status=IN_PROGRESS if first time.
+   - On Complete → `WOStageLog { COMPLETE, goodQty, scrapQty?, note? }`; advance `currentStageIndex`. If last enabled stage, set WO.status=COMPLETED.
+   - Prevent Start if the stage is not READY for this WO (gated by `currentStageIndex` and `enabled=true`).
+   - Show basic feedback (toast/inline) on success/failure.
+
+3) **Supervisor View** `/supervisor` (department-scoped)
+   - A simple table or Kanban of WIP in the supervisor’s Department:
+     - Columns or table fields: WO number, Hull ID, SKU, status, current stage name/seq, last event time, work center.
+   - Summary metrics at top: counts of RELEASED / IN_PROGRESS / COMPLETED (today), average stage time per work center (from START/COMPLETE pairs).
+   - No planning UI yet. No skipping stages from here in v1. Read-only except maybe “Hold/Unhold” (optional).
+
+4) **Auth + Middleware**
+   - `/api/auth/login` (POST): verify email/password (bcrypt). On success, set `token` cookie:
+     - `httpOnly: true`, `secure: process.env.NODE_ENV==="production"`, `sameSite: "lax"`, `path: "/"`, `maxAge: 7 days`.
+     - Return JSON `{ ok:true, role, redirectTo: role==="OPERATOR" ? "/operator" : "/supervisor" }`.
+   - `/api/auth/logout` clears cookie.
+   - Add `/api/auth/me` (GET) to debug: returns `{ ok:true, user:{ userId, role, departmentId } }` if cookie valid.
+   - `src/middleware.ts` must verify the `token` and gate protected paths.
+
+5) **Work Order APIs**
+   - Keep `/api/work-orders/start|pause|complete` endpoints. They must:
+     - Validate JWT and that the user’s Department matches the stage’s WorkCenter.Department.
+     - Enforce gating: only `currentStageIndex` and `enabled=true`.
+     - Write `WOStageLog` rows and update `WorkOrder` status/index as described.
+
+6) **Dept scoping**
+   - Users have `departmentId`. Operator and Supervisor pages must only show items for their Department’s WorkCenters/Stations.
+   - Admin can see everything (we don’t need an Admin UI page in v1).
+
+7) **Styling**
+   - Minimal, clean. No heavy UI frameworks. Vanilla CSS or small inline styles are fine.
+
+### ACCEPTANCE TESTS (must pass)
+- **Server start**: `npm run dev` binds on `$PORT` (or 3000 if unset) without conflicts.
+- **Login curl** (Agent: run & include header output in DIAGNOSIS.md):
