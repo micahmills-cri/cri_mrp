@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
+import type { NextRequest } from "next/server";
 
 export type JwtPayload = {
   userId: string;
@@ -20,6 +21,17 @@ export function signJWT(payload: JwtPayload): string {
 
 export function verifyToken(token: string): JwtPayload {
   return jwt.verify(token, SECRET) as JwtPayload;
+}
+
+export function getUserFromRequest(request: NextRequest): JwtPayload | null {
+  try {
+    const token = request.cookies.get('token')?.value;
+    if (!token) return null;
+    
+    return verifyToken(token);
+  } catch (error) {
+    return null;
+  }
 }
 
 export async function verifyPassword(password: string, hash: string): Promise<boolean> {
