@@ -1,31 +1,23 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { verifyJWT } from './lib/auth'
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import jwt from "jsonwebtoken";
 
-export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl
-  
-  // Allow public routes
-  if (pathname === '/login' || pathname.startsWith('/api/auth')) {
-    return NextResponse.next()
-  }
-  
-  // Protect private routes
-  if (pathname.startsWith('/operator') || pathname.startsWith('/supervisor')) {
-    const token = request.cookies.get('token')?.value
-    
-    if (!token) {
-      return NextResponse.redirect(new URL('/login', request.url))
-    }
-    
-    const payload = verifyJWT(token)
-    if (!payload) {
-      return NextResponse.redirect(new URL('/login', request.url))
-    }
-  }
-  
-  return NextResponse.next()
-}
+const SECRET = process.env.JWT_SECRET!;
 
 export const config = {
-  matcher: ['/operator/:path*', '/supervisor/:path*', '/api/((?!auth).)*']
+  matcher: ["/operator/:path*", "/supervisor/:path*", "/api/work-orders/:path*"],
+};
+
+export function middleware(req: NextRequest) {
+  const token = req.cookies.get("token")?.value;
+  if (!token) return NextResponse.redirect(new URL("/login", req.url));
+
+  try {
+    jwt.verify(token, SECRET);
+    return NextResponse.next();
+  } catch {
+    const res = NextResponse.redirect(new URL("/login", req.url));
+    res.cookies.delete("token");
+    return res;
+  }
 }

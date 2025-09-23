@@ -1,42 +1,27 @@
-import { NextRequest } from 'next/server'
-import jwt from 'jsonwebtoken'
-import bcrypt from 'bcryptjs'
-import { Role } from '@prisma/client'
+import jwt from "jsonwebtoken";
+import bcrypt from "bcryptjs";
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'
+export type JwtPayload = {
+  userId: string;
+  role: "ADMIN" | "SUPERVISOR" | "OPERATOR";
+  departmentId?: string | null;
+};
 
-export interface JWTPayload {
-  userId: string
-  role: Role
-  departmentId?: string
+const SECRET = process.env.JWT_SECRET!;
+if (!SECRET) console.warn("JWT_SECRET is not set");
+
+export function signToken(payload: JwtPayload): string {
+  return jwt.sign(payload, SECRET, { expiresIn: "7d" });
 }
 
-export function signJWT(payload: JWTPayload): string {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' })
+export function signJWT(payload: JwtPayload): string {
+  return signToken(payload);
 }
 
-export function verifyJWT(token: string): JWTPayload | null {
-  try {
-    return jwt.verify(token, JWT_SECRET) as JWTPayload
-  } catch {
-    return null
-  }
-}
-
-export async function hashPassword(password: string): Promise<string> {
-  return bcrypt.hash(password, 12)
+export function verifyToken(token: string): JwtPayload {
+  return jwt.verify(token, SECRET) as JwtPayload;
 }
 
 export async function verifyPassword(password: string, hash: string): Promise<boolean> {
-  return bcrypt.compare(password, hash)
-}
-
-export function getTokenFromRequest(request: NextRequest): string | null {
-  return request.cookies.get('token')?.value || null
-}
-
-export function getUserFromRequest(request: NextRequest): JWTPayload | null {
-  const token = getTokenFromRequest(request)
-  if (!token) return null
-  return verifyJWT(token)
+  return bcrypt.compare(password, hash);
 }

@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
 
     if (!user) {
       return NextResponse.json(
-        { error: 'Invalid email or password' },
+        { ok: false, error: 'Invalid email or password' },
         { status: 401 }
       )
     }
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     const isValidPassword = await verifyPassword(password, user.passwordHash)
     if (!isValidPassword) {
       return NextResponse.json(
-        { error: 'Invalid email or password' },
+        { ok: false, error: 'Invalid email or password' },
         { status: 401 }
       )
     }
@@ -42,17 +42,20 @@ export async function POST(request: NextRequest) {
       departmentId: user.departmentId || undefined
     })
 
+    // Determine redirect based on role
+    const redirectTo = user.role === 'OPERATOR' ? '/operator' : '/supervisor'
+
     // Create response with cookie
     const response = NextResponse.json({
-      success: true,
+      ok: true,
+      redirectTo,
       user: {
         id: user.id,
         email: user.email,
         role: user.role,
         departmentId: user.departmentId,
         departmentName: user.department?.name
-      },
-      role: user.role
+      }
     })
 
     // Set httpOnly cookie
@@ -60,14 +63,15 @@ export async function POST(request: NextRequest) {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 // 7 days
+      path: '/',
+      maxAge: 604800 // 7 days
     })
 
     return response
   } catch (error) {
     console.error('Login error:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { ok: false, error: 'Internal server error' },
       { status: 500 }
     )
   }

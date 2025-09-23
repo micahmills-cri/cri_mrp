@@ -1,0 +1,59 @@
+You are diagnosing why login bounces back to /login in this Next.js 14 + Prisma app on Replit. 
+Do NOT upgrade packages, do NOT restructure the project, and do NOT delete files. 
+Make only minimal, reversible edits if a fix is clear. 
+Log everything you check and write a DIAGNOSIS.md at the repo root summarizing findings, fixes, and next steps.
+
+### GOALS
+1) Verify environment, versions, and run settings.
+2) Verify auth flow: /api/auth/login sets an httpOnly JWT cookie and middleware allows access.
+3) Prove the cookie is actually being set (Set-Cookie header present) and readable by middleware.
+4) Fix only the smallest thing necessary to make operator login land on /operator.
+
+### CHECKLIST
+A. ENV + RUNTIME
+- Print Node and npm versions.
+- Show package.json engines & scripts. Confirm "dev" uses `next dev -p $PORT` (not a hardcoded port). If not, change it.
+- Confirm .replit (or Run config) starts `npm run dev`.
+- Print whether process.env.DATABASE_URL and JWT_SECRET are defined (mask values).
+
+B. DEP VERSIONS
+- Echo exact versions for next, react, react-dom. (Expect Next 14 + React 18.3.1)
+
+C. PRISMA
+- Create a tiny script `scripts/db-check.ts` that imports PrismaClient and prints counts of User and WorkOrder; run it to confirm DB connectivity.
+
+D. AUTH FILES
+- Inspect `src/app/api/auth/login/route.ts`: 
+  - ensure it calls `cookies().set("token", <jwt>, { httpOnly:true, secure: process.env.NODE_ENV==="production", sameSite:"lax", path:"/", maxAge: 604800 })`
+  - ensure it returns JSON `{ok:true, redirectTo:"/operator"|" /supervisor"}` (not a redirect Response).
+- Inspect `src/middleware.ts`:
+  - matcher must include `/operator/:path*`, `/supervisor/:path*`, `/api/work-orders/:path*` and NOT include `/login` nor `/api/auth/*`
+  - it should read cookie `token` and `jwt.verify(token, process.env.JWT_SECRET)`
+- Inspect `src/app/(auth)/login/page.tsx`:
+  - If it uses a plain HTML form with no action, change it to a client component that POSTs to `/api/auth/login` via fetch, checks `ok`, then `router.push(redirectTo)`.
+  - If it already does that, just log that it’s correct.
+
+E. RUN + CURL TEST
+- Kill any stray dev servers. Start dev with `$PORT`.
+- Use curl *from the Replit shell* to simulate login to the running server:
+  `curl -i -k -H "Content-Type: application/json" -d '{"email":"operator@cri.local","password":"Operator123!"}' https://$REPL_SLUG.$REPL_OWNER.repl.co/api/auth/login`
+  (If the public URL is not available as env vars, fetch the current preview URL and use that.)
+- Capture and print the response headers. Confirm there is a `Set-Cookie: token=...; Path=/; HttpOnly;` header.
+- If Set-Cookie is missing, fix the login route to set it and retest.
+- Then fetch a protected endpoint to prove the cookie is honored:
+  `curl -i -k --cookie "token=<copied value if needed>" https://<public-url>/api/auth/me` 
+  (Add a simple /api/auth/me route temporarily if it doesn’t exist; it should read the token from cookies and return {ok:true,user}.)
+
+F. MINIMAL FIXES (only if needed)
+- Adjust `secure: false` **only for dev** by detecting protocol: if public URL is https, keep `secure:true`; otherwise false. Prefer leaving it `secure: process.env.NODE_ENV==="production"`.
+- Ensure `sameSite:"lax"` and `path:"/"`.
+- Ensure login page uses client-side fetch to `/api/auth/login` and pushes `redirectTo`.
+
+G. OUTPUT
+- Create DIAGNOSIS.md with:
+  - “What I checked” (commands, files)
+  - “What I observed” (versions, env, headers)
+  - “Root cause” (e.g., form posted to /login, cookie never set)
+  - “Fix applied” (precise diff or code snippet)
+  - “How to verify” (urls/steps)
+- Commit only the minimal edits and DIAGNOSIS.md with message: `diag: auth cookie + middleware`
