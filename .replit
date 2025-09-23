@@ -9,7 +9,7 @@ requiredFiles = [".replit", "replit.nix", "package.json", "package-lock.json"]
 channel = "stable-24_11"
 
 [deployment]
-run = ["node", "index.js"]
+run = "npm run dev"
 deploymentTarget = "autoscale"
 ignorePorts = false
 
@@ -45,5 +45,5 @@ localPort = 5000
 externalPort = 80
 
 [[ports]]
-localPort = 33935
+localPort = 44577
 externalPort = 3000
