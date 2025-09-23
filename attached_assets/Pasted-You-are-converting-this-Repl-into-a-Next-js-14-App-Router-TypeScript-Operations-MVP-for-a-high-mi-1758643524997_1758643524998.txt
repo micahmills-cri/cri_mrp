@@ -1,0 +1,200 @@
+You are converting this Repl into a Next.js 14 (App Router, TypeScript) Operations MVP for a high-mix, low-volume boat factory. Use Prisma + Postgres. Implement EXACTLY the following.
+
+ASSUMPTIONS:
+- Default stages (enabled by default): Kitting, Lamination, Hull Rigging, Deck Rigging, Capping, Engine Hang, Final Rigging, Water Test, QA, Cleaning, Shipping.
+- One department per stage; operators only see their department queue and may only start the current enabled stage.
+- Planning: all stages ON by default; any change creates a NEW RoutingVersion. Once a version is RELEASED, its stage list/order is required.
+- Spec Snapshot (model, trim, features, routingVersion id + stage list) freezes when a WO is set to use a RELEASED RoutingVersion (release from planning).
+- Notes optional everywhere.
+
+1) Install deps:
+- next@14 react react-dom typescript @types/node @types/react @types/react-dom prisma @prisma/client zod bcryptjs jsonwebtoken date-fns
+- dev: tsx
+Add scripts in package.json:
+{
+  "dev":"next dev",
+  "build":"next build",
+  "start":"next start",
+  "prisma:generate":"prisma generate",
+  "prisma:migrate":"prisma migrate dev",
+  "seed":"node --import tsx src/db/seed.ts"
+}
+
+2) Files (TypeScript):
+/src/app/(auth)/login/page.tsx
+/src/app/operator/page.tsx
+/src/app/supervisor/page.tsx
+/src/app/api/auth/login/route.ts
+/src/app/api/auth/logout/route.ts
+/src/app/api/work-orders/start/route.ts
+/src/app/api/work-orders/pause/route.ts
+/src/app/api/work-orders/complete/route.ts
+/src/app/layout.tsx
+/src/app/page.tsx
+/src/lib/auth.ts
+/src/lib/rbac.ts
+/src/lib/db.ts
+/src/components/ui/Button.tsx
+/src/middleware.ts
+/README.md
+/src/db/seed.ts
+
+3) Prisma schema at prisma/schema.prisma:
+- datasource postgresql env("DATABASE_URL"), generator client
+- enums:
+  Role { ADMIN, SUPERVISOR, OPERATOR }
+  WOStatus { PLANNED, RELEASED, IN_PROGRESS, HOLD, COMPLETED, CLOSED }
+  WOEvent { START, PAUSE, COMPLETE, SCRAP_ADJUST, GOOD_ADJUST }
+  RoutingVersionStatus { DRAFT, RELEASED }
+- models:
+  Department {
+    id String @id @default(cuid())
+    name String @unique
+    workCenters WorkCenter[]
+    users User[]
+  }
+
+  User {
+    id String @id @default(cuid())
+    email String @unique
+    passwordHash String
+    role Role @default(OPERATOR)
+    departmentId String?
+    department Department? @relation(fields: [departmentId], references: [id])
+    createdAt DateTime @default(now())
+  }
+
+  WorkCenter {
+    id String @id @default(cuid())
+    name String @unique
+    departmentId String
+    department Department @relation(fields: [departmentId], references: [id])
+    stations Station[]
+    isActive Boolean @default(true)
+  }
+
+  Station {
+    id String @id @default(cuid())
+    code String @unique
+    name String
+    workCenterId String
+    workCenter WorkCenter @relation(fields: [workCenterId], references: [id])
+    isActive Boolean @default(true)
+  }
+
+  RoutingVersion {
+    id String @id @default(cuid())
+    model String
+    trim String?
+    featuresJson Json?
+    version Int @default(1)
+    status RoutingVersionStatus @default(DRAFT)
+    releasedAt DateTime?
+    stages RoutingStage[]
+  }
+
+  RoutingStage {
+    id String @id @default(cuid())
+    routingVersionId String
+    routingVersion RoutingVersion @relation(fields:[routingVersionId], references:[id])
+    sequence Int
+    code String   // e.g., "LAMINATION", "QA"
+    name String   // display name
+    enabled Boolean @default(true)
+    workCenterId String
+    workCenter WorkCenter @relation(fields:[workCenterId], references:[id])
+    standardStageSeconds Int
+  }
+
+  WorkOrder {
+    id String @id @default(cuid())
+    number String @unique
+    hullId String
+    productSku String
+    specSnapshot Json      // frozen at release (model, trim, features, routingVersion + stage list)
+    qty Int
+    status WOStatus @default(RELEASED)
+    routingVersionId String
+    routingVersion RoutingVersion @relation(fields:[routingVersionId], references:[id])
+    currentStageIndex Int @default(0)
+    createdAt DateTime @default(now())
+  }
+
+  WOStageLog {
+    id String @id @default(cuid())
+    workOrderId String
+    workOrder WorkOrder @relation(fields:[workOrderId], references:[id])
+    routingStageId String
+    routingStage RoutingStage @relation(fields:[routingStageId], references:[id])
+    stationId String
+    station Station @relation(fields:[stationId], references:[id])
+    userId String
+    user User @relation(fields:[userId], references:[id])
+    event WOEvent
+    goodQty Int @default(0)
+    scrapQty Int @default(0)
+    note String?
+    createdAt DateTime @default(now())
+  }
+
+  WorkInstructionVersion {
+    id String @id @default(cuid())
+    routingStageId String
+    routingStage RoutingStage @relation(fields:[routingStageId], references:[id])
+    version Int
+    contentMd String
+    isActive Boolean @default(true)
+    createdAt DateTime @default(now())
+  }
+
+  AuditLog {
+    id String @id @default(cuid())
+    actorId String?
+    actor User? @relation(fields:[actorId], references:[id])
+    model String
+    modelId String
+    action String
+    before Json?
+    after Json?
+    createdAt DateTime @default(now())
+  }
+
+4) Auth:
+- Email/password (bcrypt). POST /api/auth/login sets httpOnly cookie "token" (7d) with {userId, role, departmentId}. /api/auth/logout clears it.
+- middleware.ts: protect /operator and /supervisor; allow /login and /api/auth/*.
+
+5) Operator Console (/operator):
+- Input: WO number or Hull ID, Station select (limited to stations in the user’s Department).
+- Show current enabled stage (by WorkOrder.currentStageIndex).
+- Buttons: Start, Pause, Complete.
+- Guards:
+  - Only the current enabled stage is startable.
+  - On Start: write WOStageLog {START}, set WO.status=IN_PROGRESS if first time.
+  - On Complete: write WOStageLog {COMPLETE, goodQty, scrapQty?, note?}; increment currentStageIndex. If last enabled stage, set WO.status=COMPLETED.
+
+6) Supervisor View (/supervisor):
+- Department-scoped WIP table: WO number, hullId, SKU, status, current stage name/seq, last event, work center.
+- Summary metrics: count RELEASED/IN_PROGRESS/COMPLETED today; average stage time per work center from START/COMPLETE pairs.
+
+7) Audit middleware:
+- Prisma $use hook: on create/update/delete of RoutingVersion/Stage, WorkOrder, Station, WorkCenter, WOStageLog → write AuditLog row with model, modelId, action, before/after.
+
+8) Seed (/src/db/seed.ts):
+- Departments: one per stage (Kitting, Lamination, Hull Rigging, Deck Rigging, Capping, Engine Hang, Final Rigging, Water Test, QA, Cleaning, Shipping)
+- WorkCenters: one per department with same names.
+- Stations: one per work center (codes: KIT-1, LAM-1, HRIG-1, DRIG-1, CAP-1, ENG-1, FRIG-1, WTEST-1, QA-1, CLEAN-1, SHIP-1).
+- Users:
+  - admin@cri.local / Admin123! (role ADMIN, no dept)
+  - supervisor@cri.local / Supervisor123! (role SUPERVISOR, department = Rigging)
+  - operator@cri.local / Operator123! (role OPERATOR, department = Rigging)
+- RoutingVersion (RELEASED): model "LX24", trim "Base", featuresJson {}, version 1, stages = all defaults with enabled=true and sensible standardStageSeconds.
+- WorkOrder: number "WO-1001", hullId "HULL-TEST-001", productSku "LX24-BASE", qty 1, status RELEASED, routingVersion = above, specSnapshot = {model, trim, features, routingVersionId, stages:[{code, name, sequence}]}
+
+9) README.md with setup:
+- npm install
+- npx prisma generate
+- npx prisma migrate dev --name init
+- npm run seed
+- npm run dev
+
+Quality: TypeScript strict, minimal UI (no heavy libs), clear errors.
