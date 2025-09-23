@@ -4,7 +4,7 @@
   "description": "Next.js 14 Operations MVP for boat factory",
   "main": "index.js",
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 5000",
     "build": "next build",
     "start": "next start",
     "prisma:generate": "prisma generate",
