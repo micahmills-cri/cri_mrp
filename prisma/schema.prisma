@@ -1,0 +1,156 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  SUPERVISOR
+  OPERATOR
+}
+
+enum WOStatus {
+  PLANNED
+  RELEASED
+  IN_PROGRESS
+  HOLD
+  COMPLETED
+  CLOSED
+}
+
+enum WOEvent {
+  START
+  PAUSE
+  COMPLETE
+  SCRAP_ADJUST
+  GOOD_ADJUST
+}
+
+enum RoutingVersionStatus {
+  DRAFT
+  RELEASED
+}
+
+model Department {
+  id          String       @id @default(cuid())
+  name        String       @unique
+  workCenters WorkCenter[]
+  users       User[]
+}
+
+model User {
+  id           String       @id @default(cuid())
+  email        String       @unique
+  passwordHash String
+  role         Role         @default(OPERATOR)
+  departmentId String?
+  department   Department?  @relation(fields: [departmentId], references: [id])
+  createdAt    DateTime     @default(now())
+  woStageLogs  WOStageLog[]
+  auditLogs    AuditLog[]
+}
+
+model WorkCenter {
+  id           String          @id @default(cuid())
+  name         String          @unique
+  departmentId String
+  department   Department      @relation(fields: [departmentId], references: [id])
+  stations     Station[]
+  isActive     Boolean         @default(true)
+  routingStages RoutingStage[]
+}
+
+model Station {
+  id           String       @id @default(cuid())
+  code         String       @unique
+  name         String
+  workCenterId String
+  workCenter   WorkCenter   @relation(fields: [workCenterId], references: [id])
+  isActive     Boolean      @default(true)
+  woStageLogs  WOStageLog[]
+}
+
+model RoutingVersion {
+  id           String                @id @default(cuid())
+  model        String
+  trim         String?
+  featuresJson Json?
+  version      Int                   @default(1)
+  status       RoutingVersionStatus  @default(DRAFT)
+  releasedAt   DateTime?
+  stages       RoutingStage[]
+  workOrders   WorkOrder[]
+}
+
+model RoutingStage {
+  id                     String                    @id @default(cuid())
+  routingVersionId       String
+  routingVersion         RoutingVersion            @relation(fields: [routingVersionId], references: [id])
+  sequence               Int
+  code                   String
+  name                   String
+  enabled                Boolean                   @default(true)
+  workCenterId           String
+  workCenter             WorkCenter                @relation(fields: [workCenterId], references: [id])
+  standardStageSeconds   Int
+  woStageLogs            WOStageLog[]
+  workInstructionVersions WorkInstructionVersion[]
+}
+
+model WorkOrder {
+  id                 String       @id @default(cuid())
+  number             String       @unique
+  hullId             String
+  productSku         String
+  specSnapshot       Json
+  qty                Int
+  status             WOStatus     @default(RELEASED)
+  routingVersionId   String
+  routingVersion     RoutingVersion @relation(fields: [routingVersionId], references: [id])
+  currentStageIndex  Int          @default(0)
+  createdAt          DateTime     @default(now())
+  woStageLogs        WOStageLog[]
+}
+
+model WOStageLog {
+  id             String       @id @default(cuid())
+  workOrderId    String
+  workOrder      WorkOrder    @relation(fields: [workOrderId], references: [id])
+  routingStageId String
+  routingStage   RoutingStage @relation(fields: [routingStageId], references: [id])
+  stationId      String
+  station        Station      @relation(fields: [stationId], references: [id])
+  userId         String
+  user           User         @relation(fields: [userId], references: [id])
+  event          WOEvent
+  goodQty        Int          @default(0)
+  scrapQty       Int          @default(0)
+  note           String?
+  createdAt      DateTime     @default(now())
+}
+
+model WorkInstructionVersion {
+  id             String       @id @default(cuid())
+  routingStageId String
+  routingStage   RoutingStage @relation(fields: [routingStageId], references: [id])
+  version        Int
+  contentMd      String
+  isActive       Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  actor     User?    @relation(fields: [actorId], references: [id])
+  model     String
+  modelId   String
+  action    String
+  before    Json?
+  after     Json?
+  createdAt DateTime @default(now())
+}
