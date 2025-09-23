@@ -37,9 +37,9 @@ export default function LoginPage() {
   }
 
   const testAccounts = [
-    { role: 'Operator', email: 'operator@boat.com', password: 'password' },
-    { role: 'Supervisor', email: 'supervisor@boat.com', password: 'password' },
-    { role: 'Admin', email: 'admin@boat.com', password: 'password' }
+    { role: 'Operator', email: 'operator@cri.local', password: 'Operator123!' },
+    { role: 'Supervisor', email: 'supervisor@cri.local', password: 'Supervisor123!' },
+    { role: 'Admin', email: 'admin@cri.local', password: 'Admin123!' }
   ]
 
   return (
