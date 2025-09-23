@@ -1,0 +1,110 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { prisma } from '../../../../lib/db'
+import { getUserFromRequest } from '../../../../lib/auth'
+import { z } from 'zod'
+import { WOStatus, WOEvent } from '@prisma/client'
+
+const completeWOSchema = z.object({
+  workOrderNumber: z.string(),
+  stationId: z.string(),
+  goodQty: z.number().min(0),
+  scrapQty: z.number().min(0).optional(),
+  note: z.string().optional()
+})
+
+export async function POST(request: NextRequest) {
+  try {
+    const user = getUserFromRequest(request)
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const body = await request.json()
+    const { workOrderNumber, stationId, goodQty, scrapQty = 0, note } = completeWOSchema.parse(body)
+
+    // Find work order with current stage
+    const workOrder = await prisma.workOrder.findUnique({
+      where: { number: workOrderNumber },
+      include: {
+        routingVersion: {
+          include: {
+            stages: {
+              orderBy: { sequence: 'asc' },
+              include: { workCenter: { include: { department: true } } }
+            }
+          }
+        }
+      }
+    })
+
+    if (!workOrder) {
+      return NextResponse.json({ error: 'Work order not found' }, { status: 404 })
+    }
+
+    const currentStage = workOrder.routingVersion.stages[workOrder.currentStageIndex]
+    if (!currentStage) {
+      return NextResponse.json({ error: 'No current stage found' }, { status: 400 })
+    }
+
+    // Verify station
+    const station = await prisma.station.findFirst({
+      where: {
+        id: stationId,
+        workCenterId: currentStage.workCenterId,
+        isActive: true
+      }
+    })
+
+    if (!station) {
+      return NextResponse.json({ error: 'Invalid station' }, { status: 400 })
+    }
+
+    // Create completion log entry
+    await prisma.wOStageLog.create({
+      data: {
+        workOrderId: workOrder.id,
+        routingStageId: currentStage.id,
+        stationId: station.id,
+        userId: user.userId,
+        event: WOEvent.COMPLETE,
+        goodQty,
+        scrapQty,
+        note: note || null
+      }
+    })
+
+    // Check if this is the last enabled stage
+    const enabledStages = workOrder.routingVersion.stages.filter(s => s.enabled)
+    const isLastStage = workOrder.currentStageIndex >= enabledStages.length - 1
+
+    let newStatus = workOrder.status
+    let newStageIndex = workOrder.currentStageIndex
+
+    if (isLastStage) {
+      newStatus = WOStatus.COMPLETED
+    } else {
+      newStatus = WOStatus.RELEASED // Ready for next stage
+      newStageIndex = workOrder.currentStageIndex + 1
+    }
+
+    // Update work order
+    await prisma.workOrder.update({
+      where: { id: workOrder.id },
+      data: {
+        status: newStatus,
+        currentStageIndex: newStageIndex
+      }
+    })
+
+    return NextResponse.json({ 
+      success: true, 
+      message: isLastStage 
+        ? `Completed work order ${workOrderNumber}` 
+        : `Completed stage ${currentStage.name} for ${workOrderNumber}`,
+      isComplete: isLastStage
+    })
+  } catch (error) {
+    console.error('Complete work order error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
