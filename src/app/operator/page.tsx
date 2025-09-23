@@ -1,8 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Button from '../../components/ui/Button'
+import Card from '../../components/ui/Card'
+import Alert from '../../components/ui/Alert'
 
 interface Station {
   id: string
@@ -16,7 +18,7 @@ export default function OperatorPage() {
   const [stations, setStations] = useState<Station[]>([])
   const [currentStage, setCurrentStage] = useState<any>(null)
   const [loading, setLoading] = useState(false)
-  const [message, setMessage] = useState('')
+  const [message, setMessage] = useState<{text: string, type: 'success' | 'error' | 'info'} | null>(null)
   const [quantities, setQuantities] = useState({ good: 1, scrap: 0 })
   const [note, setNote] = useState('')
   const router = useRouter()
@@ -39,7 +41,7 @@ export default function OperatorPage() {
     if (!workOrderInput.trim()) return
 
     setLoading(true)
-    setMessage('')
+    setMessage(null)
 
     try {
       // This would need an API endpoint to get work order details
@@ -48,9 +50,9 @@ export default function OperatorPage() {
         sequence: 3,
         canStart: true
       })
-      setMessage(`Found work order: ${workOrderInput}`)
+      setMessage({text: `Found work order: ${workOrderInput}`, type: 'success'})
     } catch (error) {
-      setMessage('Work order not found')
+      setMessage({text: 'Work order not found', type: 'error'})
     } finally {
       setLoading(false)
     }
@@ -58,7 +60,7 @@ export default function OperatorPage() {
 
   const handleStart = async () => {
     if (!selectedStation) {
-      setMessage('Please select a station')
+      setMessage({text: 'Please select a station', type: 'error'})
       return
     }
 
@@ -75,9 +77,12 @@ export default function OperatorPage() {
       })
 
       const data = await response.json()
-      setMessage(data.message || 'Started work')
+      setMessage({
+        text: data.message || 'Work started successfully', 
+        type: response.ok ? 'success' : 'error'
+      })
     } catch (error) {
-      setMessage('Error starting work')
+      setMessage({text: 'Error starting work', type: 'error'})
     } finally {
       setLoading(false)
     }
@@ -85,7 +90,7 @@ export default function OperatorPage() {
 
   const handlePause = async () => {
     if (!selectedStation) {
-      setMessage('Please select a station')
+      setMessage({text: 'Please select a station', type: 'error'})
       return
     }
 
@@ -102,9 +107,12 @@ export default function OperatorPage() {
       })
 
       const data = await response.json()
-      setMessage(data.message || 'Paused work')
+      setMessage({
+        text: data.message || 'Work paused successfully', 
+        type: response.ok ? 'success' : 'error'
+      })
     } catch (error) {
-      setMessage('Error pausing work')
+      setMessage({text: 'Error pausing work', type: 'error'})
     } finally {
       setLoading(false)
     }
@@ -112,7 +120,7 @@ export default function OperatorPage() {
 
   const handleComplete = async () => {
     if (!selectedStation) {
-      setMessage('Please select a station')
+      setMessage({text: 'Please select a station', type: 'error'})
       return
     }
 
@@ -131,25 +139,35 @@ export default function OperatorPage() {
       })
 
       const data = await response.json()
-      setMessage(data.message || 'Completed work')
+      setMessage({
+        text: data.message || 'Work completed successfully', 
+        type: response.ok ? 'success' : 'error'
+      })
       
       if (data.isComplete) {
         setCurrentStage(null)
         setWorkOrderInput('')
       }
     } catch (error) {
-      setMessage('Error completing work')
+      setMessage({text: 'Error completing work', type: 'error'})
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white shadow">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100">
+      <div className="bg-white shadow-sm">
         <div className="container py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold">Operator Console</h1>
-          <Button onClick={handleLogout} variant="secondary">
+          <div className="flex items-center space-x-3">
+            <div className="h-8 w-8 bg-blue-600 rounded-lg flex items-center justify-center">
+              <svg className="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900">Operator Console</h1>
+          </div>
+          <Button onClick={handleLogout} variant="secondary" size="sm">
             Logout
           </Button>
         </div>
@@ -157,35 +175,35 @@ export default function OperatorPage() {
 
       <div className="container py-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="card">
-            <h2 className="text-xl font-semibold mb-4">Work Order Lookup</h2>
+          <Card>
+            <h2 className="text-xl font-semibold mb-4 text-gray-900">Work Order Lookup</h2>
             
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1">
+                <label className="form-label">
                   Work Order Number or Hull ID
                 </label>
                 <input
                   type="text"
                   value={workOrderInput}
                   onChange={(e) => setWorkOrderInput(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="form-input"
                   placeholder="Enter WO number or Hull ID"
                 />
               </div>
 
-              <Button onClick={handleWorkOrderLookup} disabled={loading}>
-                Lookup
+              <Button onClick={handleWorkOrderLookup} disabled={loading} className="w-full">
+                {loading ? "Looking up..." : "Lookup Work Order"}
               </Button>
 
               <div>
-                <label className="block text-sm font-medium mb-1">
+                <label className="form-label">
                   Station
                 </label>
                 <select
                   value={selectedStation}
                   onChange={(e) => setSelectedStation(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  className="form-input"
                 >
                   <option value="">Select Station</option>
                   {stations.map(station => (
@@ -196,21 +214,23 @@ export default function OperatorPage() {
                 </select>
               </div>
             </div>
-          </div>
+          </Card>
 
-          <div className="card">
-            <h2 className="text-xl font-semibold mb-4">Current Stage</h2>
+          <Card>
+            <h2 className="text-xl font-semibold mb-4 text-gray-900">Current Stage</h2>
             
             {currentStage ? (
               <div className="space-y-4">
-                <div className="bg-blue-50 p-4 rounded">
-                  <h3 className="font-medium">{currentStage.name}</h3>
-                  <p className="text-sm text-gray-600">Sequence: {currentStage.sequence}</p>
-                </div>
+                <Alert variant="info">
+                  <div>
+                    <h3 className="font-medium">{currentStage.name}</h3>
+                    <p className="text-sm opacity-80">Sequence: {currentStage.sequence}</p>
+                  </div>
+                </Alert>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium mb-1">
+                    <label className="form-label">
                       Good Qty
                     </label>
                     <input
@@ -220,13 +240,13 @@ export default function OperatorPage() {
                         ...prev,
                         good: parseInt(e.target.value) || 0
                       }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                      className="form-input"
                       min="0"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium mb-1">
+                    <label className="form-label">
                       Scrap Qty
                     </label>
                     <input
@@ -236,45 +256,53 @@ export default function OperatorPage() {
                         ...prev,
                         scrap: parseInt(e.target.value) || 0
                       }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                      className="form-input"
                       min="0"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-1">
+                  <label className="form-label">
                     Note (Optional)
                   </label>
                   <textarea
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    className="form-input"
                     rows={3}
+                    placeholder="Add any notes about the work performed..."
                   />
                 </div>
 
                 <div className="flex space-x-2">
-                  <Button onClick={handleStart} disabled={loading}>
-                    Start
+                  <Button onClick={handleStart} disabled={loading} className="flex-1">
+                    Start Work
                   </Button>
-                  <Button onClick={handlePause} variant="secondary" disabled={loading}>
+                  <Button onClick={handlePause} variant="secondary" disabled={loading} className="flex-1">
                     Pause
                   </Button>
-                  <Button onClick={handleComplete} variant="primary" disabled={loading}>
+                  <Button onClick={handleComplete} variant="primary" disabled={loading} className="flex-1">
                     Complete
                   </Button>
                 </div>
               </div>
             ) : (
-              <p className="text-gray-500">Enter a work order number to see current stage</p>
+              <div className="text-center py-8 text-gray-500">
+                <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+                <p>Enter a work order number above to see current stage</p>
+              </div>
             )}
-          </div>
+          </Card>
         </div>
 
         {message && (
-          <div className="mt-4 p-4 bg-blue-50 border border-blue-200 text-blue-700 rounded">
-            {message}
+          <div className="mt-6">
+            <Alert variant={message.type}>
+              {message.text}
+            </Alert>
           </div>
         )}
       </div>
