@@ -4,7 +4,7 @@
   "description": "Next.js 14 Operations MVP for boat factory",
   "main": "index.js",
   "scripts": {
-    "dev": "sh -c 'PORT=${PORT:-3000} next dev -p $PORT'",
+    "dev": "next dev -p ${PORT:-5000}",
     "build": "next build",
     "start": "next start",
     "prisma:generate": "prisma generate",

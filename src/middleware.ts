@@ -1,23 +1,21 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import jwt from "jsonwebtoken";
 
-const SECRET = process.env.JWT_SECRET!;
-
+// Define which paths need authentication
 export const config = {
-  matcher: ["/operator/:path*", "/supervisor/:path*", "/api/work-orders/:path*"],
+  matcher: ["/operator/:path*", "/supervisor/:path*", "/api/work-orders/:path*", "/api/supervisor/:path*"],
 };
 
 export function middleware(req: NextRequest) {
   const token = req.cookies.get("token")?.value;
-  if (!token) return NextResponse.redirect(new URL("/login", req.url));
-
-  try {
-    jwt.verify(token, SECRET);
-    return NextResponse.next();
-  } catch {
-    const res = NextResponse.redirect(new URL("/login", req.url));
-    res.cookies.delete("token");
-    return res;
+  
+  // If no token, redirect to login
+  if (!token) {
+    return NextResponse.redirect(new URL("/login", req.url));
   }
+  
+  // For now, just check if token exists
+  // The actual JWT verification will happen in the API routes and pages
+  // because jsonwebtoken doesn't work in Edge Runtime
+  return NextResponse.next();
 }

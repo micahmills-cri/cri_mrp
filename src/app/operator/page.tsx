@@ -45,7 +45,9 @@ export default function OperatorConsole() {
 
   useEffect(() => {
     // Check authentication
-    fetch('/api/auth/me')
+    fetch('/api/auth/me', { 
+      credentials: 'include' 
+    })
       .then(res => res.json())
       .then(data => {
         if (!data.ok) {
@@ -66,6 +68,7 @@ export default function OperatorConsole() {
       const response = await fetch('/api/work-orders/search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ query: searchQuery.trim() })
       })
 
@@ -116,6 +119,7 @@ export default function OperatorConsole() {
       const response = await fetch(`/api/work-orders/${action}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify(requestBody)
       })
 

@@ -50,7 +50,9 @@ export default function SupervisorView() {
 
   useEffect(() => {
     // Check authentication
-    fetch('/api/auth/me')
+    fetch('/api/auth/me', { 
+      credentials: 'include' 
+    })
       .then(res => res.json())
       .then(authData => {
         if (!authData.ok) {
@@ -70,7 +72,9 @@ export default function SupervisorView() {
   const loadDashboard = async () => {
     setLoading(true)
     try {
-      const response = await fetch('/api/supervisor/dashboard')
+      const response = await fetch('/api/supervisor/dashboard', { 
+        credentials: 'include' 
+      })
       const result = await response.json()
       
       if (result.success) {
