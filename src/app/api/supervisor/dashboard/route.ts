@@ -13,24 +13,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
     }
 
-    // Get work orders in the supervisor's department (or all if admin)
-    const whereCondition = user.role === 'ADMIN' ? {} : {
-      routingVersion: {
-        stages: {
-          some: {
-            workCenter: {
-              departmentId: user.departmentId
-            }
-          }
-        }
-      }
-    }
-
+    // Get ALL work orders for supervisors to see complete factory status
     const workOrders = await prisma.workOrder.findMany({
       where: {
-        ...whereCondition,
         status: {
-          in: ['RELEASED', 'IN_PROGRESS', 'HOLD', 'COMPLETED']
+          in: ['PLANNED', 'RELEASED', 'IN_PROGRESS', 'HOLD', 'COMPLETED']
         }
       },
       include: {
@@ -59,12 +46,8 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: 'desc' }
     })
 
-    // Filter work orders to only include those in supervisor's department
-    const filteredWorkOrders = user.role === 'ADMIN' ? workOrders : 
-      workOrders.filter(wo => {
-        const currentStage = wo.routingVersion.stages[wo.currentStageIndex]
-        return currentStage && currentStage.workCenter.departmentId === user.departmentId
-      })
+    // Show all work orders to supervisors for complete factory visibility
+    const filteredWorkOrders = workOrders
 
     // Transform work orders for display
     const wipData = filteredWorkOrders.map(wo => {
