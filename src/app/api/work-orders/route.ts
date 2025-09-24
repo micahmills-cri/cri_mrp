@@ -121,7 +121,13 @@ export async function GET(request: NextRequest) {
         orderBy: { createdAt: 'desc' },
         take: 100,
         include: {
-          routingVersion: true
+          routingVersion: true,
+          _count: {
+            select: {
+              notes: true,
+              attachments: true
+            }
+          }
         }
       })
       
