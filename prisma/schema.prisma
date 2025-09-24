@@ -30,6 +30,11 @@ enum WOEvent {
   GOOD_ADJUST
 }
 
+enum NoteScope {
+  GENERAL
+  DEPARTMENT
+}
+
 enum RoutingVersionStatus {
   DRAFT
   RELEASED
@@ -40,6 +45,7 @@ model Department {
   name        String       @unique
   workCenters WorkCenter[]
   users       User[]
+  notes       WorkOrderNote[]
 }
 
 model User {
@@ -52,6 +58,8 @@ model User {
   createdAt    DateTime     @default(now())
   woStageLogs  WOStageLog[]
   auditLogs    AuditLog[]
+  notes        WorkOrderNote[]
+  attachments  WorkOrderAttachment[]
 }
 
 model WorkCenter {
@@ -114,6 +122,8 @@ model WorkOrder {
   currentStageIndex  Int          @default(0)
   createdAt          DateTime     @default(now())
   woStageLogs        WOStageLog[]
+  notes              WorkOrderNote[]
+  attachments        WorkOrderAttachment[]
 }
 
 model WOStageLog {
@@ -141,6 +151,53 @@ model WorkInstructionVersion {
   contentMd      String
   isActive       Boolean      @default(true)
   createdAt      DateTime     @default(now())
+}
+
+model WorkOrderNote {
+  id           String     @id @default(cuid())
+  workOrderId  String
+  workOrder    WorkOrder  @relation(fields: [workOrderId], references: [id])
+  userId       String
+  user         User       @relation(fields: [userId], references: [id])
+  scope        NoteScope  @default(GENERAL)
+  departmentId String?    // Only used when scope is DEPARTMENT
+  department   Department? @relation(fields: [departmentId], references: [id])
+  content      String
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+model WorkOrderAttachment {
+  id           String     @id @default(cuid())
+  workOrderId  String
+  workOrder    WorkOrder  @relation(fields: [workOrderId], references: [id])
+  userId       String
+  user         User       @relation(fields: [userId], references: [id])
+  filename     String
+  originalName String
+  fileType     String     // mime type
+  fileSize     Int        // in bytes
+  storageUri   String     // path or URL to file
+  description  String?
+  createdAt    DateTime   @default(now())
+}
+
+model ProductModel {
+  id           String   @id @default(cuid())
+  code         String   @unique
+  name         String
+  description  String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+}
+
+model ProductTrim {
+  id           String   @id @default(cuid())
+  code         String   @unique
+  name         String
+  description  String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
 }
 
 model AuditLog {
