@@ -187,7 +187,7 @@ export async function POST(
     const note = await prisma.workOrderNote.create({
       data: {
         workOrderId,
-        userId: user.id,
+        userId: user.userId,
         content: content.trim(),
         scope: scope || 'GENERAL',
         departmentId: scope === 'DEPARTMENT' ? departmentId : null
