@@ -57,15 +57,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No current stage found' }, { status: 400 })
     }
 
-    // Check if user has access to this stage (department scoped)
-    if (user.departmentId && user.departmentId !== currentStage.workCenter.department.id) {
+    // Check if user has access to this stage (department scoped for operators only)
+    if (user.role === 'OPERATOR' && user.departmentId && user.departmentId !== currentStage.workCenter.department.id) {
       return NextResponse.json({ error: 'Work order not in your department' }, { status: 403 })
     }
 
-    // Filter stations to only include those in user's department
-    const availableStations = currentStage.workCenter.stations.filter(station => 
-      currentStage.workCenter.department.id === user.departmentId || !user.departmentId
-    )
+    // Filter stations for operators only (admin and supervisor see all stations)
+    const availableStations = user.role === 'OPERATOR' 
+      ? currentStage.workCenter.stations.filter(station => 
+          currentStage.workCenter.department.id === user.departmentId || !user.departmentId
+        )
+      : currentStage.workCenter.stations
 
     return NextResponse.json({
       success: true,
