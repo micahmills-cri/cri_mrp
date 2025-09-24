@@ -2,6 +2,9 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import NotesTimeline from '../../components/NotesTimeline'
+import FileUpload from '../../components/FileUpload'
+import ModelTrimSelector from '../../components/ModelTrimSelector'
 
 type WorkOrder = {
   id: string
@@ -109,6 +112,13 @@ export default function SupervisorView() {
     trim: '',
     features: ''
   })
+  // Model/Trim selector states
+  const [selectedModelId, setSelectedModelId] = useState('')
+  const [selectedTrimId, setSelectedTrimId] = useState('')
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
+  const [generatedSku, setGeneratedSku] = useState('')
+  // Detail drawer tab state
+  const [activeDetailTab, setActiveDetailTab] = useState<'timeline' | 'notes' | 'files'>('timeline')
   const [routingVersions, setRoutingVersions] = useState<RoutingVersion[]>([])
   const [selectedRoutingVersion, setSelectedRoutingVersion] = useState<RoutingVersion | null>(null)
   const [editableStages, setEditableStages] = useState<RoutingStage[]>([])
@@ -1023,78 +1033,137 @@ export default function SupervisorView() {
               </div>
             </div>
 
-            {/* Stage Timeline */}
-            {selectedWorkOrder.stageTimeline && selectedWorkOrder.stageTimeline.length > 0 && (
-              <div style={{ marginBottom: '1.5rem' }}>
-                <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', fontWeight: '600' }}>
-                  Stage Timeline
-                </h3>
-                {selectedWorkOrder.stageTimeline.map((stage, index) => (
-                  <div key={stage.stageId} style={{
-                    padding: '0.75rem',
-                    marginBottom: '0.5rem',
-                    backgroundColor: '#f8f9fa',
-                    borderRadius: '4px',
-                    border: '1px solid #dee2e6'
-                  }}>
-                    <div style={{ fontWeight: '500', marginBottom: '0.5rem' }}>
-                      {stage.stageName} ({stage.stageCode})
-                    </div>
-                    {stage.events.map((event: any) => (
-                      <div key={event.id} style={{
-                        padding: '0.5rem',
-                        marginBottom: '0.25rem',
-                        backgroundColor: 'white',
-                        borderRadius: '3px',
-                        fontSize: '0.875rem'
+            {/* Detail Tabs */}
+            <div style={{ marginBottom: '1rem' }}>
+              <div style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid #dee2e6' }}>
+                <button
+                  onClick={() => setActiveDetailTab('timeline')}
+                  style={{
+                    padding: '0.5rem 1rem',
+                    backgroundColor: 'transparent',
+                    color: activeDetailTab === 'timeline' ? '#007bff' : '#6c757d',
+                    border: 'none',
+                    borderBottom: `2px solid ${activeDetailTab === 'timeline' ? '#007bff' : 'transparent'}`,
+                    cursor: 'pointer',
+                    fontWeight: activeDetailTab === 'timeline' ? '600' : '400'
+                  }}
+                >
+                  Timeline
+                </button>
+                <button
+                  onClick={() => setActiveDetailTab('notes')}
+                  style={{
+                    padding: '0.5rem 1rem',
+                    backgroundColor: 'transparent',
+                    color: activeDetailTab === 'notes' ? '#007bff' : '#6c757d',
+                    border: 'none',
+                    borderBottom: `2px solid ${activeDetailTab === 'notes' ? '#007bff' : 'transparent'}`,
+                    cursor: 'pointer',
+                    fontWeight: activeDetailTab === 'notes' ? '600' : '400'
+                  }}
+                >
+                  Notes
+                </button>
+                <button
+                  onClick={() => setActiveDetailTab('files')}
+                  style={{
+                    padding: '0.5rem 1rem',
+                    backgroundColor: 'transparent',
+                    color: activeDetailTab === 'files' ? '#007bff' : '#6c757d',
+                    border: 'none',
+                    borderBottom: `2px solid ${activeDetailTab === 'files' ? '#007bff' : 'transparent'}`,
+                    cursor: 'pointer',
+                    fontWeight: activeDetailTab === 'files' ? '600' : '400'
+                  }}
+                >
+                  Files
+                </button>
+              </div>
+            </div>
+
+            {/* Tab Content */}
+            {activeDetailTab === 'timeline' && (
+              <div>
+                {/* Stage Timeline */}
+                {selectedWorkOrder.stageTimeline && selectedWorkOrder.stageTimeline.length > 0 ? (
+                  <div>
+                    <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', fontWeight: '600' }}>
+                      Stage Timeline
+                    </h3>
+                    {selectedWorkOrder.stageTimeline.map((stage, index) => (
+                      <div key={stage.stageId} style={{
+                        padding: '0.75rem',
+                        marginBottom: '0.5rem',
+                        backgroundColor: '#f8f9fa',
+                        borderRadius: '4px',
+                        border: '1px solid #dee2e6'
                       }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <span style={{ fontWeight: '500' }}>{event.event}</span>
-                          <span style={{ color: '#6c757d' }}>
-                            {new Date(event.createdAt).toLocaleString()}
-                          </span>
+                        <div style={{ fontWeight: '500', marginBottom: '0.5rem' }}>
+                          {stage.stageName} ({stage.stageCode})
                         </div>
-                        <div style={{ color: '#6c757d', marginTop: '0.25rem' }}>
-                          Station: {event.station} • User: {event.user}
-                        </div>
-                        {event.event === 'COMPLETE' && (
-                          <div style={{ marginTop: '0.25rem' }}>
-                            Good: {event.goodQty} • Scrap: {event.scrapQty}
+                        {stage.events.map((event: any) => (
+                          <div key={event.id} style={{
+                            padding: '0.5rem',
+                            marginBottom: '0.25rem',
+                            backgroundColor: 'white',
+                            borderRadius: '3px',
+                            fontSize: '0.875rem'
+                          }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                              <span style={{ fontWeight: '500' }}>{event.event}</span>
+                              <span style={{ color: '#6c757d' }}>
+                                {new Date(event.createdAt).toLocaleString()}
+                              </span>
+                            </div>
+                            <div style={{ color: '#6c757d', marginTop: '0.25rem' }}>
+                              Station: {event.station} • User: {event.user}
+                            </div>
+                            {event.event === 'COMPLETE' && (
+                              <div style={{ marginTop: '0.25rem' }}>
+                                Good: {event.goodQty} • Scrap: {event.scrapQty}
+                              </div>
+                            )}
+                            {event.note && (
+                              <div style={{ marginTop: '0.25rem', fontStyle: 'italic' }}>
+                                Note: {event.note}
+                              </div>
+                            )}
                           </div>
-                        )}
-                        {event.note && (
-                          <div style={{ marginTop: '0.25rem', fontStyle: 'italic' }}>
-                            Note: {event.note}
-                          </div>
-                        )}
+                        ))}
                       </div>
                     ))}
                   </div>
-                ))}
+                ) : (
+                  <div style={{ textAlign: 'center', padding: '2rem', color: '#6c757d' }}>
+                    No timeline events yet.
+                  </div>
+                )}
               </div>
             )}
 
-            {/* Notes */}
-            {selectedWorkOrder.notes && selectedWorkOrder.notes.length > 0 && (
-              <div style={{ marginBottom: '1.5rem' }}>
-                <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', fontWeight: '600' }}>
-                  Notes
-                </h3>
-                {selectedWorkOrder.notes.map((note, index) => (
-                  <div key={index} style={{
-                    padding: '0.5rem',
-                    marginBottom: '0.5rem',
-                    backgroundColor: '#f8f9fa',
-                    borderRadius: '4px',
-                    fontSize: '0.875rem'
-                  }}>
-                    <div style={{ fontWeight: '500' }}>{note.note}</div>
-                    <div style={{ color: '#6c757d', marginTop: '0.25rem' }}>
-                      {note.stage} • {note.event} • {note.user} • {new Date(note.createdAt).toLocaleString()}
-                    </div>
-                  </div>
-                ))}
-              </div>
+            {activeDetailTab === 'notes' && (
+              <NotesTimeline
+                workOrderId={selectedWorkOrder.id}
+                onError={(error) => setError(error)}
+                onSuccess={(message) => {
+                  setMessage(message)
+                  setTimeout(() => setMessage(''), 3000)
+                }}
+              />
+            )}
+
+            {activeDetailTab === 'files' && (
+              <FileUpload
+                workOrderId={selectedWorkOrder.id}
+                onError={(error) => setError(error)}
+                onSuccess={(message) => {
+                  setMessage(message)
+                  setTimeout(() => setMessage(''), 3000)
+                }}
+                onFileUploaded={() => {
+                  // Could refresh file list or show updated count
+                }}
+              />
             )}
           </div>
         </div>
@@ -1144,6 +1213,10 @@ export default function SupervisorView() {
                     trim: '',
                     features: ''
                   })
+                  setSelectedModelId('')
+                  setSelectedTrimId('')
+                  setSelectedYear(new Date().getFullYear())
+                  setGeneratedSku('')
                   setSelectedRoutingVersion(null)
                   setEditableStages([])
                 }}
@@ -1205,24 +1278,6 @@ export default function SupervisorView() {
               
               <div>
                 <label style={{ display: 'block', marginBottom: '0.25rem', fontWeight: '500' }}>
-                  SKU
-                </label>
-                <input
-                  type="text"
-                  value={newWO.productSku}
-                  onChange={(e) => setNewWO({ ...newWO, productSku: e.target.value })}
-                  placeholder="e.g., BOAT-MODEL-X"
-                  style={{
-                    width: '100%',
-                    padding: '0.5rem',
-                    border: '1px solid #ced4da',
-                    borderRadius: '4px'
-                  }}
-                />
-              </div>
-              
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.25rem', fontWeight: '500' }}>
                   Quantity
                 </label>
                 <input
@@ -1238,42 +1293,42 @@ export default function SupervisorView() {
                   }}
                 />
               </div>
-              
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.25rem', fontWeight: '500' }}>
-                  Model *
-                </label>
-                <input
-                  type="text"
-                  value={newWO.model}
-                  onChange={(e) => setNewWO({ ...newWO, model: e.target.value })}
-                  placeholder="e.g., Speedster 2000"
-                  style={{
-                    width: '100%',
-                    padding: '0.5rem',
-                    border: '1px solid #ced4da',
-                    borderRadius: '4px'
-                  }}
-                />
-              </div>
-              
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.25rem', fontWeight: '500' }}>
-                  Trim
-                </label>
-                <input
-                  type="text"
-                  value={newWO.trim}
-                  onChange={(e) => setNewWO({ ...newWO, trim: e.target.value })}
-                  placeholder="e.g., Luxury"
-                  style={{
-                    width: '100%',
-                    padding: '0.5rem',
-                    border: '1px solid #ced4da',
-                    borderRadius: '4px'
-                  }}
-                />
-              </div>
+            </div>
+
+            {/* Model/Trim Selection */}
+            <div style={{ marginBottom: '1.5rem' }}>
+              <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', fontWeight: '600' }}>
+                Product Configuration
+              </h3>
+              <ModelTrimSelector
+                selectedModelId={selectedModelId}
+                selectedTrimId={selectedTrimId}
+                year={selectedYear}
+                onModelChange={(modelId, model) => {
+                  setSelectedModelId(modelId)
+                  setNewWO({ ...newWO, model: model?.name || '' })
+                }}
+                onTrimChange={(trimId, trim) => {
+                  setSelectedTrimId(trimId)
+                  setNewWO({ ...newWO, trim: trim?.name || '' })
+                }}
+                onYearChange={(year) => {
+                  setSelectedYear(year)
+                }}
+                onSkuGenerated={(sku) => {
+                  setGeneratedSku(sku)
+                  setNewWO({ ...newWO, productSku: sku })
+                }}
+                onError={(error) => setError(error)}
+              />
+            </div>
+
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr',
+              gap: '1rem',
+              marginBottom: '1.5rem'
+            }}>
               
               <div style={{ gridColumn: '1 / -1' }}>
                 <label style={{ display: 'block', marginBottom: '0.25rem', fontWeight: '500' }}>
@@ -1456,6 +1511,10 @@ export default function SupervisorView() {
                     trim: '',
                     features: ''
                   })
+                  setSelectedModelId('')
+                  setSelectedTrimId('')
+                  setSelectedYear(new Date().getFullYear())
+                  setGeneratedSku('')
                   setSelectedRoutingVersion(null)
                   setEditableStages([])
                 }}
