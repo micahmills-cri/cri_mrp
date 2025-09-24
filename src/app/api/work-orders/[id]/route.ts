@@ -66,8 +66,8 @@ export async function GET(
       return NextResponse.json({ error: 'Work order not found' }, { status: 404 })
     }
 
-    // Check department scoping for non-admin users
-    if (user.role !== Role.ADMIN && user.departmentId) {
+    // Check department scoping for operators only (admin and supervisor have full access)
+    if (user.role === Role.OPERATOR && user.departmentId) {
       const enabledStages = workOrder.routingVersion.stages.filter(s => s.enabled)
       const currentStage = enabledStages[workOrder.currentStageIndex]
       

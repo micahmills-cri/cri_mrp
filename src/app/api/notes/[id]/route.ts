@@ -50,8 +50,8 @@ export async function PUT(
       return NextResponse.json({ message: 'Note not found' }, { status: 404 });
     }
 
-    // Department-based access control for work order
-    if (user.role !== 'ADMIN' && user.departmentId) {
+    // Department-based access control for operators only (admin and supervisor have full access)
+    if (user.role === 'OPERATOR' && user.departmentId) {
       const enabledStages = existingNote.workOrder.routingVersion.stages.filter(s => s.enabled).sort((a, b) => a.sequence - b.sequence);
       const currentStage = enabledStages[existingNote.workOrder.currentStageIndex];
       
@@ -60,9 +60,8 @@ export async function PUT(
       }
     }
 
-    // Permission check: users can only edit their own notes, unless they're admin
-    // For department-scoped notes, also check department membership
-    if (user.role !== 'ADMIN') {
+    // Permission check: operators can only edit their own notes, admin and supervisor have broader permissions
+    if (user.role === 'OPERATOR') {
       // First check: Can only edit own notes
       if (existingNote.userId !== user.id) {
         return NextResponse.json({ 
@@ -152,8 +151,8 @@ export async function DELETE(
       return NextResponse.json({ message: 'Note not found' }, { status: 404 });
     }
 
-    // Department-based access control for work order
-    if (user.role !== 'ADMIN' && user.departmentId) {
+    // Department-based access control for operators only (admin and supervisor have full access)
+    if (user.role === 'OPERATOR' && user.departmentId) {
       const enabledStages = existingNote.workOrder.routingVersion.stages.filter(s => s.enabled).sort((a, b) => a.sequence - b.sequence);
       const currentStage = enabledStages[existingNote.workOrder.currentStageIndex];
       

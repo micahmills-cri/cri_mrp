@@ -41,8 +41,8 @@ export async function GET(
       return NextResponse.json({ message: 'Work order not found' }, { status: 404 });
     }
 
-    // Department-based access control for non-admin users
-    if (user.role !== 'ADMIN' && user.departmentId) {
+    // Department-based access control for operators only (admin and supervisor have full access)
+    if (user.role === 'OPERATOR' && user.departmentId) {
       const enabledStages = workOrder.routingVersion.stages.filter(s => s.enabled).sort((a, b) => a.sequence - b.sequence);
       const currentStage = enabledStages[workOrder.currentStageIndex];
       
@@ -123,8 +123,8 @@ export async function POST(
       return NextResponse.json({ message: 'Work order not found' }, { status: 404 });
     }
 
-    // Department-based access control for non-admin users
-    if (user.role !== 'ADMIN' && user.departmentId) {
+    // Department-based access control for operators only (admin and supervisor have full access)
+    if (user.role === 'OPERATOR' && user.departmentId) {
       const enabledStages = workOrder.routingVersion.stages.filter(s => s.enabled).sort((a, b) => a.sequence - b.sequence);
       const currentStage = enabledStages[workOrder.currentStageIndex];
       

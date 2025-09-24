@@ -39,8 +39,8 @@ export async function GET(
       return NextResponse.json({ message: 'Work order not found' }, { status: 404 });
     }
 
-    // Department-based access control for non-admin users
-    if (user.role !== 'ADMIN' && user.departmentId) {
+    // Department-based access control for operators only (admin and supervisor have full access)
+    if (user.role === 'OPERATOR' && user.departmentId) {
       const enabledStages = workOrder.routingVersion.stages.filter(s => s.enabled).sort((a, b) => a.sequence - b.sequence);
       const currentStage = enabledStages[workOrder.currentStageIndex];
       
@@ -158,8 +158,8 @@ export async function POST(
       return NextResponse.json({ message: 'Work order not found' }, { status: 404 });
     }
 
-    // Department-based access control for non-admin users
-    if (user.role !== 'ADMIN' && user.departmentId) {
+    // Department-based access control for operators only (admin and supervisor have full access)
+    if (user.role === 'OPERATOR' && user.departmentId) {
       const enabledStages = workOrder.routingVersion.stages.filter(s => s.enabled).sort((a, b) => a.sequence - b.sequence);
       const currentStage = enabledStages[workOrder.currentStageIndex];
       
@@ -176,8 +176,8 @@ export async function POST(
         }, { status: 400 });
       }
       
-      // Non-admin users can only create notes for their own department
-      if (user.role !== 'ADMIN' && departmentId !== user.departmentId) {
+      // Operators can only create notes for their own department (admin and supervisor have full access)
+      if (user.role === 'OPERATOR' && departmentId !== user.departmentId) {
         return NextResponse.json({ 
           message: 'You can only create department notes for your own department' 
         }, { status: 403 });

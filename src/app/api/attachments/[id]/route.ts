@@ -46,8 +46,8 @@ export async function GET(
       return NextResponse.json({ message: 'Attachment not found' }, { status: 404 });
     }
 
-    // Department-based access control for work order
-    if (user.role !== 'ADMIN' && user.departmentId) {
+    // Department-based access control for operators only (admin and supervisor have full access)
+    if (user.role === 'OPERATOR' && user.departmentId) {
       const enabledStages = attachment.workOrder.routingVersion.stages.filter(s => s.enabled).sort((a, b) => a.sequence - b.sequence);
       const currentStage = enabledStages[attachment.workOrder.currentStageIndex];
       
@@ -144,8 +144,8 @@ export async function DELETE(
       return NextResponse.json({ message: 'Attachment not found' }, { status: 404 });
     }
 
-    // Department-based access control for work order
-    if (user.role !== 'ADMIN' && user.departmentId) {
+    // Department-based access control for operators only (admin and supervisor have full access)
+    if (user.role === 'OPERATOR' && user.departmentId) {
       const enabledStages = attachment.workOrder.routingVersion.stages.filter(s => s.enabled).sort((a, b) => a.sequence - b.sequence);
       const currentStage = enabledStages[attachment.workOrder.currentStageIndex];
       
