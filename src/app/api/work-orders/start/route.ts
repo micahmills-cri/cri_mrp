@@ -19,6 +19,14 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
     const { workOrderId, stationId, note } = startWOSchema.parse(body)
+    
+    // Get selected department from query params, fallback to user's assigned department
+    const { searchParams } = new URL(request.url)
+    const selectedDepartmentId = searchParams.get('departmentId') || user.departmentId
+
+    if (!selectedDepartmentId) {
+      return NextResponse.json({ error: 'No department specified' }, { status: 400 })
+    }
 
     // Find work order
     const workOrder = await prisma.workOrder.findUnique({
@@ -51,7 +59,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No current stage found' }, { status: 400 })
     }
 
-    if (user.departmentId !== currentStage.workCenter.department.id) {
+    if (selectedDepartmentId !== currentStage.workCenter.department.id) {
       return NextResponse.json({ error: 'Not authorized for this stage' }, { status: 403 })
     }
 
