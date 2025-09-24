@@ -83,8 +83,15 @@ type WorkOrderDetails = {
   }
 }
 
+type Department = {
+  id: string
+  name: string
+}
+
 export default function OperatorConsole() {
   const [department, setDepartment] = useState<{ id: string; name: string } | null>(null)
+  const [availableDepartments, setAvailableDepartments] = useState<Department[]>([])
+  const [selectedDepartmentId, setSelectedDepartmentId] = useState<string>('')
   const [queue, setQueue] = useState<QueueWorkOrder[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedWorkOrder, setSelectedWorkOrder] = useState<WorkOrderDetails | null>(null)
@@ -99,20 +106,30 @@ export default function OperatorConsole() {
   const [isActionPanelOpen, setIsActionPanelOpen] = useState(false)
   const router = useRouter()
 
-  // Load station from localStorage
+  // Load station and department from localStorage
   useEffect(() => {
     const savedStation = localStorage.getItem('operator-selected-station')
+    const savedDepartmentId = localStorage.getItem('operator-selected-department')
     if (savedStation) {
       setSelectedStation(savedStation)
     }
+    if (savedDepartmentId) {
+      setSelectedDepartmentId(savedDepartmentId)
+    }
   }, [])
 
-  // Save station to localStorage when changed
+  // Save station and department to localStorage when changed
   useEffect(() => {
     if (selectedStation) {
       localStorage.setItem('operator-selected-station', selectedStation)
     }
   }, [selectedStation])
+
+  useEffect(() => {
+    if (selectedDepartmentId) {
+      localStorage.setItem('operator-selected-department', selectedDepartmentId)
+    }
+  }, [selectedDepartmentId])
 
   // Check authentication and fetch initial data
   useEffect(() => {
@@ -123,22 +140,48 @@ export default function OperatorConsole() {
       .then(data => {
         if (!data.ok) {
           router.push('/login')
+        } else {
+          // Set default department if none selected
+          if (!selectedDepartmentId && data.user?.departmentId) {
+            setSelectedDepartmentId(data.user.departmentId)
+          }
         }
       })
       .catch(() => router.push('/login'))
-  }, [router])
+  }, [router, selectedDepartmentId])
+
+  // Fetch available departments
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        const response = await fetch('/api/departments', {
+          credentials: 'include'
+        })
+        if (response.ok) {
+          const data = await response.json()
+          setAvailableDepartments(data.departments || [])
+        }
+      } catch (err) {
+        console.error('Error fetching departments:', err)
+      }
+    }
+    
+    fetchDepartments()
+  }, [])
 
   // Fetch queue data
   const fetchQueue = useCallback(async () => {
+    if (!selectedDepartmentId) return
+    
     try {
-      const response = await fetch('/api/queues/my-department', {
+      const response = await fetch(`/api/queues/my-department?departmentId=${selectedDepartmentId}`, {
         credentials: 'include'
       })
       
       if (response.ok) {
         const data = await response.json()
         setQueue(data.queue || [])
-        if (!department && data.department) {
+        if (data.department) {
           setDepartment(data.department)
         }
       } else if (response.status === 401) {
@@ -147,7 +190,7 @@ export default function OperatorConsole() {
     } catch (err) {
       console.error('Error fetching queue:', err)
     }
-  }, [router, department])
+  }, [router, selectedDepartmentId])
 
   // Poll queue every 5 seconds
   useEffect(() => {
@@ -158,14 +201,14 @@ export default function OperatorConsole() {
 
   // Search for work order
   const searchWorkOrder = async () => {
-    if (!searchQuery.trim()) return
+    if (!searchQuery.trim() || !selectedDepartmentId) return
     
     setLoading(true)
     setError('')
     setMessage('')
     
     try {
-      const response = await fetch(`/api/work-orders/find?query=${encodeURIComponent(searchQuery.trim())}`, {
+      const response = await fetch(`/api/work-orders/find?query=${encodeURIComponent(searchQuery.trim())}&departmentId=${selectedDepartmentId}`, {
         credentials: 'include'
       })
 
@@ -192,6 +235,8 @@ export default function OperatorConsole() {
 
   // Open work order from queue
   const openWorkOrder = async (woId: string) => {
+    if (!selectedDepartmentId) return
+    
     setLoading(true)
     setError('')
     setMessage('')
@@ -199,7 +244,7 @@ export default function OperatorConsole() {
     try {
       const wo = queue.find(q => q.id === woId)
       if (wo) {
-        const response = await fetch(`/api/work-orders/find?query=${encodeURIComponent(wo.number)}`, {
+        const response = await fetch(`/api/work-orders/find?query=${encodeURIComponent(wo.number)}&departmentId=${selectedDepartmentId}`, {
           credentials: 'include'
         })
 
@@ -251,7 +296,7 @@ export default function OperatorConsole() {
         requestBody.scrapQty = parseInt(scrapQty) || 0
       }
 
-      const response = await fetch(`/api/work-orders/${action}`, {
+      const response = await fetch(`/api/work-orders/${action}?departmentId=${selectedDepartmentId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -279,7 +324,7 @@ export default function OperatorConsole() {
         } else {
           // Refresh work order details
           const refreshResponse = await fetch(
-            `/api/work-orders/find?query=${encodeURIComponent(selectedWorkOrder.workOrder.number)}`,
+            `/api/work-orders/find?query=${encodeURIComponent(selectedWorkOrder.workOrder.number)}&departmentId=${selectedDepartmentId}`,
             { credentials: 'include' }
           )
           if (refreshResponse.ok) {
@@ -325,11 +370,34 @@ export default function OperatorConsole() {
             <h1 style={{ margin: 0, fontSize: '1.5rem', fontWeight: '600' }}>
               Operator Console
             </h1>
-            {department && (
-              <div style={{ fontSize: '1.1rem', fontWeight: '500', color: '#495057' }}>
-                Department: {department.name}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <label style={{ fontSize: '0.875rem', fontWeight: '500' }}>Department:</label>
+                <select
+                  value={selectedDepartmentId}
+                  onChange={(e) => setSelectedDepartmentId(e.target.value)}
+                  style={{
+                    padding: '0.375rem 0.5rem',
+                    border: '1px solid #ced4da',
+                    borderRadius: '4px',
+                    backgroundColor: 'white',
+                    fontSize: '0.875rem'
+                  }}
+                >
+                  <option value="">Select Department...</option>
+                  {availableDepartments.map(dept => (
+                    <option key={dept.id} value={dept.id}>
+                      {dept.name}
+                    </option>
+                  ))}
+                </select>
               </div>
-            )}
+              {department && (
+                <div style={{ fontSize: '0.875rem', color: '#6c757d', fontStyle: 'italic' }}>
+                  Current: {department.name}
+                </div>
+              )}
+            </div>
           </div>
           
           {/* Search Bar */}
