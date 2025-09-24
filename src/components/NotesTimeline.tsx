@@ -22,6 +22,11 @@ type Note = {
   }
 }
 
+type Department = {
+  id: string
+  name: string
+}
+
 type NotesTimelineProps = {
   workOrderId: string
   onError?: (error: string) => void
@@ -33,14 +38,34 @@ export default function NotesTimeline({ workOrderId, onError, onSuccess }: Notes
   const [loading, setLoading] = useState(false)
   const [showAddNote, setShowAddNote] = useState(false)
   const [newNote, setNewNote] = useState('')
-  const [noteScope, setNoteScope] = useState<'GENERAL' | 'DEPARTMENT'>('GENERAL')
+  const [noteScope, setNoteScope] = useState<string>('GENERAL')
+  const [selectedDepartmentId, setSelectedDepartmentId] = useState<string>('')
+  const [departments, setDepartments] = useState<Department[]>([])
   const [submitting, setSubmitting] = useState(false)
   const [editingNote, setEditingNote] = useState<string | null>(null)
   const [editContent, setEditContent] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
-  const [filterScope, setFilterScope] = useState<'ALL' | 'GENERAL' | 'DEPARTMENT'>('ALL')
+  const [filterScope, setFilterScope] = useState<string>('ALL')
   const [autoRefresh, setAutoRefresh] = useState(true)
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
+
+  // Load departments
+  const loadDepartments = async () => {
+    try {
+      const response = await fetch('/api/departments', {
+        credentials: 'include'
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        setDepartments(data.departments || [])
+      } else {
+        console.error('Failed to load departments')
+      }
+    } catch (err) {
+      console.error('Network error loading departments')
+    }
+  }
 
   // Load notes
   const loadNotes = async () => {
@@ -70,14 +95,21 @@ export default function NotesTimeline({ workOrderId, onError, onSuccess }: Notes
     
     setSubmitting(true)
     try {
+      const requestBody: any = {
+        content: newNote.trim(),
+        scope: noteScope === 'GENERAL' ? 'GENERAL' : 'DEPARTMENT'
+      }
+      
+      // If it's a department note, include the department ID
+      if (noteScope !== 'GENERAL') {
+        requestBody.departmentId = noteScope // noteScope now contains the department ID
+      }
+      
       const response = await fetch(`/api/work-orders/${workOrderId}/notes`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({
-          content: newNote.trim(),
-          scope: noteScope
-        })
+        body: JSON.stringify(requestBody)
       })
       
       if (response.ok) {
@@ -85,6 +117,7 @@ export default function NotesTimeline({ workOrderId, onError, onSuccess }: Notes
         setNotes(prev => [note, ...prev])
         setNewNote('')
         setShowAddNote(false)
+        setNoteScope('GENERAL')
         onSuccess?.('Note added successfully')
       } else {
         const error = await response.json()
@@ -183,9 +216,15 @@ export default function NotesTimeline({ workOrderId, onError, onSuccess }: Notes
     const matchesSearch = note.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
       note.user.email.toLowerCase().includes(searchQuery.toLowerCase())
     
-    const matchesScope = filterScope === 'ALL' ||
-      (filterScope === 'GENERAL' && note.scope === 'GENERAL') ||
-      (filterScope === 'DEPARTMENT' && note.scope === 'DEPARTMENT')
+    let matchesScope = false
+    if (filterScope === 'ALL') {
+      matchesScope = true
+    } else if (filterScope === 'GENERAL') {
+      matchesScope = note.scope === 'GENERAL'
+    } else {
+      // Department-specific filter
+      matchesScope = note.scope === 'DEPARTMENT' && note.departmentId === filterScope
+    }
     
     return matchesSearch && matchesScope
   })
@@ -210,8 +249,9 @@ export default function NotesTimeline({ workOrderId, onError, onSuccess }: Notes
     }
   }, [autoRefresh, workOrderId])
 
-  // Load notes on mount
+  // Load departments and notes on mount
   useEffect(() => {
+    loadDepartments()
     loadNotes()
   }, [workOrderId])
 
@@ -277,7 +317,7 @@ export default function NotesTimeline({ workOrderId, onError, onSuccess }: Notes
         />
         <select
           value={filterScope}
-          onChange={(e) => setFilterScope(e.target.value as 'ALL' | 'GENERAL' | 'DEPARTMENT')}
+          onChange={(e) => setFilterScope(e.target.value)}
           style={{
             padding: '0.5rem',
             border: '1px solid #ced4da',
@@ -288,7 +328,9 @@ export default function NotesTimeline({ workOrderId, onError, onSuccess }: Notes
         >
           <option value="ALL">All Notes</option>
           <option value="GENERAL">General Notes</option>
-          <option value="DEPARTMENT">Department Notes</option>
+          {departments.map(dept => (
+            <option key={dept.id} value={dept.id}>{dept.name} Notes</option>
+          ))}
         </select>
       </div>
 
@@ -304,7 +346,7 @@ export default function NotesTimeline({ workOrderId, onError, onSuccess }: Notes
           <div style={{ marginBottom: '0.5rem' }}>
             <select
               value={noteScope}
-              onChange={(e) => setNoteScope(e.target.value as 'GENERAL' | 'DEPARTMENT')}
+              onChange={(e) => setNoteScope(e.target.value)}
               style={{
                 padding: '0.25rem 0.5rem',
                 border: '1px solid #ced4da',
@@ -313,7 +355,9 @@ export default function NotesTimeline({ workOrderId, onError, onSuccess }: Notes
               }}
             >
               <option value="GENERAL">General Note</option>
-              <option value="DEPARTMENT">Department Note</option>
+              {departments.map(dept => (
+                <option key={dept.id} value={dept.id}>{dept.name} Note</option>
+              ))}
             </select>
           </div>
           <textarea
