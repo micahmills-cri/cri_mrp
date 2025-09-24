@@ -43,7 +43,12 @@ export class ObjectStorageService {
 
   // Gets the private object directory.
   getPrivateObjectDir(): string {
-    const dir = process.env.PRIVATE_OBJECT_DIR || "/boat-factory-attachments/uploads";
+    const dir = process.env.PRIVATE_OBJECT_DIR || "";
+    if (!dir) {
+      // For development, use a sensible default bucket path
+      console.warn("PRIVATE_OBJECT_DIR not set, using default bucket");
+      return "/boat-factory-attachments";
+    }
     return dir;
   }
 

@@ -64,16 +64,8 @@ export async function GET(
         { scope: 'DEPARTMENT', departmentId: userDeptId }
       ];
     } else if (user.role === 'SUPERVISOR') {
-      // Supervisors can see all GENERAL notes and DEPARTMENT notes from their department only
-      const userDeptId = user.departmentId;
-      if (!userDeptId) {
-        return NextResponse.json({ message: 'Supervisor has no department assigned' }, { status: 403 });
-      }
-      
-      whereClause.OR = [
-        { scope: 'GENERAL' },
-        { scope: 'DEPARTMENT', departmentId: userDeptId }
-      ];
+      // Supervisors can see ALL notes (same as admin) - they have cross-department visibility
+      // No additional filtering needed - they can see all GENERAL and DEPARTMENT notes
     }
     // ADMIN can see all notes
 
