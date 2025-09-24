@@ -378,3 +378,121 @@ feat: work order notes + product models APIs with RBAC (attachments pending stor
 - Implement comprehensive security validation across all new endpoints
 - Maintain backward compatibility with existing functionality
 ```
+
+---
+
+# CRITICAL FIX - Supervisor Access Control Issue
+
+## Problem Report (September 24, 2025)
+**Issue**: Supervisors getting "Work order not in your department" error when trying to access WO-1001 in Supervisor Dashboard
+**Requirement**: Supervisors should have full access to view and edit all work orders across departments
+**Priority**: HIGH - Blocking supervisor functionality
+
+## Root Cause Analysis
+
+### Issue Identified
+The access control logic in multiple API endpoints was incorrectly treating SUPERVISOR users the same as OPERATOR users, restricting them to only work orders within their assigned department.
+
+### Problematic Code Pattern
+Throughout the codebase, the access control logic used this incorrect pattern:
+```typescript
+// INCORRECT - This restricts both operators AND supervisors
+if (user.role !== 'ADMIN' && user.departmentId) {
+  // Department restriction logic
+}
+```
+
+**Expected vs Actual Access Levels**:
+- ✅ ADMIN users: Full access (working correctly)
+- ❌ SUPERVISOR users: Department-restricted (INCORRECT - should have full access)
+- ✅ OPERATOR users: Department-restricted (working correctly)
+
+## Files Fixed
+
+### 1. Work Order Details Access
+**File**: `src/app/api/work-orders/[id]/route.ts` (Line 70)
+- **Before**: `if (user.role !== Role.ADMIN && user.departmentId) {`
+- **After**: `if (user.role === Role.OPERATOR && user.departmentId) {`
+
+### 2. Work Order Notes Access  
+**File**: `src/app/api/work-orders/[id]/notes/route.ts` (Lines 43, 162, 180)
+- Fixed GET and POST endpoints for notes access
+- Fixed department-specific note creation permissions
+
+### 3. Work Order Attachments Access
+**File**: `src/app/api/work-orders/[id]/attachments/route.ts` (Lines 45, 119)
+- Fixed attachment listing and upload access control
+
+### 4. Individual Attachment Access
+**File**: `src/app/api/attachments/[id]/route.ts` (Line 50)
+- Fixed download and delete access for individual files
+
+### 5. Individual Notes Management
+**File**: `src/app/api/notes/[id]/route.ts` (Lines 54, 65)
+- Fixed note editing and deletion permissions
+- Supervisors now have admin-level privileges for note management
+
+### 6. Work Order Search
+**File**: `src/app/api/work-orders/search/route.ts` (Lines 61, 69)
+- **Critical**: This was restricting ALL users (including admins!) to their department
+- Fixed search access and station filtering logic
+
+## Solution Implemented
+
+### Updated Access Control Pattern
+```typescript
+// CORRECT - Only restrict operators to their department
+if (user.role === 'OPERATOR' && user.departmentId) {
+  // Department restriction logic applies only to operators
+}
+```
+
+### Updated Role-Based Access Matrix
+| Role | Department Access | Notes Management | File Management | Search Access |
+|------|------------------|-----------------|----------------|---------------|
+| OPERATOR | Own department only | Own department + own notes | Own department | Own department |
+| SUPERVISOR | **ALL departments** | **ALL departments** | **ALL departments** | **ALL departments** |  
+| ADMIN | All departments | All departments | All departments | All departments |
+
+## Fix Validation
+
+### Pre-Fix Behavior
+- Supervisor accessing WO-1001: ❌ "Work order not in your department" (403 error)
+- Supervisor accessing notes: ❌ Access denied
+- Supervisor accessing attachments: ❌ Access denied
+- Supervisor search: ❌ Department restricted
+
+### Post-Fix Behavior (Expected)
+- Supervisor accessing WO-1001: ✅ Full work order details displayed  
+- Supervisor accessing notes: ✅ Can view, create, edit, delete all notes
+- Supervisor accessing attachments: ✅ Can view, upload, download all files
+- Supervisor search: ✅ Can find and access work orders from any department
+
+## Impact Assessment
+
+### Security Impact
+- ✅ **Enhanced**: Supervisors now have proper cross-department oversight
+- ✅ **Maintained**: Operator restrictions preserved (department scoping)
+- ✅ **Unchanged**: Admin access levels remain the same
+
+### Functional Impact
+- ✅ **Restored**: Cross-department work order access for supervisors
+- ✅ **Enabled**: Full notes and attachments management across departments
+- ✅ **Fixed**: Unrestricted search functionality for supervisors
+
+## Testing Status
+
+### Ready for Verification
+1. **Login as Supervisor**: Access Supervisor Dashboard
+2. **Cross-Department Access**: View WO-1001 or any work order from different department
+3. **Notes Management**: Create, edit, delete notes on any work order
+4. **File Management**: Upload, download files from any work order  
+5. **Search Functionality**: Search and access work orders across all departments
+
+**Expected Result**: All operations should work without department restrictions for supervisors
+
+## Fix Status
+- **Status**: ✅ COMPLETE
+- **Files Modified**: 6 API endpoint files
+- **Testing**: Ready for user verification
+- **Impact**: Critical supervisor functionality restored
