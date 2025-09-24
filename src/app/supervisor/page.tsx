@@ -198,6 +198,7 @@ export default function SupervisorView() {
           currentStageIndex: 0,
           specSnapshot: {},
           createdAt: item.createdAt,
+          _count: item._count, // Pass through count data for badges
           currentStage: item.currentStage ? {
             id: item.currentStage.id || '',
             code: item.currentStage.code,

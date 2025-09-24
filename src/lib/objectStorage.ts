@@ -41,20 +41,14 @@ export class ObjectNotFoundError extends Error {
 export class ObjectStorageService {
   constructor() {}
 
-  // Gets the private object directory using Replit App Storage environment variables.
+  // Gets the private object directory using your specific Work Order Attachments bucket.
   getPrivateObjectDir(): string {
-    const bucket = process.env.REPLIT_APP_STORAGE_BUCKET;
-    const prefix = process.env.REPLIT_APP_STORAGE_PREFIX;
+    // Using your specific "Work Order Attachments" bucket ID
+    const bucketId = "replit-objstore-ce5d5edc-1bae-43a7-8949-4f36f7b5b0dd";
+    const prefix = "attachments";
     
-    if (!bucket || !prefix) {
-      throw new Error(
-        "App Storage not configured. Missing REPLIT_APP_STORAGE_BUCKET or REPLIT_APP_STORAGE_PREFIX environment variables. " +
-        "Please configure App Storage through the Replit UI or set up the integration properly."
-      );
-    }
-    
-    // Construct the proper path using Replit's assigned bucket and prefix
-    return `/${bucket}/${prefix}`;
+    // Construct the proper path for your bucket
+    return `/${bucketId}/${prefix}`;
   }
 
   // Gets the upload URL for an object entity.
