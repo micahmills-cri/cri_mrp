@@ -12,9 +12,14 @@ export async function GET(request: NextRequest) {
 
     const searchParams = request.nextUrl.searchParams
     const query = searchParams.get('query')
+    const selectedDepartmentId = searchParams.get('departmentId') || user.departmentId
     
     if (!query) {
       return NextResponse.json({ error: 'Query parameter required' }, { status: 400 })
+    }
+
+    if (!selectedDepartmentId) {
+      return NextResponse.json({ error: 'No department specified' }, { status: 400 })
     }
 
     // Search by work order number or hull ID
@@ -73,8 +78,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Check if user has access to this stage (department scoped)
-    if (user.departmentId && user.departmentId !== currentStage.workCenter.department.id) {
-      return NextResponse.json({ error: 'Work order not in your department' }, { status: 403 })
+    if (selectedDepartmentId !== currentStage.workCenter.department.id) {
+      return NextResponse.json({ error: 'Work order not in selected department' }, { status: 403 })
     }
 
     // Get the last event for display
