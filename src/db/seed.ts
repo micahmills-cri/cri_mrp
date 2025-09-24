@@ -1,148 +1,183 @@
 import { PrismaClient, Role, RoutingVersionStatus } from '@prisma/client'
 import { hashPassword } from '../lib/auth'
+import { backupData } from './backup-data'
 
 const prisma = new PrismaClient()
 
 async function main() {
-  console.log('Starting database seed...')
+  console.log('Starting database seed with backup restoration...')
 
-  // Create departments (one per stage)
-  const departmentNames = [
-    'Kitting',
-    'Lamination', 
-    'Hull Rigging',
-    'Deck Rigging',
-    'Capping',
-    'Engine Hang',
-    'Final Rigging',
-    'Water Test',
-    'QA',
-    'Cleaning',
-    'Shipping'
-  ]
+  // Clear existing data
+  console.log('Clearing existing data...')
+  await prisma.workOrderNote.deleteMany()
+  await prisma.workOrderAttachment.deleteMany()
+  await prisma.wOStageLog.deleteMany()
+  await prisma.workOrder.deleteMany()
+  await prisma.routingStage.deleteMany()
+  await prisma.routingVersion.deleteMany()
+  await prisma.workInstructionVersion.deleteMany()
+  await prisma.station.deleteMany()
+  await prisma.workCenter.deleteMany()
+  await prisma.user.deleteMany()
+  await prisma.department.deleteMany()
+  await prisma.productModel.deleteMany()
+  await prisma.productTrim.deleteMany()
 
-  console.log('Creating departments...')
-  const departments = await Promise.all(
-    departmentNames.map(name =>
-      prisma.department.create({
-        data: { name }
-      })
-    )
-  )
-
-  console.log('Creating work centers...')
-  const workCenters = await Promise.all(
-    departments.map(dept =>
-      prisma.workCenter.create({
-        data: {
-          name: dept.name,
-          departmentId: dept.id
-        }
-      })
-    )
-  )
-
-  console.log('Creating stations...')
-  const stationCodes = [
-    'KIT-1', 'LAM-1', 'HRIG-1', 'DRIG-1', 'CAP-1', 
-    'ENG-1', 'FRIG-1', 'WTEST-1', 'QA-1', 'CLEAN-1', 'SHIP-1'
-  ]
-  
-  const stations = await Promise.all(
-    workCenters.map((wc, index) =>
-      prisma.station.create({
-        data: {
-          code: stationCodes[index],
-          name: `${wc.name} Station 1`,
-          workCenterId: wc.id
-        }
-      })
-    )
-  )
-
-  console.log('Creating users...')
-  const riggingDept = departments.find(d => d.name === 'Hull Rigging')!
-  
-  await prisma.user.createMany({
-    data: [
-      {
-        email: 'admin@cri.local',
-        passwordHash: await hashPassword('Admin123!'),
-        role: Role.ADMIN
-      },
-      {
-        email: 'supervisor@cri.local',
-        passwordHash: await hashPassword('Supervisor123!'),
-        role: Role.SUPERVISOR,
-        departmentId: riggingDept.id
-      },
-      {
-        email: 'operator@cri.local',
-        passwordHash: await hashPassword('Operator123!'),
-        role: Role.OPERATOR,
-        departmentId: riggingDept.id
+  console.log('Creating departments from backup...')
+  for (const dept of backupData.departments) {
+    await prisma.department.create({
+      data: {
+        id: dept.id,
+        name: dept.name
       }
-    ]
-  })
-
-  console.log('Creating routing version...')
-  const routingVersion = await prisma.routingVersion.create({
-    data: {
-      model: 'LX24',
-      trim: 'Base',
-      featuresJson: {},
-      version: 1,
-      status: RoutingVersionStatus.RELEASED,
-      releasedAt: new Date()
-    }
-  })
-
-  console.log('Creating routing stages...')
-  const standardTimes = [
-    120, 240, 180, 150, 90, 120, 180, 60, 90, 60, 30
-  ] // minutes converted to seconds
-  
-  const routingStages = await Promise.all(
-    workCenters.map((wc, index) =>
-      prisma.routingStage.create({
-        data: {
-          routingVersionId: routingVersion.id,
-          sequence: index + 1,
-          code: departmentNames[index].toUpperCase().replace(' ', '_'),
-          name: departmentNames[index],
-          enabled: true,
-          workCenterId: wc.id,
-          standardStageSeconds: standardTimes[index] * 60
-        }
-      })
-    )
-  )
-
-  console.log('Creating test work order...')
-  const specSnapshot = {
-    model: 'LX24',
-    trim: 'Base',
-    features: {},
-    routingVersionId: routingVersion.id,
-    stages: routingStages.map(rs => ({
-      code: rs.code,
-      name: rs.name,
-      sequence: rs.sequence
-    }))
+    })
   }
 
-  await prisma.workOrder.create({
-    data: {
-      number: 'WO-1001',
-      hullId: 'HULL-TEST-001',
-      productSku: 'LX24-BASE',
-      qty: 1,
-      routingVersionId: routingVersion.id,
-      specSnapshot
-    }
-  })
+  console.log('Creating users from backup...')
+  for (const user of backupData.users) {
+    await prisma.user.create({
+      data: {
+        id: user.id,
+        email: user.email,
+        passwordHash: user.passwordHash,
+        role: user.role as any,
+        departmentId: user.departmentId
+      }
+    })
+  }
 
-  console.log('Database seed completed successfully!')
+  console.log('Creating work centers from backup...')
+  for (const wc of backupData.workCenters) {
+    await prisma.workCenter.create({
+      data: {
+        id: wc.id,
+        name: wc.name,
+        departmentId: wc.departmentId,
+        isActive: wc.isActive
+      }
+    })
+  }
+
+  console.log('Creating stations from backup...')
+  for (const station of backupData.stations) {
+    await prisma.station.create({
+      data: {
+        id: station.id,
+        code: station.code,
+        name: station.name,
+        workCenterId: station.workCenterId,
+        isActive: station.isActive
+      }
+    })
+  }
+
+  console.log('Creating routing versions from backup...')
+  for (const rv of backupData.routingVersions) {
+    await prisma.routingVersion.create({
+      data: {
+        id: rv.id,
+        model: rv.model,
+        trim: rv.trim,
+        featuresJson: rv.featuresJson,
+        version: rv.version,
+        status: rv.status as any,
+        releasedAt: new Date(rv.releasedAt)
+      }
+    })
+  }
+
+  console.log('Creating routing stages from backup...')
+  for (const stage of backupData.routingStages) {
+    await prisma.routingStage.create({
+      data: {
+        id: stage.id,
+        routingVersionId: stage.routingVersionId,
+        sequence: stage.sequence,
+        code: stage.code,
+        name: stage.name,
+        enabled: stage.enabled,
+        workCenterId: stage.workCenterId,
+        standardStageSeconds: stage.standardStageSeconds
+      }
+    })
+  }
+
+  console.log('Creating work orders from backup...')
+  for (const wo of backupData.workOrders) {
+    await prisma.workOrder.create({
+      data: {
+        id: wo.id,
+        number: wo.number,
+        hullId: wo.hullId,
+        productSku: wo.productSku,
+        specSnapshot: wo.specSnapshot,
+        qty: wo.qty,
+        status: wo.status as any,
+        routingVersionId: wo.routingVersionId,
+        currentStageIndex: wo.currentStageIndex,
+        createdAt: new Date(wo.createdAt)
+      }
+    })
+  }
+
+  console.log('Creating stage logs from backup...')
+  for (const log of backupData.woStageLogs) {
+    await prisma.wOStageLog.create({
+      data: {
+        id: log.id,
+        workOrderId: log.workOrderId,
+        routingStageId: log.routingStageId,
+        stationId: log.stationId,
+        userId: log.userId,
+        event: log.event as any,
+        goodQty: log.goodQty,
+        scrapQty: log.scrapQty,
+        note: log.note,
+        createdAt: new Date(log.createdAt)
+      }
+    })
+  }
+
+  console.log('Creating product models and trims...')
+  await Promise.all([
+    prisma.productModel.create({
+      data: {
+        code: 'LX24',
+        name: 'LX24 Luxury',
+        description: '24-foot luxury boat model',
+        isActive: true
+      }
+    }),
+    prisma.productModel.create({
+      data: {
+        code: 'LX26',
+        name: 'LX26 Luxury',
+        description: '26-foot luxury boat model',
+        isActive: true
+      }
+    })
+  ])
+
+  await Promise.all([
+    prisma.productTrim.create({
+      data: {
+        code: 'LT',
+        name: 'Luxury Touring',
+        description: 'High-end touring package with premium features',
+        isActive: true
+      }
+    }),
+    prisma.productTrim.create({
+      data: {
+        code: 'LE',
+        name: 'Luxury Edition',
+        description: 'Elite package with all premium features and upgrades',
+        isActive: true
+      }
+    })
+  ])
+
+  console.log('Database seed completed successfully with backup data restored and new models/trims added!')
 }
 
 main()

@@ -7,6 +7,126 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Department {
+  id          String       @id @default(cuid())
+  name        String       @unique
+  users       User[]
+  workCenters WorkCenter[]
+}
+
+model User {
+  id           String       @id @default(cuid())
+  email        String       @unique
+  passwordHash String
+  role         Role         @default(OPERATOR)
+  departmentId String?
+  createdAt    DateTime     @default(now())
+  auditLogs    AuditLog[]
+  department   Department?  @relation(fields: [departmentId], references: [id])
+  woStageLogs  WOStageLog[]
+}
+
+model WorkCenter {
+  id            String         @id @default(cuid())
+  name          String         @unique
+  departmentId  String
+  isActive      Boolean        @default(true)
+  routingStages RoutingStage[]
+  stations      Station[]
+  department    Department     @relation(fields: [departmentId], references: [id])
+}
+
+model Station {
+  id           String       @id @default(cuid())
+  code         String       @unique
+  name         String
+  workCenterId String
+  isActive     Boolean      @default(true)
+  workCenter   WorkCenter   @relation(fields: [workCenterId], references: [id])
+  woStageLogs  WOStageLog[]
+}
+
+model RoutingVersion {
+  id           String               @id @default(cuid())
+  model        String
+  trim         String?
+  featuresJson Json?
+  version      Int                  @default(1)
+  status       RoutingVersionStatus @default(DRAFT)
+  releasedAt   DateTime?
+  stages       RoutingStage[]
+  workOrders   WorkOrder[]
+}
+
+model RoutingStage {
+  id                      String                   @id @default(cuid())
+  routingVersionId        String
+  sequence                Int
+  code                    String
+  name                    String
+  enabled                 Boolean                  @default(true)
+  workCenterId            String
+  standardStageSeconds    Int
+  routingVersion          RoutingVersion           @relation(fields: [routingVersionId], references: [id])
+  workCenter              WorkCenter               @relation(fields: [workCenterId], references: [id])
+  woStageLogs             WOStageLog[]
+  workInstructionVersions WorkInstructionVersion[]
+}
+
+model WorkOrder {
+  id                String         @id @default(cuid())
+  number            String         @unique
+  hullId            String
+  productSku        String
+  specSnapshot      Json
+  qty               Int
+  status            WOStatus       @default(RELEASED)
+  routingVersionId  String
+  currentStageIndex Int            @default(0)
+  createdAt         DateTime       @default(now())
+  woStageLogs       WOStageLog[]
+  routingVersion    RoutingVersion @relation(fields: [routingVersionId], references: [id])
+}
+
+model WOStageLog {
+  id             String       @id @default(cuid())
+  workOrderId    String
+  routingStageId String
+  stationId      String
+  userId         String
+  event          WOEvent
+  goodQty        Int          @default(0)
+  scrapQty       Int          @default(0)
+  note           String?
+  createdAt      DateTime     @default(now())
+  routingStage   RoutingStage @relation(fields: [routingStageId], references: [id])
+  station        Station      @relation(fields: [stationId], references: [id])
+  user           User         @relation(fields: [userId], references: [id])
+  workOrder      WorkOrder    @relation(fields: [workOrderId], references: [id])
+}
+
+model WorkInstructionVersion {
+  id             String       @id @default(cuid())
+  routingStageId String
+  version        Int
+  contentMd      String
+  isActive       Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  routingStage   RoutingStage @relation(fields: [routingStageId], references: [id])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  model     String
+  modelId   String
+  action    String
+  before    Json?
+  after     Json?
+  createdAt DateTime @default(now())
+  actor     User?    @relation(fields: [actorId], references: [id])
+}
+
 enum Role {
   ADMIN
   SUPERVISOR
@@ -30,184 +150,7 @@ enum WOEvent {
   GOOD_ADJUST
 }
 
-enum NoteScope {
-  GENERAL
-  DEPARTMENT
-}
-
 enum RoutingVersionStatus {
   DRAFT
   RELEASED
-}
-
-model Department {
-  id          String       @id @default(cuid())
-  name        String       @unique
-  workCenters WorkCenter[]
-  users       User[]
-  notes       WorkOrderNote[]
-}
-
-model User {
-  id           String       @id @default(cuid())
-  email        String       @unique
-  passwordHash String
-  role         Role         @default(OPERATOR)
-  departmentId String?
-  department   Department?  @relation(fields: [departmentId], references: [id])
-  createdAt    DateTime     @default(now())
-  woStageLogs  WOStageLog[]
-  auditLogs    AuditLog[]
-  notes        WorkOrderNote[]
-  attachments  WorkOrderAttachment[]
-}
-
-model WorkCenter {
-  id           String          @id @default(cuid())
-  name         String          @unique
-  departmentId String
-  department   Department      @relation(fields: [departmentId], references: [id])
-  stations     Station[]
-  isActive     Boolean         @default(true)
-  routingStages RoutingStage[]
-}
-
-model Station {
-  id           String       @id @default(cuid())
-  code         String       @unique
-  name         String
-  workCenterId String
-  workCenter   WorkCenter   @relation(fields: [workCenterId], references: [id])
-  isActive     Boolean      @default(true)
-  woStageLogs  WOStageLog[]
-}
-
-model RoutingVersion {
-  id           String                @id @default(cuid())
-  model        String
-  trim         String?
-  featuresJson Json?
-  version      Int                   @default(1)
-  status       RoutingVersionStatus  @default(DRAFT)
-  releasedAt   DateTime?
-  stages       RoutingStage[]
-  workOrders   WorkOrder[]
-}
-
-model RoutingStage {
-  id                     String                    @id @default(cuid())
-  routingVersionId       String
-  routingVersion         RoutingVersion            @relation(fields: [routingVersionId], references: [id])
-  sequence               Int
-  code                   String
-  name                   String
-  enabled                Boolean                   @default(true)
-  workCenterId           String
-  workCenter             WorkCenter                @relation(fields: [workCenterId], references: [id])
-  standardStageSeconds   Int
-  woStageLogs            WOStageLog[]
-  workInstructionVersions WorkInstructionVersion[]
-}
-
-model WorkOrder {
-  id                 String       @id @default(cuid())
-  number             String       @unique
-  hullId             String
-  productSku         String
-  specSnapshot       Json
-  qty                Int
-  status             WOStatus     @default(RELEASED)
-  routingVersionId   String
-  routingVersion     RoutingVersion @relation(fields: [routingVersionId], references: [id])
-  currentStageIndex  Int          @default(0)
-  createdAt          DateTime     @default(now())
-  woStageLogs        WOStageLog[]
-  notes              WorkOrderNote[]
-  attachments        WorkOrderAttachment[]
-}
-
-model WOStageLog {
-  id             String       @id @default(cuid())
-  workOrderId    String
-  workOrder      WorkOrder    @relation(fields: [workOrderId], references: [id])
-  routingStageId String
-  routingStage   RoutingStage @relation(fields: [routingStageId], references: [id])
-  stationId      String
-  station        Station      @relation(fields: [stationId], references: [id])
-  userId         String
-  user           User         @relation(fields: [userId], references: [id])
-  event          WOEvent
-  goodQty        Int          @default(0)
-  scrapQty       Int          @default(0)
-  note           String?
-  createdAt      DateTime     @default(now())
-}
-
-model WorkInstructionVersion {
-  id             String       @id @default(cuid())
-  routingStageId String
-  routingStage   RoutingStage @relation(fields: [routingStageId], references: [id])
-  version        Int
-  contentMd      String
-  isActive       Boolean      @default(true)
-  createdAt      DateTime     @default(now())
-}
-
-model WorkOrderNote {
-  id           String     @id @default(cuid())
-  workOrderId  String
-  workOrder    WorkOrder  @relation(fields: [workOrderId], references: [id])
-  userId       String
-  user         User       @relation(fields: [userId], references: [id])
-  scope        NoteScope  @default(GENERAL)
-  departmentId String?    // Only used when scope is DEPARTMENT
-  department   Department? @relation(fields: [departmentId], references: [id])
-  content      String
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-}
-
-model WorkOrderAttachment {
-  id           String     @id @default(cuid())
-  workOrderId  String
-  workOrder    WorkOrder  @relation(fields: [workOrderId], references: [id])
-  userId       String
-  user         User       @relation(fields: [userId], references: [id])
-  filename     String
-  originalName String
-  fileType     String     // mime type
-  fileSize     Int        // in bytes
-  storageUri   String     // path or URL to file
-  description  String?
-  createdAt    DateTime   @default(now())
-}
-
-model ProductModel {
-  id           String   @id @default(cuid())
-  code         String   @unique
-  name         String
-  description  String?
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-}
-
-model ProductTrim {
-  id           String   @id @default(cuid())
-  code         String   @unique
-  name         String
-  description  String?
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-}
-
-model AuditLog {
-  id        String   @id @default(cuid())
-  actorId   String?
-  actor     User?    @relation(fields: [actorId], references: [id])
-  model     String
-  modelId   String
-  action    String
-  before    Json?
-  after     Json?
-  createdAt DateTime @default(now())
 }
