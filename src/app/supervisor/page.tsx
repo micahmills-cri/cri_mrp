@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import NotesTimeline from '../../components/NotesTimeline'
-import FileUpload from '../../components/FileUpload'
+import FileManager from '../../components/FileManager'
 import ModelTrimSelector from '../../components/ModelTrimSelector'
 
 type WorkOrder = {
@@ -1153,15 +1153,12 @@ export default function SupervisorView() {
             )}
 
             {activeDetailTab === 'files' && (
-              <FileUpload
+              <FileManager
                 workOrderId={selectedWorkOrder.id}
                 onError={(error) => setError(error)}
                 onSuccess={(message) => {
                   setMessage(message)
                   setTimeout(() => setMessage(''), 3000)
-                }}
-                onFileUploaded={() => {
-                  // Could refresh file list or show updated count
                 }}
               />
             )}

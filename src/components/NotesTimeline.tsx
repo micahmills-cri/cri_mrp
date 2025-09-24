@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 type Note = {
   id: string
@@ -37,6 +37,10 @@ export default function NotesTimeline({ workOrderId, onError, onSuccess }: Notes
   const [submitting, setSubmitting] = useState(false)
   const [editingNote, setEditingNote] = useState<string | null>(null)
   const [editContent, setEditContent] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [filterScope, setFilterScope] = useState<'ALL' | 'GENERAL' | 'DEPARTMENT'>('ALL')
+  const [autoRefresh, setAutoRefresh] = useState(true)
+  const intervalRef = useRef<NodeJS.Timeout | null>(null)
 
   // Load notes
   const loadNotes = async () => {
@@ -174,6 +178,38 @@ export default function NotesTimeline({ workOrderId, onError, onSuccess }: Notes
     }
   }
 
+  // Filter notes
+  const filteredNotes = notes.filter(note => {
+    const matchesSearch = note.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      note.user.email.toLowerCase().includes(searchQuery.toLowerCase())
+    
+    const matchesScope = filterScope === 'ALL' ||
+      (filterScope === 'GENERAL' && note.scope === 'GENERAL') ||
+      (filterScope === 'DEPARTMENT' && note.scope === 'DEPARTMENT')
+    
+    return matchesSearch && matchesScope
+  })
+
+  // Setup auto-refresh
+  useEffect(() => {
+    if (autoRefresh) {
+      intervalRef.current = setInterval(() => {
+        loadNotes()
+      }, 10000) // Refresh every 10 seconds
+    } else {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+        intervalRef.current = null
+      }
+    }
+    
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+      }
+    }
+  }, [autoRefresh, workOrderId])
+
   // Load notes on mount
   useEffect(() => {
     loadNotes()
@@ -185,25 +221,75 @@ export default function NotesTimeline({ workOrderId, onError, onSuccess }: Notes
         display: 'flex', 
         justifyContent: 'space-between', 
         alignItems: 'center', 
-        marginBottom: '1rem' 
+        marginBottom: '1rem',
+        flexWrap: 'wrap',
+        gap: '0.5rem' 
       }}>
         <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '600' }}>
-          Notes Timeline
+          Notes Timeline ({filteredNotes.length})
         </h3>
-        <button
-          onClick={() => setShowAddNote(!showAddNote)}
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          <label style={{ fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+            <input
+              type="checkbox"
+              checked={autoRefresh}
+              onChange={(e) => setAutoRefresh(e.target.checked)}
+            />
+            Auto-refresh
+          </label>
+          <button
+            onClick={() => setShowAddNote(!showAddNote)}
+            style={{
+              padding: '0.5rem 1rem',
+              backgroundColor: '#007bff',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '0.875rem'
+            }}
+          >
+            {showAddNote ? 'Cancel' : 'Add Note'}
+          </button>
+        </div>
+      </div>
+
+      {/* Search and Filter Bar */}
+      <div style={{
+        display: 'flex',
+        gap: '0.5rem',
+        marginBottom: '1rem',
+        flexWrap: 'wrap'
+      }}>
+        <input
+          type="text"
+          placeholder="Search notes..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
           style={{
-            padding: '0.5rem 1rem',
-            backgroundColor: '#007bff',
-            color: 'white',
-            border: 'none',
+            flex: 1,
+            minWidth: '200px',
+            padding: '0.5rem',
+            border: '1px solid #ced4da',
             borderRadius: '4px',
-            cursor: 'pointer',
             fontSize: '0.875rem'
           }}
+        />
+        <select
+          value={filterScope}
+          onChange={(e) => setFilterScope(e.target.value as 'ALL' | 'GENERAL' | 'DEPARTMENT')}
+          style={{
+            padding: '0.5rem',
+            border: '1px solid #ced4da',
+            borderRadius: '4px',
+            fontSize: '0.875rem',
+            cursor: 'pointer'
+          }}
         >
-          {showAddNote ? 'Cancel' : 'Add Note'}
-        </button>
+          <option value="ALL">All Notes</option>
+          <option value="GENERAL">General Notes</option>
+          <option value="DEPARTMENT">Department Notes</option>
+        </select>
       </div>
 
       {/* Add Note Form */}
@@ -289,19 +375,21 @@ export default function NotesTimeline({ workOrderId, onError, onSuccess }: Notes
         <div style={{ textAlign: 'center', padding: '2rem', color: '#6c757d' }}>
           Loading notes...
         </div>
-      ) : notes.length === 0 ? (
+      ) : filteredNotes.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '2rem', color: '#6c757d' }}>
-          No notes yet. Add the first note to get started.
+          {searchQuery || filterScope !== 'ALL' 
+            ? 'No notes match your filters.' 
+            : 'No notes yet. Add the first note to get started.'}
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          {notes.map((note, index) => (
+          {filteredNotes.map((note, index) => (
             <div key={note.id} style={{
               position: 'relative',
               paddingLeft: '2rem'
             }}>
               {/* Timeline line */}
-              {index < notes.length - 1 && (
+              {index < filteredNotes.length - 1 && (
                 <div style={{
                   position: 'absolute',
                   left: '0.5rem',
