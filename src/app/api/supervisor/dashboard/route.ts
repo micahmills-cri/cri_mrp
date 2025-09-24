@@ -41,6 +41,12 @@ export async function GET(request: NextRequest) {
             station: true,
             user: true
           }
+        },
+        _count: {
+          select: {
+            notes: true,
+            attachments: true
+          }
         }
       },
       orderBy: { createdAt: 'desc' }
@@ -73,7 +79,9 @@ export async function GET(request: NextRequest) {
           user: lastLog.user.email,
           station: lastLog.station.code
         } : null,
-        createdAt: wo.createdAt
+        createdAt: wo.createdAt,
+        // Include count data for badges
+        _count: wo._count
       }
     })
 
