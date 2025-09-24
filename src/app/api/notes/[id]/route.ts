@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
-import { getUserFromRequest } from '@/lib/auth';
+import { prisma } from '../../../../lib/db';
+import { getUserFromRequest } from '../../../../lib/auth';
 
 // PUT /api/notes/[id] - Update an existing note
 export async function PUT(

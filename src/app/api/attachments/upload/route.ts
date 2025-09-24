@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { ObjectStorageService } from '@/lib/objectStorage';
-import { getUserFromRequest } from '@/lib/auth';
+import { ObjectStorageService } from '../../../../lib/objectStorage';
+import { getUserFromRequest } from '../../../../lib/auth';
 
 // POST /api/attachments/upload - Get presigned URL for file upload
 export async function POST(request: NextRequest) {

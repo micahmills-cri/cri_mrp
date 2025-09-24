@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
-import { getUserFromRequest } from '@/lib/auth';
+import { prisma } from '../../../../lib/db';
+import { getUserFromRequest } from '../../../../lib/auth';
 
 // POST /api/sku/generate - Generate SKU in format YEAR-MODEL-TRIM
 export async function POST(request: NextRequest) {

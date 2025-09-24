@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
-import { getUserFromRequest } from '@/lib/auth';
+import { prisma } from '../../../../../lib/db';
+import { getUserFromRequest } from '../../../../../lib/auth';
 
 // GET /api/work-orders/[id]/notes - Get notes for a work order
 export async function GET(

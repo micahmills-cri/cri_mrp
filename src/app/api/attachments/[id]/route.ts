@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
-import { getUserFromRequest } from '@/lib/auth';
-import { ObjectStorageService, ObjectNotFoundError } from '@/lib/objectStorage';
-import { ObjectPermission } from '@/lib/objectAcl';
+import { prisma } from '../../../../lib/db';
+import { getUserFromRequest } from '../../../../lib/auth';
+import { ObjectStorageService, ObjectNotFoundError } from '../../../../lib/objectStorage';
+import { ObjectPermission } from '../../../../lib/objectAcl';
 
 // GET /api/attachments/[id] - Download attachment
 export async function GET(

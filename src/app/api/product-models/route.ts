@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
-import { getUserFromRequest } from '@/lib/auth';
+import { prisma } from '../../../lib/db';
+import { getUserFromRequest } from '../../../lib/auth';
 
 // GET /api/product-models - Get all active product models with their trims
 export async function GET(request: NextRequest) {
