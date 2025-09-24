@@ -16,6 +16,10 @@ type WorkOrder = {
   currentStageIndex: number
   specSnapshot: any
   createdAt: string
+  _count?: {
+    notes: number
+    attachments: number
+  }
   routingVersion?: {
     id: string
     model: string
@@ -477,9 +481,23 @@ export default function SupervisorView() {
                   borderRadius: '4px',
                   border: '1px solid #dee2e6'
                 }}>
-                  <div style={{ fontWeight: '500' }}>{wo.number}</div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                    <div style={{ fontWeight: '500' }}>{wo.number}</div>
+                    <div style={{ display: 'flex', gap: '0.25rem' }}>
+                      {wo._count && wo._count.attachments > 0 && (
+                        <span style={{ fontSize: '0.75rem', backgroundColor: '#e3f2fd', color: '#1976d2', padding: '0.125rem 0.25rem', borderRadius: '10px', fontWeight: '500' }}>
+                          📎 {wo._count.attachments}
+                        </span>
+                      )}
+                      {wo._count && wo._count.notes > 0 && (
+                        <span style={{ fontSize: '0.75rem', backgroundColor: '#e8f5e8', color: '#2e7d32', padding: '0.125rem 0.25rem', borderRadius: '10px', fontWeight: '500' }}>
+                          💬 {wo._count.notes}
+                        </span>
+                      )}
+                    </div>
+                  </div>
                   <div style={{ fontSize: '0.875rem', color: '#6c757d' }}>
-                    {wo.hullId} • {wo.productSku}
+                    {wo.hullId} • {wo.routingVersion ? `${wo.routingVersion.model}${wo.routingVersion.trim ? `-${wo.routingVersion.trim}` : ''}` : wo.productSku}
                   </div>
                   {wo.currentStage && (
                     <div style={{ fontSize: '0.875rem', marginTop: '0.25rem' }}>
@@ -753,7 +771,9 @@ export default function SupervisorView() {
                       <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #dee2e6' }}>Status</th>
                       <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #dee2e6' }}>WO Number</th>
                       <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #dee2e6' }}>Hull ID</th>
-                      <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #dee2e6' }}>SKU</th>
+                      <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #dee2e6' }}>Model</th>
+                      <th style={{ padding: '0.75rem', textAlign: 'center', borderBottom: '2px solid #dee2e6', width: '80px' }}>Files</th>
+                      <th style={{ padding: '0.75rem', textAlign: 'center', borderBottom: '2px solid #dee2e6', width: '80px' }}>Notes</th>
                       <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #dee2e6' }}>Current Stage</th>
                       <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #dee2e6' }}>Work Center</th>
                       <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #dee2e6' }}>Actions</th>
@@ -779,7 +799,43 @@ export default function SupervisorView() {
                           </td>
                           <td style={{ padding: '0.75rem', fontWeight: '500' }}>{wo.number}</td>
                           <td style={{ padding: '0.75rem' }}>{wo.hullId}</td>
-                          <td style={{ padding: '0.75rem' }}>{wo.productSku}</td>
+                          <td style={{ padding: '0.75rem' }}>
+                            {wo.routingVersion ? `${wo.routingVersion.model}${wo.routingVersion.trim ? `-${wo.routingVersion.trim}` : ''}` : wo.productSku}
+                          </td>
+                          <td style={{ padding: '0.75rem', textAlign: 'center' }}>
+                            {wo._count && wo._count.attachments > 0 ? (
+                              <span style={{ 
+                                fontSize: '0.875rem', 
+                                backgroundColor: '#e3f2fd', 
+                                color: '#1976d2', 
+                                padding: '0.25rem 0.5rem', 
+                                borderRadius: '12px', 
+                                fontWeight: '500',
+                                display: 'inline-block'
+                              }}>
+                                📎 {wo._count.attachments}
+                              </span>
+                            ) : (
+                              <span style={{ color: '#6c757d', fontSize: '0.875rem' }}>-</span>
+                            )}
+                          </td>
+                          <td style={{ padding: '0.75rem', textAlign: 'center' }}>
+                            {wo._count && wo._count.notes > 0 ? (
+                              <span style={{ 
+                                fontSize: '0.875rem', 
+                                backgroundColor: '#e8f5e8', 
+                                color: '#2e7d32', 
+                                padding: '0.25rem 0.5rem', 
+                                borderRadius: '12px', 
+                                fontWeight: '500',
+                                display: 'inline-block'
+                              }}>
+                                💬 {wo._count.notes}
+                              </span>
+                            ) : (
+                              <span style={{ color: '#6c757d', fontSize: '0.875rem' }}>-</span>
+                            )}
+                          </td>
                           <td style={{ padding: '0.75rem' }}>
                             {wo.currentStage ? (
                               <div>
