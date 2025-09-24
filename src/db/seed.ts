@@ -9,8 +9,9 @@ async function main() {
 
   // Clear existing data
   console.log('Clearing existing data...')
-  await prisma.workOrderNote.deleteMany()
-  await prisma.workOrderAttachment.deleteMany()
+  // Note: Some models may not exist yet on first run, so we handle errors gracefully
+  try { await prisma.workOrderNote.deleteMany() } catch {}
+  try { await prisma.workOrderAttachment.deleteMany() } catch {}
   await prisma.wOStageLog.deleteMany()
   await prisma.workOrder.deleteMany()
   await prisma.routingStage.deleteMany()
@@ -20,8 +21,8 @@ async function main() {
   await prisma.workCenter.deleteMany()
   await prisma.user.deleteMany()
   await prisma.department.deleteMany()
-  await prisma.productModel.deleteMany()
-  await prisma.productTrim.deleteMany()
+  try { await prisma.productModel.deleteMany() } catch {}
+  try { await prisma.productTrim.deleteMany() } catch {}
 
   console.log('Creating departments from backup...')
   for (const dept of backupData.departments) {
@@ -139,19 +140,17 @@ async function main() {
   }
 
   console.log('Creating product models and trims...')
-  await Promise.all([
+  const [lx24Model, lx26Model] = await Promise.all([
     prisma.productModel.create({
       data: {
-        code: 'LX24',
-        name: 'LX24 Luxury',
+        name: 'LX24',
         description: '24-foot luxury boat model',
         isActive: true
       }
     }),
     prisma.productModel.create({
       data: {
-        code: 'LX26',
-        name: 'LX26 Luxury',
+        name: 'LX26',
         description: '26-foot luxury boat model',
         isActive: true
       }
@@ -161,17 +160,33 @@ async function main() {
   await Promise.all([
     prisma.productTrim.create({
       data: {
-        code: 'LT',
-        name: 'Luxury Touring',
-        description: 'High-end touring package with premium features',
+        productModelId: lx24Model.id,
+        name: 'LT',
+        description: 'Luxury Touring - High-end touring package with premium features',
         isActive: true
       }
     }),
     prisma.productTrim.create({
       data: {
-        code: 'LE',
-        name: 'Luxury Edition',
-        description: 'Elite package with all premium features and upgrades',
+        productModelId: lx24Model.id,
+        name: 'LE',
+        description: 'Luxury Edition - Elite package with all premium features and upgrades',
+        isActive: true
+      }
+    }),
+    prisma.productTrim.create({
+      data: {
+        productModelId: lx26Model.id,
+        name: 'LT',
+        description: 'Luxury Touring - High-end touring package with premium features',
+        isActive: true
+      }
+    }),
+    prisma.productTrim.create({
+      data: {
+        productModelId: lx26Model.id,
+        name: 'LE',
+        description: 'Luxury Edition - Elite package with all premium features and upgrades',
         isActive: true
       }
     })

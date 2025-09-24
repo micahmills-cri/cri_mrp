@@ -8,22 +8,25 @@ datasource db {
 }
 
 model Department {
-  id          String       @id @default(cuid())
-  name        String       @unique
+  id          String          @id @default(cuid())
+  name        String          @unique
   users       User[]
   workCenters WorkCenter[]
+  notes       WorkOrderNote[]
 }
 
 model User {
-  id           String       @id @default(cuid())
-  email        String       @unique
+  id           String                @id @default(cuid())
+  email        String                @unique
   passwordHash String
-  role         Role         @default(OPERATOR)
+  role         Role                  @default(OPERATOR)
   departmentId String?
-  createdAt    DateTime     @default(now())
+  createdAt    DateTime              @default(now())
   auditLogs    AuditLog[]
-  department   Department?  @relation(fields: [departmentId], references: [id])
+  department   Department?           @relation(fields: [departmentId], references: [id])
   woStageLogs  WOStageLog[]
+  notes        WorkOrderNote[]
+  attachments  WorkOrderAttachment[]
 }
 
 model WorkCenter {
@@ -74,18 +77,20 @@ model RoutingStage {
 }
 
 model WorkOrder {
-  id                String         @id @default(cuid())
-  number            String         @unique
+  id                String                @id @default(cuid())
+  number            String                @unique
   hullId            String
   productSku        String
   specSnapshot      Json
   qty               Int
-  status            WOStatus       @default(RELEASED)
+  status            WOStatus              @default(RELEASED)
   routingVersionId  String
-  currentStageIndex Int            @default(0)
-  createdAt         DateTime       @default(now())
+  currentStageIndex Int                   @default(0)
+  createdAt         DateTime              @default(now())
   woStageLogs       WOStageLog[]
-  routingVersion    RoutingVersion @relation(fields: [routingVersionId], references: [id])
+  notes             WorkOrderNote[]
+  attachments       WorkOrderAttachment[]
+  routingVersion    RoutingVersion        @relation(fields: [routingVersionId], references: [id])
 }
 
 model WOStageLog {
@@ -150,7 +155,62 @@ enum WOEvent {
   GOOD_ADJUST
 }
 
+enum NoteScope {
+  GENERAL
+  DEPARTMENT
+}
+
 enum RoutingVersionStatus {
   DRAFT
   RELEASED
+}
+
+// Notes system
+model WorkOrderNote {
+  id           String      @id @default(cuid())
+  workOrderId  String
+  userId       String
+  departmentId String?
+  scope        NoteScope   @default(GENERAL)
+  content      String
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  workOrder    WorkOrder   @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  user         User        @relation(fields: [userId], references: [id])
+  department   Department? @relation(fields: [departmentId], references: [id])
+}
+
+// File attachment system
+model WorkOrderAttachment {
+  id           String    @id @default(cuid())
+  workOrderId  String
+  userId       String
+  filename     String
+  originalName String
+  fileSize     Int
+  mimeType     String
+  filePath     String
+  createdAt    DateTime  @default(now())
+  workOrder    WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  user         User      @relation(fields: [userId], references: [id])
+}
+
+// Product model and trim system
+model ProductModel {
+  id          String        @id @default(cuid())
+  name        String        @unique
+  description String?
+  isActive    Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+  trims       ProductTrim[]
+}
+
+model ProductTrim {
+  id             String       @id @default(cuid())
+  productModelId String
+  name           String
+  description    String?
+  isActive       Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  productModel   ProductModel @relation(fields: [productModelId], references: [id])
 }
