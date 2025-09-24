@@ -2,11 +2,27 @@
 
 ## Overview
 
-This is a Next.js 14 Operations MVP designed for a high-mix, low-volume boat factory. The system manages work orders through multiple manufacturing stages, providing role-based interfaces for operators and supervisors. It features a complete manufacturing workflow with stage progression, work-in-progress tracking, and comprehensive audit logging.
+This is a Next.js 14 Operations MVP designed for a high-mix, low-volume boat factory. The system manages work orders through multiple manufacturing stages, providing role-based interfaces for operators and supervisors. It features a complete manufacturing workflow with stage progression, work-in-progress tracking, comprehensive audit logging, file attachments, notes management, and advanced UI features for real-time collaboration.
 
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
+
+## Recent Updates - Phase 2 Enhancements Completed
+
+### Phase 1 Foundation Components (Completed)
+- **NotesTimeline**: Complete notes management system with timeline visualization, department scoping, and edit/delete capabilities
+- **FileUpload**: Drag-and-drop file upload system with progress tracking and type validation  
+- **ModelTrimSelector**: Model/Trim dropdown selection with automatic SKU generation in YEAR-MODEL-TRIM format
+- **API Integration**: All components fully integrated with backend APIs for notes, files, and product models
+
+### Phase 2 Advanced Features (Completed)
+- **Real-time Updates**: Auto-refresh functionality for notes timeline with 10-second polling interval
+- **FileListDisplay**: Comprehensive file list component with search, filter, and bulk operations
+- **FileManager**: Integrated file management component combining upload and display capabilities
+- **Enhanced Filtering**: Search functionality for notes with department scope filtering  
+- **Bulk Operations**: Select all, bulk delete, and file type filtering for attachments
+- **Supervisor Dashboard**: Enhanced tabbed interface integrating all new components seamlessly
 
 ## System Architecture
 
