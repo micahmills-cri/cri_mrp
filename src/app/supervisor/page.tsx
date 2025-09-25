@@ -98,6 +98,7 @@ type RoutingVersion = {
 export default function SupervisorView() {
   const [activeTab, setActiveTab] = useState<'board' | 'plan'>('board')
   const [workOrders, setWorkOrders] = useState<WorkOrder[]>([])
+  const [summary, setSummary] = useState<any>(null)
   const [selectedDepartment, setSelectedDepartment] = useState<string>('')
   const [userRole, setUserRole] = useState<string>('')
   const [userDepartmentId, setUserDepartmentId] = useState<string>('')
@@ -214,6 +215,7 @@ export default function SupervisorView() {
           } : undefined
         }))
         setWorkOrders(transformedOrders)
+        setSummary(result.data.summary)
       } else {
         setError(result.error || 'Failed to load dashboard')
       }
@@ -684,41 +686,31 @@ export default function SupervisorView() {
                 label="Released Work Orders"
                 value={workOrders.filter(wo => wo.status === 'RELEASED').length}
                 variant="default"
-                trend={{
-                  value: 12,
-                  direction: "up",
-                  label: "vs yesterday"
-                }}
               />
               <StatsCard
                 label="In Progress"
                 value={workOrders.filter(wo => wo.status === 'IN_PROGRESS').length}
                 variant="success"
-                trend={{
-                  value: 8,
-                  direction: "up", 
-                  label: "active now"
-                }}
+                trend={summary?.trends?.inProgress ? {
+                  value: Math.abs(summary.trends.inProgress.trend),
+                  direction: summary.trends.inProgress.direction as "up" | "down",
+                  label: `vs ${summary.trends.inProgress.weekdayAvg} weekday avg`
+                } : undefined}
               />
               <StatsCard
-                label="Completed Today"
+                label="Completed This Week"
                 value={workOrders.filter(wo => wo.status === 'COMPLETED').length}
                 variant="success"
-                trend={{
-                  value: 15,
-                  direction: "up",
-                  label: "vs target"
-                }}
+                trend={summary?.trends?.completed ? {
+                  value: Math.abs(summary.trends.completed.trend),
+                  direction: summary.trends.completed.direction as "up" | "down",
+                  label: `vs ${summary.trends.completed.lastWeek} last week`
+                } : undefined}
               />
               <StatsCard
                 label="On Hold"
                 value={workOrders.filter(wo => wo.status === 'HOLD').length}
                 variant="warning"
-                trend={{
-                  value: workOrders.filter(wo => wo.status === 'HOLD').length > 0 ? 2 : 0,
-                  direction: "down",
-                  label: "need attention"
-                }}
               />
             </div>
 
