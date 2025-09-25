@@ -104,10 +104,62 @@ export async function GET(request: NextRequest) {
       HOLD: filteredWorkOrders.filter(wo => wo.status === 'HOLD').length
     }
     
-    // Simple trends placeholder for now
+    // Calculate real trends based on historical data
+    
+    // Calculate weekday average for In Progress over past 4 weeks
+    const fourWeeksAgo = new Date(today)
+    fourWeeksAgo.setDate(today.getDate() - 28)
+    
+    // Get historical counts for weekdays only (Mon-Fri)
+    const historicalInProgress = await prisma.workOrder.count({
+      where: {
+        status: 'IN_PROGRESS',
+        createdAt: {
+          gte: fourWeeksAgo,
+          lt: today
+        }
+      }
+    })
+    
+    // Simple weekday average calculation (20 weekdays in 4 weeks)
+    const weekdayAvg = Math.round(historicalInProgress / 20) || 0
+    const inProgressTrend = statusCounts.IN_PROGRESS - weekdayAvg
+    
+    // Calculate completed work orders for this week vs last week
+    const completedThisWeek = await prisma.workOrder.count({
+      where: {
+        status: 'COMPLETED',
+        createdAt: {
+          gte: thisWeekStart
+        }
+      }
+    })
+    
+    const completedLastWeek = await prisma.workOrder.count({
+      where: {
+        status: 'COMPLETED',
+        createdAt: {
+          gte: lastWeekStart,
+          lt: thisWeekStart
+        }
+      }
+    })
+    
+    const completedTrend = completedThisWeek - completedLastWeek
+    
     const trends = {
-      inProgress: { current: statusCounts.IN_PROGRESS, weekdayAvg: 3, trend: 15, direction: 'up' },
-      completed: { thisWeek: statusCounts.COMPLETED, lastWeek: 8, trend: 25, direction: 'up' }
+      inProgress: { 
+        current: statusCounts.IN_PROGRESS, 
+        weekdayAvg: weekdayAvg, 
+        trend: Math.abs(inProgressTrend), 
+        direction: inProgressTrend >= 0 ? 'up' : 'down' 
+      },
+      completed: { 
+        thisWeek: completedThisWeek, 
+        lastWeek: completedLastWeek, 
+        trend: Math.abs(completedTrend), 
+        direction: completedTrend >= 0 ? 'up' : 'down' 
+      }
     }
 
     // Calculate average stage times per work center (simplified version)
