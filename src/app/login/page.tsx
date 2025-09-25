@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { Input, Button } from '../../components/ui'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -44,129 +45,73 @@ export default function LoginPage() {
   ]
 
   return (
-    <div style={{ 
-      minHeight: '100vh', 
-      display: 'flex', 
-      alignItems: 'center', 
-      justifyContent: 'center',
-      backgroundColor: '#f5f5f5',
-      fontFamily: 'system-ui, sans-serif'
-    }}>
-      <div style={{
-        backgroundColor: 'white',
-        padding: '2rem',
-        borderRadius: '8px',
-        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-        width: '100%',
-        maxWidth: '400px'
-      }}>
-        <h1 style={{ 
-          textAlign: 'center', 
-          marginBottom: '2rem',
-          fontSize: '1.5rem',
-          fontWeight: '600'
-        }}>
-          Boat Factory Login
-        </h1>
+    <div className="min-h-screen flex items-center justify-center bg-background px-4">
+      <div className="bg-white p-8 rounded-lg shadow-sm border border-slate-200 w-full max-w-md">
+        <div className="text-center mb-8">
+          <h1 className="text-2xl font-semibold text-slate-900 mb-2">
+            Boat Factory Operations
+          </h1>
+          <p className="text-sm text-slate-600">
+            Sign in to access your manufacturing dashboard
+          </p>
+        </div>
 
-        <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: '1rem' }}>
-            <label style={{ 
-              display: 'block', 
-              marginBottom: '0.5rem',
-              fontWeight: '500'
-            }}>
-              Email:
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
-                fontSize: '1rem'
-              }}
-            />
-          </div>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <Input
+            type="email"
+            label="Email Address"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="your.email@company.com"
+            isRequired
+            disabled={loading}
+            variant={error ? 'error' : 'default'}
+          />
 
-          <div style={{ marginBottom: '1.5rem' }}>
-            <label style={{ 
-              display: 'block', 
-              marginBottom: '0.5rem',
-              fontWeight: '500'
-            }}>
-              Password:
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
-                fontSize: '1rem'
-              }}
-            />
-          </div>
+          <Input
+            type="password"
+            label="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Enter your password"
+            isRequired
+            disabled={loading}
+            variant={error ? 'error' : 'default'}
+          />
 
           {error && (
-            <div style={{
-              color: '#dc3545',
-              marginBottom: '1rem',
-              fontSize: '0.875rem'
-            }}>
+            <div className="p-3 text-sm text-danger-800 bg-danger-50 border border-danger-200 rounded-md flex items-center">
+              <svg className="w-4 h-4 mr-2 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
               {error}
             </div>
           )}
 
-          <button
+          <Button
             type="submit"
-            disabled={loading}
-            style={{
-              width: '100%',
-              padding: '0.75rem',
-              backgroundColor: '#007bff',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              fontSize: '1rem',
-              cursor: loading ? 'not-allowed' : 'pointer',
-              opacity: loading ? 0.7 : 1
-            }}
+            variant="primary"
+            fullWidth
+            loading={loading}
+            disabled={loading || !email.trim() || !password.trim()}
           >
             {loading ? 'Signing in...' : 'Sign In'}
-          </button>
+          </Button>
         </form>
 
-        <div style={{ 
-          marginTop: '2rem',
-          padding: '1rem',
-          backgroundColor: '#f8f9fa',
-          borderRadius: '4px'
-        }}>
-          <h3 style={{ 
-            margin: '0 0 0.75rem 0',
-            fontSize: '0.875rem',
-            fontWeight: '600'
-          }}>
-            Test Accounts:
+        <div className="mt-8 p-4 bg-slate-50 rounded-md border border-slate-200">
+          <h3 className="text-sm font-semibold text-slate-700 mb-3">
+            Demo Accounts
           </h3>
-          {testAccounts.map((account, index) => (
-            <div key={index} style={{ 
-              marginBottom: '0.5rem',
-              fontSize: '0.75rem',
-              fontFamily: 'monospace'
-            }}>
-              <strong>{account.role}:</strong> {account.email} / {account.password}
-            </div>
-          ))}
+          <div className="space-y-2">
+            {testAccounts.map((account, index) => (
+              <div key={index} className="text-xs font-mono text-slate-600 p-2 bg-white rounded border">
+                <div className="font-medium text-slate-800 mb-1">{account.role}</div>
+                <div className="text-slate-600">{account.email}</div>
+                <div className="text-slate-500">{account.password}</div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
