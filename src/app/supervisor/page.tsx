@@ -5,6 +5,10 @@ import { useRouter } from 'next/navigation'
 import NotesTimeline from '../../components/NotesTimeline'
 import FileManager from '../../components/FileManager'
 import ModelTrimSelector from '../../components/ModelTrimSelector'
+import { StatsCard, StatsGrid } from '../../components/ui/StatsCard'
+import { DataCard, DataGrid } from '../../components/ui/DataCard'
+import { StatusCard, StatusGrid } from '../../components/ui/StatusCard'
+import { Button } from '../../components/ui/Button'
 
 type WorkOrder = {
   id: string
@@ -676,50 +680,46 @@ export default function SupervisorView() {
               gap: '1rem',
               marginBottom: '1.5rem'
             }}>
-              <div style={{
-                backgroundColor: 'white',
-                padding: '1rem',
-                borderRadius: '8px',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-              }}>
-                <div style={{ fontSize: '0.875rem', color: '#6c757d' }}>Released</div>
-                <div style={{ fontSize: '1.5rem', fontWeight: '600', color: '#1565c0' }}>
-                  {workOrders.filter(wo => wo.status === 'RELEASED').length}
-                </div>
-              </div>
-              <div style={{
-                backgroundColor: 'white',
-                padding: '1rem',
-                borderRadius: '8px',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-              }}>
-                <div style={{ fontSize: '0.875rem', color: '#6c757d' }}>In Progress</div>
-                <div style={{ fontSize: '1.5rem', fontWeight: '600', color: '#2e7d32' }}>
-                  {workOrders.filter(wo => wo.status === 'IN_PROGRESS').length}
-                </div>
-              </div>
-              <div style={{
-                backgroundColor: 'white',
-                padding: '1rem',
-                borderRadius: '8px',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-              }}>
-                <div style={{ fontSize: '0.875rem', color: '#6c757d' }}>Completed (Today)</div>
-                <div style={{ fontSize: '1.5rem', fontWeight: '600', color: '#7b1fa2' }}>
-                  {workOrders.filter(wo => wo.status === 'COMPLETED').length}
-                </div>
-              </div>
-              <div style={{
-                backgroundColor: 'white',
-                padding: '1rem',
-                borderRadius: '8px',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-              }}>
-                <div style={{ fontSize: '0.875rem', color: '#6c757d' }}>On Hold</div>
-                <div style={{ fontSize: '1.5rem', fontWeight: '600', color: '#ef6c00' }}>
-                  {workOrders.filter(wo => wo.status === 'HOLD').length}
-                </div>
-              </div>
+              <StatsCard
+                label="Released Work Orders"
+                value={workOrders.filter(wo => wo.status === 'RELEASED').length}
+                variant="primary"
+                trend={{
+                  value: 12,
+                  direction: "up",
+                  label: "vs yesterday"
+                }}
+              />
+              <StatsCard
+                label="In Progress"
+                value={workOrders.filter(wo => wo.status === 'IN_PROGRESS').length}
+                variant="success"
+                trend={{
+                  value: 8,
+                  direction: "up", 
+                  label: "active now"
+                }}
+              />
+              <StatsCard
+                label="Completed Today"
+                value={workOrders.filter(wo => wo.status === 'COMPLETED').length}
+                variant="success"
+                trend={{
+                  value: 15,
+                  direction: "up",
+                  label: "vs target"
+                }}
+              />
+              <StatsCard
+                label="On Hold"
+                value={workOrders.filter(wo => wo.status === 'HOLD').length}
+                variant="warning"
+                trend={{
+                  value: workOrders.filter(wo => wo.status === 'HOLD').length > 0 ? 2 : 0,
+                  direction: "down",
+                  label: "need attention"
+                }}
+              />
             </div>
 
             {/* View Toggle */}
