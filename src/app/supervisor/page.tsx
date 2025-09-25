@@ -683,7 +683,7 @@ export default function SupervisorView() {
               <StatsCard
                 label="Released Work Orders"
                 value={workOrders.filter(wo => wo.status === 'RELEASED').length}
-                variant="primary"
+                variant="default"
                 trend={{
                   value: 12,
                   direction: "up",

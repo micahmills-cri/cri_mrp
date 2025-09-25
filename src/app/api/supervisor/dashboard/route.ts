@@ -2,6 +2,101 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '../../../../lib/db'
 import { getUserFromRequest } from '../../../../lib/auth'
 
+// Helper function to calculate trend data
+async function calculateTrends() {
+  const now = new Date()
+  const today = new Date(now)
+  today.setHours(0, 0, 0, 0)
+  
+  const thisWeekStart = new Date(today)
+  thisWeekStart.setDate(today.getDate() - today.getDay())
+  
+  const lastWeekStart = new Date(thisWeekStart)
+  lastWeekStart.setDate(thisWeekStart.getDate() - 7)
+  const lastWeekEnd = new Date(thisWeekStart)
+  lastWeekEnd.setTime(lastWeekEnd.getTime() - 1)
+  
+  // Calculate weekday average for In Progress (last 4 weeks of weekdays)
+  const fourWeeksAgo = new Date(today)
+  fourWeeksAgo.setDate(today.getDate() - 28)
+  
+  const historicalInProgress = await prisma.wOStageLog.findMany({
+    where: {
+      event: 'START',
+      createdAt: {
+        gte: fourWeeksAgo,
+        lt: today
+      }
+    },
+    include: {
+      workOrder: true
+    }
+  })
+  
+  // Group by weekday and calculate average
+  const weekdayGroups: { [key: number]: number } = {}
+  historicalInProgress.forEach(log => {
+    const dayOfWeek = log.createdAt.getDay()
+    if (dayOfWeek >= 1 && dayOfWeek <= 5) { // Monday-Friday only
+      weekdayGroups[dayOfWeek] = (weekdayGroups[dayOfWeek] || 0) + 1
+    }
+  })
+  
+  const weekdayAvg = Object.values(weekdayGroups).length > 0 
+    ? Math.round(Object.values(weekdayGroups).reduce((a, b) => a + b, 0) / Object.values(weekdayGroups).length)
+    : 0
+  
+  // Current in progress count
+  const currentInProgress = await prisma.workOrder.count({
+    where: { status: 'IN_PROGRESS' }
+  })
+  
+  // Calculate completed this week vs last week
+  const thisWeekCompleted = await prisma.workOrder.count({
+    where: {
+      status: 'COMPLETED',
+      woStageLogs: {
+        some: {
+          event: 'COMPLETE',
+          createdAt: {
+            gte: thisWeekStart
+          }
+        }
+      }
+    }
+  })
+  
+  const lastWeekCompleted = await prisma.workOrder.count({
+    where: {
+      status: 'COMPLETED',
+      woStageLogs: {
+        some: {
+          event: 'COMPLETE',
+          createdAt: {
+            gte: lastWeekStart,
+            lte: lastWeekEnd
+          }
+        }
+      }
+    }
+  })
+  
+  return {
+    inProgress: {
+      current: currentInProgress,
+      weekdayAvg,
+      trend: weekdayAvg > 0 ? Math.round(((currentInProgress - weekdayAvg) / weekdayAvg) * 100) : 0,
+      direction: currentInProgress >= weekdayAvg ? 'up' : 'down'
+    },
+    completed: {
+      thisWeek: thisWeekCompleted,
+      lastWeek: lastWeekCompleted,
+      trend: lastWeekCompleted > 0 ? Math.round(((thisWeekCompleted - lastWeekCompleted) / lastWeekCompleted) * 100) : 0,
+      direction: thisWeekCompleted >= lastWeekCompleted ? 'up' : 'down'
+    }
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
     const user = getUserFromRequest(request)
@@ -85,9 +180,17 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    // Calculate summary metrics
+    // Calculate summary metrics with trend data
     const today = new Date()
     today.setHours(0, 0, 0, 0)
+    
+    const thisWeekStart = new Date(today)
+    thisWeekStart.setDate(today.getDate() - today.getDay())
+    
+    const lastWeekStart = new Date(thisWeekStart)
+    lastWeekStart.setDate(thisWeekStart.getDate() - 7)
+    const lastWeekEnd = new Date(thisWeekStart)
+    lastWeekEnd.setTime(lastWeekEnd.getTime() - 1)
 
     const statusCounts = {
       RELEASED: filteredWorkOrders.filter(wo => wo.status === 'RELEASED').length,
@@ -95,6 +198,9 @@ export async function GET(request: NextRequest) {
       COMPLETED: filteredWorkOrders.filter(wo => wo.status === 'COMPLETED' && wo.woStageLogs.some(log => log.createdAt >= today)).length,
       HOLD: filteredWorkOrders.filter(wo => wo.status === 'HOLD').length
     }
+    
+    // Calculate trends
+    const trends = await calculateTrends()
 
     // Calculate average stage times per work center (simplified version)
     const workCenterTimes: Record<string, { totalTime: number; count: number }> = {}
@@ -136,7 +242,8 @@ export async function GET(request: NextRequest) {
         wipData,
         summary: {
           statusCounts,
-          avgStageTimes
+          avgStageTimes,
+          trends
         }
       }
     })
