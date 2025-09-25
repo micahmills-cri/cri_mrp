@@ -131,7 +131,10 @@ export default function SupervisorView() {
   const [routingVersions, setRoutingVersions] = useState<RoutingVersion[]>([])
   const [selectedRoutingVersion, setSelectedRoutingVersion] = useState<RoutingVersion | null>(null)
   const [editableStages, setEditableStages] = useState<RoutingStage[]>([])
-  const [workCenters, setWorkCenters] = useState<Array<{ id: string; name: string; departmentId: string }>>([])
+  const [workCenters, setWorkCenters] = useState<Array<{ id: string; name: string; departmentId: string; departmentName?: string }>>([])
+  const [routingMode, setRoutingMode] = useState<'default' | 'create_new' | 'existing'>('default')
+  const [availableRoutingVersions, setAvailableRoutingVersions] = useState<any[]>([])
+  const [loadingRoutings, setLoadingRoutings] = useState(false)
 
   // Check authentication and user role
   useEffect(() => {
@@ -160,25 +163,23 @@ export default function SupervisorView() {
   // Load work centers for planning
   const loadWorkCenters = async () => {
     try {
-      const response = await fetch('/api/supervisor/dashboard', { 
+      const response = await fetch('/api/work-centers', { 
         credentials: 'include' 
       })
       const result = await response.json()
       
-      if (result.success && result.data) {
-        // Extract unique work centers from the data
-        const workCenterList: Array<{ id: string; name: string; departmentId: string }> = []
-        // For now, we'll use mock work centers
-        // In production, this would come from a dedicated API
-        setWorkCenters([
-          { id: 'wc1', name: 'Hull Assembly', departmentId: 'dept1' },
-          { id: 'wc2', name: 'Deck Installation', departmentId: 'dept1' },
-          { id: 'wc3', name: 'Electronics Bay', departmentId: 'dept2' },
-          { id: 'wc4', name: 'Final Inspection', departmentId: 'dept3' }
-        ])
+      if (result.success && result.workCenters) {
+        setWorkCenters(result.workCenters.map((wc: any) => ({
+          id: wc.id,
+          name: wc.name,
+          departmentId: wc.departmentId,
+          departmentName: wc.department?.name
+        })))
       }
-    } catch (err) {
-      console.error('Error loading work centers:', err)
+    } catch (error) {
+      console.error('Error loading work centers:', error)
+      // Fallback to empty array if API fails
+      setWorkCenters([])
     }
   }
 
@@ -304,14 +305,148 @@ export default function SupervisorView() {
   }
 
   // Create work order
+  // Load routing versions for selected product configuration
+  const loadRoutingVersions = async (model: string, trim?: string) => {
+    if (!model) return
+    
+    setLoadingRoutings(true)
+    try {
+      const params = new URLSearchParams({ model })
+      if (trim) params.append('trim', trim)
+      
+      const response = await fetch(`/api/routing-versions?${params}`, {
+        credentials: 'include'
+      })
+      const result = await response.json()
+      
+      if (result.success) {
+        setAvailableRoutingVersions(result.routingVersions)
+      }
+    } catch (error) {
+      console.error('Error loading routing versions:', error)
+    }
+    setLoadingRoutings(false)
+  }
+
+  // Create default routing with all 11 departments
+  const createDefaultRouting = () => {
+    if (workCenters.length === 0) {
+      setError('Work centers not loaded yet. Please try again.')
+      return
+    }
+
+    // Create complete routing with all 11 departments in correct order
+    const departmentOrder = [
+      'Kitting', 'Lamination', 'Hull Rigging', 'Deck Rigging', 'Capping', 
+      'Engine Hang', 'Final Rigging', 'Water Test', 'QA', 'Cleaning', 'Shipping'
+    ]
+    
+    const defaultStages = departmentOrder.map((deptName, index) => {
+      const workCenter = workCenters.find(wc => wc.departmentName === deptName)
+      if (!workCenter) {
+        console.warn(`Work center not found for department: ${deptName}`)
+        return null
+      }
+      
+      return {
+        code: deptName.toUpperCase().replace(/\s+/g, '_'),
+        name: deptName,
+        sequence: index + 1,
+        enabled: true,
+        workCenterId: workCenter.id,
+        standardStageSeconds: getDefaultTimeForDepartment(deptName)
+      }
+    }).filter(Boolean) as RoutingStage[]
+    
+    setEditableStages(defaultStages)
+    setSelectedRoutingVersion({ id: 'default', model: newWO.model, trim: newWO.trim } as any)
+  }
+
+  // Get default time allocation for each department
+  const getDefaultTimeForDepartment = (deptName: string): number => {
+    const timeMap: Record<string, number> = {
+      'Kitting': 7200,          // 2 hours
+      'Lamination': 14400,      // 4 hours
+      'Hull Rigging': 10800,    // 3 hours
+      'Deck Rigging': 9000,     // 2.5 hours
+      'Capping': 5400,          // 1.5 hours
+      'Engine Hang': 7200,      // 2 hours
+      'Final Rigging': 10800,   // 3 hours
+      'Water Test': 3600,       // 1 hour
+      'QA': 5400,               // 1.5 hours
+      'Cleaning': 3600,         // 1 hour
+      'Shipping': 1800          // 0.5 hours
+    }
+    return timeMap[deptName] || 3600
+  }
+
+  // Handle routing mode changes
+  const handleRoutingModeChange = (mode: 'default' | 'create_new' | 'existing', routingVersionId?: string) => {
+    setRoutingMode(mode)
+    
+    if (mode === 'default') {
+      createDefaultRouting()
+    } else if (mode === 'create_new') {
+      setEditableStages([])
+      setSelectedRoutingVersion(null)
+    } else if (mode === 'existing' && routingVersionId) {
+      const selectedVersion = availableRoutingVersions.find(rv => rv.id === routingVersionId)
+      if (selectedVersion) {
+        setSelectedRoutingVersion(selectedVersion)
+        setEditableStages(selectedVersion.stages || [])
+      }
+    }
+  }
+
+  // Save current routing as new version
+  const saveCurrentRouting = async () => {
+    if (!newWO.model || editableStages.length === 0) {
+      setError('Please configure routing stages before saving')
+      return
+    }
+
+    try {
+      const response = await fetch('/api/routing-versions/clone', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          model: newWO.model,
+          trim: newWO.trim || undefined,
+          features: newWO.features ? JSON.parse(newWO.features) : undefined,
+          stages: editableStages
+        })
+      })
+
+      const result = await response.json()
+      
+      if (result.success) {
+        setMessage('Routing configuration saved successfully')
+        await loadRoutingVersions(newWO.model, newWO.trim)
+        setTimeout(() => setMessage(''), 3000)
+      } else {
+        setError(result.error || 'Failed to save routing configuration')
+      }
+    } catch (error) {
+      setError('Network error saving routing configuration')
+    }
+  }
+
+  // Load routing versions when model/trim changes
+  useEffect(() => {
+    if (newWO.model) {
+      loadRoutingVersions(newWO.model, newWO.trim)
+    }
+  }, [newWO.model, newWO.trim])
+
   const createWorkOrder = async () => {
     if (!newWO.hullId || !newWO.model) {
       setError('Hull ID and Model are required')
       return
     }
 
-    if (!selectedRoutingVersion) {
-      setError('Please select or create a routing version')
+    if (editableStages.length === 0) {
+      setError('Please configure routing stages')
       return
     }
 
@@ -694,7 +829,7 @@ export default function SupervisorView() {
                 trend={summary?.trends?.inProgress ? {
                   value: Math.abs(summary.trends.inProgress.trend),
                   direction: summary.trends.inProgress.direction as "up" | "down",
-                  label: `vs ${summary.trends.inProgress.weekdayAvg} weekday avg`
+                  label: `vs weekday avg`
                 } : undefined}
               />
               <StatsCard
@@ -704,7 +839,7 @@ export default function SupervisorView() {
                 trend={summary?.trends?.completed ? {
                   value: Math.abs(summary.trends.completed.trend),
                   direction: summary.trends.completed.direction as "up" | "down",
-                  label: `vs ${summary.trends.completed.lastWeek} last week`
+                  label: `vs previous week`
                 } : undefined}
               />
               <StatsCard
@@ -1265,6 +1400,8 @@ export default function SupervisorView() {
                   setGeneratedSku('')
                   setSelectedRoutingVersion(null)
                   setEditableStages([])
+                  setRoutingMode('default')
+                  setAvailableRoutingVersions([])
                 }}
                 style={{
                   padding: '0.25rem 0.5rem',
@@ -1402,56 +1539,67 @@ export default function SupervisorView() {
                 Routing Configuration
               </h3>
               
-              <button
-                onClick={() => {
-                  // Create default stages
-                  setEditableStages([
-                    {
-                      code: 'HULL-ASM',
-                      name: 'Hull Assembly',
-                      sequence: 1,
-                      enabled: true,
-                      workCenterId: workCenters[0]?.id || 'wc1',
-                      standardStageSeconds: 3600
-                    },
-                    {
-                      code: 'DECK-INST',
-                      name: 'Deck Installation',
-                      sequence: 2,
-                      enabled: true,
-                      workCenterId: workCenters[1]?.id || 'wc2',
-                      standardStageSeconds: 2400
-                    },
-                    {
-                      code: 'ELEC-INST',
-                      name: 'Electronics Installation',
-                      sequence: 3,
-                      enabled: true,
-                      workCenterId: workCenters[2]?.id || 'wc3',
-                      standardStageSeconds: 1800
-                    },
-                    {
-                      code: 'FINAL-INSP',
-                      name: 'Final Inspection',
-                      sequence: 4,
-                      enabled: true,
-                      workCenterId: workCenters[3]?.id || 'wc4',
-                      standardStageSeconds: 1200
+              {/* Routing Configuration Dropdown */}
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', marginBottom: '0.25rem', fontWeight: '500' }}>
+                  Routing Configuration
+                </label>
+                <select
+                  value={routingMode === 'existing' ? `existing_${selectedRoutingVersion?.id}` : routingMode}
+                  onChange={(e) => {
+                    const value = e.target.value
+                    if (value.startsWith('existing_')) {
+                      const routingVersionId = value.replace('existing_', '')
+                      handleRoutingModeChange('existing', routingVersionId)
+                    } else {
+                      handleRoutingModeChange(value as 'default' | 'create_new')
                     }
-                  ])
-                }}
-                style={{
-                  padding: '0.5rem 1rem',
-                  backgroundColor: '#007bff',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  marginBottom: '1rem'
-                }}
-              >
-                Create New Routing
-              </button>
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '0.5rem',
+                    border: '1px solid #ced4da',
+                    borderRadius: '4px',
+                    fontSize: '0.875rem'
+                  }}
+                >
+                  <option value="default">Default Routing (All Departments)</option>
+                  <option value="create_new">Create New Routing</option>
+                  {availableRoutingVersions.map((rv) => (
+                    <option key={rv.id} value={`existing_${rv.id}`}>
+                      {rv.model}{rv.trim ? `-${rv.trim}` : ''} v{rv.version} ({rv.status})
+                    </option>
+                  ))}
+                </select>
+                {loadingRoutings && (
+                  <div style={{ fontSize: '0.75rem', color: '#6c757d', marginTop: '0.25rem' }}>
+                    Loading routing configurations...
+                  </div>
+                )}
+              </div>
+
+              {/* Save Routing Button */}
+              {editableStages.length > 0 && (
+                <div style={{ marginBottom: '1rem' }}>
+                  <button
+                    onClick={saveCurrentRouting}
+                    style={{
+                      padding: '0.5rem 1rem',
+                      backgroundColor: '#28a745',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      marginRight: '0.5rem'
+                    }}
+                  >
+                    Save New Routing
+                  </button>
+                  <span style={{ fontSize: '0.75rem', color: '#6c757d' }}>
+                    Save current configuration for reuse
+                  </span>
+                </div>
+              )}
 
               {editableStages.length > 0 && (
                 <div style={{
@@ -1563,6 +1711,8 @@ export default function SupervisorView() {
                   setGeneratedSku('')
                   setSelectedRoutingVersion(null)
                   setEditableStages([])
+                  setRoutingMode('default')
+                  setAvailableRoutingVersions([])
                 }}
                 style={{
                   padding: '0.5rem 1rem',
@@ -1577,13 +1727,15 @@ export default function SupervisorView() {
               </button>
               <button
                 onClick={createWorkOrder}
+                disabled={!newWO.hullId || !newWO.model || editableStages.length === 0}
                 style={{
                   padding: '0.5rem 1rem',
-                  backgroundColor: '#28a745',
+                  backgroundColor: (!newWO.hullId || !newWO.model || editableStages.length === 0) ? '#6c757d' : '#28a745',
                   color: 'white',
                   border: 'none',
                   borderRadius: '4px',
-                  cursor: 'pointer'
+                  cursor: (!newWO.hullId || !newWO.model || editableStages.length === 0) ? 'not-allowed' : 'pointer',
+                  opacity: (!newWO.hullId || !newWO.model || editableStages.length === 0) ? 0.6 : 1
                 }}
               >
                 Create Work Order
