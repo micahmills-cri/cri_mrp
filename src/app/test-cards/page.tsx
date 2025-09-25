@@ -3,6 +3,7 @@ import React from 'react'
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '../../components/ui/Card'
 import { StatsCard, StatsGrid } from '../../components/ui/StatsCard'
 import { StatusCard, StatusGrid, StatusSummary } from '../../components/ui/StatusCard'
+import { DataCard, DataGrid, QuickData } from '../../components/ui/DataCard'
 import { Button } from '../../components/ui/Button'
 
 export default function TestCardsPage() {
@@ -164,6 +165,147 @@ export default function TestCardsPage() {
               { status: 'pending', count: 1, label: 'Pending' }
             ]}
           />
+        </div>
+
+        {/* Work Order Data Cards */}
+        <div className="mb-12">
+          <h2 className="text-xl font-semibold text-slate-900 mb-6">Work Order Management</h2>
+          <DataGrid 
+            columns={2}
+            dataCards={[
+              {
+                title: "WO-2025-001",
+                subtitle: "Sport Fishing Boat - 32ft",
+                priority: "high",
+                progress: {
+                  percentage: 67,
+                  label: "Production Progress",
+                  currentStep: "Hull Assembly",
+                  currentStepNumber: 4,
+                  totalSteps: 6
+                },
+                sections: [
+                  {
+                    title: "Order Details",
+                    fields: [
+                      { label: "Product", value: "Sport Fisher 32", highlight: true },
+                      { label: "Hull ID", value: "SF32-2025-001" },
+                      { label: "Quantity", value: "1" },
+                      { label: "Customer", value: "Marina Bay Yacht Club" }
+                    ],
+                    divider: true
+                  },
+                  {
+                    title: "Current Status",
+                    fields: [
+                      { label: "Current Stage", value: "Hull Assembly", variant: "info" },
+                      { label: "Assigned Station", value: "Assembly Bay A" },
+                      { label: "Operator", value: "John Smith" },
+                      { label: "Started", value: "2 hours ago" }
+                    ],
+                    divider: true
+                  },
+                  {
+                    title: "Quality & Performance",
+                    fields: [
+                      { label: "Quality Score", value: "98.5%", variant: "success" },
+                      { label: "On-Time Status", value: "On Track", variant: "success" },
+                      { label: "Completion Est.", value: "Dec 15, 2024" }
+                    ]
+                  }
+                ],
+                actions: (
+                  <>
+                    <Button variant="secondary" size="sm">View Details</Button>
+                    <Button variant="primary" size="sm">Update Status</Button>
+                  </>
+                )
+              },
+              {
+                title: "WO-2025-002",
+                subtitle: "Center Console - 28ft",
+                priority: "urgent",
+                progress: {
+                  percentage: 23,
+                  label: "Production Progress", 
+                  currentStep: "Material Preparation",
+                  currentStepNumber: 2,
+                  totalSteps: 7
+                },
+                sections: [
+                  {
+                    title: "Order Details",
+                    fields: [
+                      { label: "Product", value: "Center Console 28", highlight: true },
+                      { label: "Hull ID", value: "CC28-2025-002" },
+                      { label: "Quantity", value: "2" },
+                      { label: "Customer", value: "Ocean Adventures LLC" }
+                    ],
+                    divider: true
+                  },
+                  {
+                    title: "Current Status",
+                    fields: [
+                      { label: "Current Stage", value: "Material Prep", variant: "warning" },
+                      { label: "Assigned Station", value: "Material Storage" },
+                      { label: "Operator", value: "Sarah Connor" },
+                      { label: "Started", value: "45 minutes ago" }
+                    ],
+                    divider: true
+                  },
+                  {
+                    title: "Issues & Alerts",
+                    fields: [
+                      { label: "Material Delay", value: "Carbon Fiber", variant: "danger" },
+                      { label: "Expected Delivery", value: "Tomorrow 9 AM" },
+                      { label: "Impact", value: "2 day delay", variant: "warning" }
+                    ]
+                  }
+                ],
+                actions: (
+                  <>
+                    <Button variant="outline" size="sm">Contact Supplier</Button>
+                    <Button variant="primary" size="sm">Escalate Issue</Button>
+                  </>
+                )
+              }
+            ]}
+          />
+        </div>
+
+        {/* Quick Data Examples */}
+        <div className="mb-12">
+          <h2 className="text-xl font-semibold text-slate-900 mb-6">Quick Information Cards</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <QuickData
+              title="Today's Production"
+              data={{
+                "Work Orders Started": 8,
+                "Work Orders Completed": 5,
+                "Quality Inspections": 12,
+                "Material Deliveries": 3
+              }}
+            />
+            <QuickData
+              title="Equipment Utilization"
+              variant="outlined"
+              data={{
+                "CNC Machines": "87%",
+                "Assembly Stations": "92%",
+                "Quality Stations": "68%",
+                "Paint Booths": "45%"
+              }}
+            />
+            <QuickData
+              title="Inventory Status"
+              data={{
+                "Carbon Fiber": "Low Stock",
+                "Resin": "Adequate",
+                "Hardware": "Overstocked",
+                "Electronics": "Normal"
+              }}
+            />
+          </div>
         </div>
         
         {/* Basic Cards */}
