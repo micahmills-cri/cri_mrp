@@ -2,6 +2,7 @@
 import React from 'react'
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '../../components/ui/Card'
 import { StatsCard, StatsGrid } from '../../components/ui/StatsCard'
+import { StatusCard, StatusGrid, StatusSummary } from '../../components/ui/StatusCard'
 import { Button } from '../../components/ui/Button'
 
 export default function TestCardsPage() {
@@ -64,6 +65,103 @@ export default function TestCardsPage() {
                   </svg>
                 )
               }
+            ]}
+          />
+        </div>
+
+        {/* Equipment Status Monitoring */}
+        <div className="mb-12">
+          <h2 className="text-xl font-semibold text-slate-900 mb-6">Equipment Status Monitoring</h2>
+          <StatusGrid 
+            columns={3}
+            statuses={[
+              {
+                name: "CNC Machine #3",
+                status: "operational",
+                description: "Running hull fabrication cycle",
+                location: "Assembly Bay A",
+                lastUpdated: "2 minutes ago",
+                details: [
+                  { label: "Current Job", value: "WO-2025-001" },
+                  { label: "Progress", value: "78%" },
+                  { label: "Cycle Time", value: "2.3 hrs" }
+                ]
+              },
+              {
+                name: "Hydraulic Press #1",
+                status: "warning",
+                description: "Temperature slightly elevated",
+                location: "Forming Section",
+                lastUpdated: "5 minutes ago",
+                details: [
+                  { label: "Temperature", value: "195°F" },
+                  { label: "Max Temp", value: "200°F" },
+                  { label: "Operating Hours", value: "47.2" }
+                ]
+              },
+              {
+                name: "Paint Booth #2",
+                status: "maintenance",
+                description: "Scheduled maintenance in progress",
+                location: "Finishing Bay",
+                lastUpdated: "15 minutes ago",
+                details: [
+                  { label: "Maintenance Type", value: "Filter Change" },
+                  { label: "Expected Completion", value: "2:30 PM" },
+                  { label: "Next Service", value: "30 days" }
+                ]
+              },
+              {
+                name: "Quality Scanner",
+                status: "error",
+                description: "Calibration failed - requires attention",
+                location: "QC Station #4",
+                lastUpdated: "1 hour ago",
+                details: [
+                  { label: "Error Code", value: "CAL-001" },
+                  { label: "Last Successful", value: "Yesterday" },
+                  { label: "Priority", value: "High" }
+                ]
+              },
+              {
+                name: "Fiber Cutter #5",
+                status: "offline",
+                description: "Powered down for blade replacement",
+                location: "Material Prep",
+                lastUpdated: "3 hours ago",
+                details: [
+                  { label: "Reason", value: "Blade Replacement" },
+                  { label: "Estimated Return", value: "Tomorrow 8 AM" },
+                  { label: "Backup Unit", value: "Active" }
+                ]
+              },
+              {
+                name: "3D Printer #A",
+                status: "pending",
+                description: "Awaiting material delivery",
+                location: "Prototyping Lab",
+                lastUpdated: "30 minutes ago",
+                details: [
+                  { label: "Material Needed", value: "Carbon Fiber" },
+                  { label: "Delivery ETA", value: "4:00 PM" },
+                  { label: "Queue Position", value: "2nd" }
+                ]
+              }
+            ]}
+          />
+        </div>
+
+        {/* Status Summary Dashboard */}
+        <div className="mb-12">
+          <StatusSummary
+            title="Factory Equipment Overview"
+            statusCounts={[
+              { status: 'operational', count: 12, label: 'Operational' },
+              { status: 'warning', count: 3, label: 'Warning' },
+              { status: 'maintenance', count: 2, label: 'Maintenance' },
+              { status: 'error', count: 1, label: 'Error' },
+              { status: 'offline', count: 2, label: 'Offline' },
+              { status: 'pending', count: 1, label: 'Pending' }
             ]}
           />
         </div>
