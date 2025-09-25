@@ -341,10 +341,12 @@ export default function SupervisorView() {
       'Engine Hang', 'Final Rigging', 'Water Test', 'QA', 'Cleaning', 'Shipping'
     ]
     
+    // Validate that all departments have work centers
+    const missingDepartments: string[] = []
     const defaultStages = departmentOrder.map((deptName, index) => {
       const workCenter = workCenters.find(wc => wc.departmentName === deptName)
       if (!workCenter) {
-        console.warn(`Work center not found for department: ${deptName}`)
+        missingDepartments.push(deptName)
         return null
       }
       
@@ -357,6 +359,11 @@ export default function SupervisorView() {
         standardStageSeconds: getDefaultTimeForDepartment(deptName)
       }
     }).filter(Boolean) as RoutingStage[]
+    
+    if (missingDepartments.length > 0) {
+      setError(`Missing work centers for departments: ${missingDepartments.join(', ')}. Please ensure all departments have active work centers.`)
+      return
+    }
     
     setEditableStages(defaultStages)
     setSelectedRoutingVersion({ id: 'default', model: newWO.model, trim: newWO.trim } as any)
@@ -413,7 +420,7 @@ export default function SupervisorView() {
         body: JSON.stringify({
           model: newWO.model,
           trim: newWO.trim || undefined,
-          features: newWO.features ? JSON.parse(newWO.features) : undefined,
+          features: newWO.features || undefined,
           stages: editableStages
         })
       })
@@ -459,7 +466,7 @@ export default function SupervisorView() {
         body: JSON.stringify({
           model: newWO.model,
           trim: newWO.trim || undefined,
-          features: newWO.features ? JSON.parse(newWO.features) : undefined,
+          features: newWO.features || undefined,
           stages: editableStages
         })
       })
@@ -483,7 +490,7 @@ export default function SupervisorView() {
           qty: newWO.qty,
           model: newWO.model,
           trim: newWO.trim || undefined,
-          features: newWO.features ? JSON.parse(newWO.features) : undefined,
+          features: newWO.features || undefined,
           routingVersionId: routingData.routingVersion.id
         })
       })
