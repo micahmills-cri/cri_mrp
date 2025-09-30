@@ -1248,47 +1248,92 @@ export default function SupervisorView() {
                       <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #dee2e6' }}>WO Number</th>
                       <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #dee2e6' }}>Hull ID</th>
                       <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #dee2e6' }}>Model</th>
+                      <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #dee2e6' }}>Priority</th>
+                      <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #dee2e6' }}>Planned Start</th>
+                      <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #dee2e6' }}>Planned Finish</th>
                       <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #dee2e6' }}>Status</th>
                       <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #dee2e6' }}>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {workOrders.filter(wo => wo.status === 'PLANNED').map(wo => (
-                      <tr key={wo.id} style={{ borderBottom: '1px solid #dee2e6' }}>
-                        <td style={{ padding: '0.75rem' }}>{wo.number}</td>
-                        <td style={{ padding: '0.75rem' }}>{wo.hullId}</td>
-                        <td style={{ padding: '0.75rem' }}>
-                          {wo.routingVersion?.model || '-'}
-                        </td>
-                        <td style={{ padding: '0.75rem' }}>
-                          <span style={{
-                            padding: '0.25rem 0.5rem',
-                            borderRadius: '4px',
-                            fontSize: '0.875rem',
-                            backgroundColor: '#e1f5fe',
-                            color: '#01579b'
-                          }}>
-                            PLANNED
-                          </span>
-                        </td>
-                        <td style={{ padding: '0.75rem' }}>
-                          <button
-                            onClick={() => releaseWorkOrder(wo.id)}
-                            style={{
+                    {workOrders.filter(wo => wo.status === 'PLANNED').map(wo => {
+                      const priorityColors: Record<string, {bg: string, text: string}> = {
+                        'LOW': { bg: '#e8f5e9', text: '#2e7d32' },
+                        'NORMAL': { bg: '#e3f2fd', text: '#1976d2' },
+                        'HIGH': { bg: '#fff3e0', text: '#ef6c00' },
+                        'CRITICAL': { bg: '#ffebee', text: '#c62828' }
+                      }
+                      const priorityColor = priorityColors[wo.priority || 'NORMAL']
+                      
+                      return (
+                        <tr key={wo.id} style={{ borderBottom: '1px solid #dee2e6' }}>
+                          <td style={{ padding: '0.75rem' }}>
+                            <button
+                              onClick={() => openDetailDrawer(wo)}
+                              style={{
+                                background: 'none',
+                                border: 'none',
+                                color: '#007bff',
+                                cursor: 'pointer',
+                                textDecoration: 'underline',
+                                padding: 0
+                              }}
+                            >
+                              {wo.number}
+                            </button>
+                          </td>
+                          <td style={{ padding: '0.75rem' }}>{wo.hullId}</td>
+                          <td style={{ padding: '0.75rem' }}>
+                            {wo.routingVersion?.model || '-'}
+                          </td>
+                          <td style={{ padding: '0.75rem' }}>
+                            <span style={{
                               padding: '0.25rem 0.5rem',
+                              borderRadius: '4px',
                               fontSize: '0.875rem',
-                              backgroundColor: '#28a745',
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: '3px',
-                              cursor: 'pointer'
-                            }}
-                          >
-                            Release
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
+                              backgroundColor: priorityColor.bg,
+                              color: priorityColor.text,
+                              fontWeight: '500'
+                            }}>
+                              {wo.priority || 'NORMAL'}
+                            </span>
+                          </td>
+                          <td style={{ padding: '0.75rem', fontSize: '0.875rem' }}>
+                            {wo.plannedStartDate ? new Date(wo.plannedStartDate).toLocaleDateString() : '-'}
+                          </td>
+                          <td style={{ padding: '0.75rem', fontSize: '0.875rem' }}>
+                            {wo.plannedFinishDate ? new Date(wo.plannedFinishDate).toLocaleDateString() : '-'}
+                          </td>
+                          <td style={{ padding: '0.75rem' }}>
+                            <span style={{
+                              padding: '0.25rem 0.5rem',
+                              borderRadius: '4px',
+                              fontSize: '0.875rem',
+                              backgroundColor: '#e1f5fe',
+                              color: '#01579b'
+                            }}>
+                              PLANNED
+                            </span>
+                          </td>
+                          <td style={{ padding: '0.75rem' }}>
+                            <button
+                              onClick={() => releaseWorkOrder(wo.id)}
+                              style={{
+                                padding: '0.25rem 0.5rem',
+                                fontSize: '0.875rem',
+                                backgroundColor: '#28a745',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '3px',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              Release
+                            </button>
+                          </td>
+                        </tr>
+                      )
+                    })}
                   </tbody>
                 </table>
                 
