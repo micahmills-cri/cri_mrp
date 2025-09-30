@@ -84,13 +84,28 @@ model WorkOrder {
   specSnapshot      Json
   qty               Int
   status            WOStatus              @default(RELEASED)
+  priority          WOPriority            @default(NORMAL)
+  plannedStartDate  DateTime?
+  plannedFinishDate DateTime?
   routingVersionId  String
   currentStageIndex Int                   @default(0)
   createdAt         DateTime              @default(now())
   woStageLogs       WOStageLog[]
   notes             WorkOrderNote[]
   attachments       WorkOrderAttachment[]
+  versions          WorkOrderVersion[]
   routingVersion    RoutingVersion        @relation(fields: [routingVersionId], references: [id])
+}
+
+model WorkOrderVersion {
+  id             String    @id @default(cuid())
+  workOrderId    String
+  versionNumber  Int
+  snapshotData   Json
+  reason         String
+  createdBy      String
+  createdAt      DateTime  @default(now())
+  workOrder      WorkOrder @relation(fields: [workOrderId], references: [id])
 }
 
 model WOStageLog {
@@ -145,6 +160,14 @@ enum WOStatus {
   HOLD
   COMPLETED
   CLOSED
+  CANCELLED
+}
+
+enum WOPriority {
+  LOW
+  NORMAL
+  HIGH
+  CRITICAL
 }
 
 enum WOEvent {
