@@ -133,46 +133,35 @@ export async function POST(
       }
     }
 
+    // Extract file path from the upload URL
     const objectStorageService = new ObjectStorageService();
-    
-    // Normalize the file URL to get a clean file path
     let filePath: string;
+    
     try {
-      // Try to set ACL policy and normalize path
-      filePath = await objectStorageService.trySetObjectEntityAclPolicy(
-        fileUrl,
-        {
-          owner: user.id,
-          visibility: 'private',
-          aclRules: [
-            {
-              group: {
-                type: 'DEPARTMENT' as any,
-                id: user.departmentId || 'all'
-              },
-              permission: ObjectPermission.READ
-            }
-          ]
-        }
-      );
-    } catch (aclError) {
-      // If ACL setting fails, just normalize the path without ACL
-      console.warn('Could not set ACL policy, proceeding without it:', aclError);
+      // Normalize the file URL to extract the clean file path
       filePath = objectStorageService.normalizeObjectEntityPath(fileUrl);
       
-      // If normalization also fails, extract path from URL manually
+      // If the normalization didn't work (no leading slash), manually extract the UUID
       if (!filePath.startsWith('/')) {
-        try {
-          const url = new URL(fileUrl);
-          const bucketId = process.env.STORAGE_BUCKET_ID;
-          // Extract just the UUID from the path
-          const pathParts = url.pathname.split('/');
-          const uuid = pathParts[pathParts.length - 1];
-          filePath = `/attachments/${uuid}`;
-        } catch (urlError) {
-          console.error('Could not parse file URL:', urlError);
-          throw new Error('Invalid file URL format');
-        }
+        const url = new URL(fileUrl);
+        const pathParts = url.pathname.split('/');
+        const uuid = pathParts[pathParts.length - 1];
+        filePath = `/attachments/${uuid}`;
+      }
+    } catch (error) {
+      console.error('Error normalizing file path:', error);
+      // Last resort: manually extract UUID from URL
+      try {
+        const url = new URL(fileUrl);
+        const pathParts = url.pathname.split('/');
+        const uuid = pathParts[pathParts.length - 1];
+        filePath = `/attachments/${uuid}`;
+      } catch (urlError) {
+        console.error('Could not parse file URL:', urlError);
+        return NextResponse.json(
+          { message: 'Invalid file URL format' },
+          { status: 400 }
+        );
       }
     }
 
@@ -182,7 +171,7 @@ export async function POST(
     const attachment = await prisma.workOrderAttachment.create({
       data: {
         workOrderId,
-        userId: user.id,
+        userId: user.userId,
         filename,
         originalName,
         fileSize: parseInt(fileSize),

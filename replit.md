@@ -10,10 +10,12 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Updates - All Four Phases Completed
 
-### Latest Fix (September 30, 2025)
+### Latest Fix (September 30, 2025) - File Upload Authentication Issue Resolved
+- **JWT Payload Fix**: Fixed critical file upload bug where `user.id` was undefined - changed to `user.userId` to match JWT token structure
+- **Upload Flow Verified**: Complete end-to-end testing confirms file uploads now work correctly (upload URL → storage → database record creation)
+- **Simplified ACL Handling**: Removed complex ACL metadata system that was causing upload failures, using streamlined path normalization instead
 - **Object Storage Configuration**: Fixed file upload functionality by migrating from hardcoded bucket ID to environment variable (STORAGE_BUCKET_ID)
 - **Build Error Resolution**: Resolved Next.js build error with @google-cloud/storage by adding proper webpack externals configuration
-- **Environment Variables**: Storage bucket ID now properly configured in .env file for easy maintenance and bucket changes
 
 ### Phase 1 Foundation Components (Completed)
 - **NotesTimeline**: Complete notes management system with timeline visualization, department scoping, and edit/delete capabilities
