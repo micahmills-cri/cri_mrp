@@ -136,7 +136,7 @@ export async function POST(request: NextRequest) {
         versionNumber: 1,
         snapshotData: initialSnapshot,
         reason: 'Initial creation',
-        createdBy: user.email
+        createdBy: user.userId
       }
     })
 
