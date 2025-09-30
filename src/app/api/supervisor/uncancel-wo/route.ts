@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
           versionNumber: newVersionNumber,
           snapshotData: snapshot,
           reason: 'Work order uncancelled - returned to PLANNED',
-          createdBy: user.email || user.userId
+          createdBy: user.userId
         }
       })
 
@@ -104,14 +104,12 @@ export async function POST(request: NextRequest) {
       // Create audit log
       await tx.auditLog.create({
         data: {
-          actorId: user.userId || user.id,
+          actorId: user.userId,
           action: 'UPDATE',
-          modelType: 'WorkOrder',
+          model: 'WorkOrder',
           modelId: workOrderId,
-          changes: { 
-            status: { from: 'CANCELLED', to: 'PLANNED' }
-          },
-          metadata: { workOrderNumber: updated.number }
+          before: { status: 'CANCELLED' },
+          after: { status: 'PLANNED' }
         }
       })
 
