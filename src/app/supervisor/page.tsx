@@ -96,7 +96,7 @@ type RoutingVersion = {
 }
 
 export default function SupervisorView() {
-  const [activeTab, setActiveTab] = useState<'board' | 'plan'>('board')
+  const [activeTab, setActiveTab] = useState<'board'>('board')
   const [workOrders, setWorkOrders] = useState<WorkOrder[]>([])
   const [summary, setSummary] = useState<any>(null)
   const [selectedDepartment, setSelectedDepartment] = useState<string>('')
@@ -955,37 +955,6 @@ export default function SupervisorView() {
             </div>
           </div>
           
-          {/* Tabs */}
-          <div style={{ marginTop: '1rem', display: 'flex', gap: '1rem' }}>
-            <button
-              onClick={() => setActiveTab('board')}
-              style={{
-                padding: '0.5rem 1rem',
-                backgroundColor: activeTab === 'board' ? '#007bff' : 'transparent',
-                color: activeTab === 'board' ? 'white' : '#007bff',
-                border: `2px solid #007bff`,
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontWeight: '500'
-              }}
-            >
-              Board
-            </button>
-            <button
-              onClick={() => setActiveTab('plan')}
-              style={{
-                padding: '0.5rem 1rem',
-                backgroundColor: activeTab === 'plan' ? '#007bff' : 'transparent',
-                color: activeTab === 'plan' ? 'white' : '#007bff',
-                border: `2px solid #007bff`,
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontWeight: '500'
-              }}
-            >
-              Plan
-            </button>
-          </div>
         </div>
       </div>
 
