@@ -15,7 +15,10 @@ type WorkOrder = {
   number: string
   hullId: string
   productSku: string
-  status: 'PLANNED' | 'RELEASED' | 'IN_PROGRESS' | 'HOLD' | 'COMPLETED'
+  status: 'PLANNED' | 'RELEASED' | 'IN_PROGRESS' | 'HOLD' | 'COMPLETED' | 'CANCELLED'
+  priority?: 'LOW' | 'NORMAL' | 'HIGH' | 'CRITICAL'
+  plannedStartDate?: string
+  plannedFinishDate?: string
   qty: number
   currentStageIndex: number
   specSnapshot: any
@@ -96,7 +99,6 @@ type RoutingVersion = {
 }
 
 export default function SupervisorView() {
-  const [activeTab, setActiveTab] = useState<'board' | 'plan'>('board')
   const [workOrders, setWorkOrders] = useState<WorkOrder[]>([])
   const [summary, setSummary] = useState<any>(null)
   const [selectedDepartment, setSelectedDepartment] = useState<string>('')
@@ -108,13 +110,13 @@ export default function SupervisorView() {
   const [viewMode, setViewMode] = useState<'table' | 'kanban'>('table')
   const [selectedWorkOrder, setSelectedWorkOrder] = useState<WorkOrder | null>(null)
   const [isDetailDrawerOpen, setIsDetailDrawerOpen] = useState(false)
+  const [drawerMode, setDrawerMode] = useState<'view' | 'create'>('view')
   const [editedWorkOrder, setEditedWorkOrder] = useState<any>(null)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const [versionHistory, setVersionHistory] = useState<any[]>([])
   const router = useRouter()
 
-  // Plan tab states
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  // Work order creation states
   const [newWO, setNewWO] = useState({
     number: '',
     hullId: '',
@@ -235,11 +237,9 @@ export default function SupervisorView() {
 
   // Poll for updates
   useEffect(() => {
-    if (activeTab === 'board') {
-      const interval = setInterval(loadBoardData, 10000) // Poll every 10 seconds
-      return () => clearInterval(interval)
-    }
-  }, [activeTab, loadBoardData])
+    const interval = setInterval(loadBoardData, 10000) // Poll every 10 seconds
+    return () => clearInterval(interval)
+  }, [loadBoardData])
 
   // Load work order details
   const loadWorkOrderDetails = async (woId: string) => {
@@ -507,21 +507,7 @@ export default function SupervisorView() {
       
       if (woResponse.ok && woData.success) {
         setMessage(`Work order ${woData.workOrder.number} created successfully`)
-        setIsCreateModalOpen(false)
-        setNewWO({
-          number: '',
-          hullId: '',
-          productSku: '',
-          qty: 1,
-          model: '',
-          trim: '',
-          features: '',
-          priority: 'NORMAL',
-          plannedStartDate: '',
-          plannedFinishDate: ''
-        })
-        setSelectedRoutingVersion(null)
-        setEditableStages([])
+        closeDrawer()
         await loadBoardData()
         setTimeout(() => setMessage(''), 3000)
       } else {
@@ -569,6 +555,7 @@ export default function SupervisorView() {
   }
 
   const openDetailDrawer = (wo: WorkOrder) => {
+    setDrawerMode('view')
     setSelectedWorkOrder(wo)
     setEditedWorkOrder({
       priority: wo.priority || 'NORMAL',
@@ -579,6 +566,38 @@ export default function SupervisorView() {
     setIsDetailDrawerOpen(true)
     setActiveDetailTab('details')
     loadVersionHistory(wo.id)
+  }
+
+  const openCreateDrawer = () => {
+    setDrawerMode('create')
+    setSelectedWorkOrder(null)
+    setNewWO({
+      number: '',
+      hullId: '',
+      productSku: '',
+      qty: 1,
+      model: '',
+      trim: '',
+      features: '',
+      priority: 'NORMAL',
+      plannedStartDate: '',
+      plannedFinishDate: ''
+    })
+    setSelectedModelId('')
+    setSelectedTrimId('')
+    setSelectedYear(new Date().getFullYear())
+    setGeneratedSku('')
+    setSelectedRoutingVersion(null)
+    setEditableStages([])
+    setRoutingMode('default')
+    setAvailableRoutingVersions([])
+    setIsDetailDrawerOpen(true)
+  }
+
+  const closeDrawer = () => {
+    setIsDetailDrawerOpen(false)
+    setSelectedWorkOrder(null)
+    setDrawerMode('view')
   }
 
   const saveWorkOrderChanges = async () => {
@@ -743,149 +762,7 @@ export default function SupervisorView() {
 
   // Render Kanban view
   const renderKanbanView = () => {
-    const columns = [
-      { title: 'Released', status: 'RELEASED' },
-      { title: 'In Progress', status: 'IN_PROGRESS' },
-      { title: 'Completed (Today)', status: 'COMPLETED' }
-    ]
-
-    return (
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
-        {columns.map(column => {
-          const columnWOs = workOrders.filter(wo => wo.status === column.status)
-          
-          return (
-            <div key={column.status} style={{
-              backgroundColor: 'white',
-              borderRadius: '8px',
-              padding: '1rem',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-              minHeight: '400px'
-            }}>
-              <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', fontWeight: '600' }}>
-                {column.title} ({columnWOs.length})
-              </h3>
-              
-              {columnWOs.map(wo => {
-                const priorityColors: Record<string, {bg: string, text: string}> = {
-                  'LOW': { bg: '#e8f5e9', text: '#2e7d32' },
-                  'NORMAL': { bg: '#e3f2fd', text: '#1976d2' },
-                  'HIGH': { bg: '#fff3e0', text: '#ef6c00' },
-                  'CRITICAL': { bg: '#ffebee', text: '#c62828' }
-                }
-                const priorityColor = priorityColors[wo.priority || 'NORMAL']
-                
-                return (
-                  <div key={wo.id} style={{
-                    padding: '0.75rem',
-                    marginBottom: '0.5rem',
-                    backgroundColor: '#f8f9fa',
-                    borderRadius: '4px',
-                    border: '1px solid #dee2e6'
-                  }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
-                      <div style={{ fontWeight: '500' }}>{wo.number}</div>
-                      <div style={{ display: 'flex', gap: '0.25rem' }}>
-                        {wo._count && wo._count.attachments > 0 && (
-                          <span style={{ fontSize: '0.75rem', backgroundColor: '#e3f2fd', color: '#1976d2', padding: '0.125rem 0.25rem', borderRadius: '10px', fontWeight: '500' }}>
-                            📎 {wo._count.attachments}
-                          </span>
-                        )}
-                        {wo._count && wo._count.notes > 0 && (
-                          <span style={{ fontSize: '0.75rem', backgroundColor: '#e8f5e8', color: '#2e7d32', padding: '0.125rem 0.25rem', borderRadius: '10px', fontWeight: '500' }}>
-                            💬 {wo._count.notes}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    
-                    {/* Priority Badge */}
-                    <div style={{ marginBottom: '0.25rem' }}>
-                      <span style={{
-                        fontSize: '0.75rem',
-                        backgroundColor: priorityColor.bg,
-                        color: priorityColor.text,
-                        padding: '0.125rem 0.375rem',
-                        borderRadius: '3px',
-                        fontWeight: '600'
-                      }}>
-                        {wo.priority || 'NORMAL'}
-                      </span>
-                    </div>
-                    
-                    <div style={{ fontSize: '0.875rem', color: '#6c757d' }}>
-                      {wo.hullId} • {wo.routingVersion ? `${wo.routingVersion.model}${wo.routingVersion.trim ? `-${wo.routingVersion.trim}` : ''}` : wo.productSku}
-                    </div>
-                    
-                    {/* Planned Dates */}
-                    {(wo.plannedStartDate || wo.plannedFinishDate) && (
-                      <div style={{ fontSize: '0.75rem', color: '#6c757d', marginTop: '0.25rem' }}>
-                        {wo.plannedStartDate && <div>Start: {new Date(wo.plannedStartDate).toLocaleDateString()}</div>}
-                        {wo.plannedFinishDate && <div>Finish: {new Date(wo.plannedFinishDate).toLocaleDateString()}</div>}
-                      </div>
-                    )}
-                    
-                    {wo.currentStage && (
-                      <div style={{ fontSize: '0.875rem', marginTop: '0.25rem' }}>
-                        Stage: {wo.currentStage.name}
-                      </div>
-                    )}
-                  <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.25rem' }}>
-                    <button
-                      onClick={() => loadWorkOrderDetails(wo.id)}
-                      style={{
-                        padding: '0.25rem 0.5rem',
-                        fontSize: '0.75rem',
-                        backgroundColor: '#007bff',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '3px',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      Open
-                    </button>
-                    {wo.status !== 'HOLD' && wo.status !== 'COMPLETED' && (
-                      <button
-                        onClick={() => holdWorkOrder(wo.id)}
-                        style={{
-                          padding: '0.25rem 0.5rem',
-                          fontSize: '0.75rem',
-                          backgroundColor: '#ffc107',
-                          color: '#212529',
-                          border: 'none',
-                          borderRadius: '3px',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        Hold
-                      </button>
-                    )}
-                    {wo.status === 'HOLD' && (
-                      <button
-                        onClick={() => unholdWorkOrder(wo.id)}
-                        style={{
-                          padding: '0.25rem 0.5rem',
-                          fontSize: '0.75rem',
-                          backgroundColor: '#28a745',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '3px',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        Unhold
-                      </button>
-                    )}
-                  </div>
-                </div>
-                )
-              })}
-            </div>
-          )
-        })}
-      </div>
-    )
+    return <div>Kanban view temporarily disabled</div>
   }
 
   return (
@@ -907,7 +784,7 @@ export default function SupervisorView() {
               Supervisor Dashboard
             </h1>
             <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-              {userRole === 'ADMIN' && activeTab === 'board' && (
+              {userRole === 'ADMIN' && (
                 <select
                   value={selectedDepartment}
                   onChange={(e) => setSelectedDepartment(e.target.value)}
@@ -929,35 +806,22 @@ export default function SupervisorView() {
             </div>
           </div>
           
-          {/* Tabs */}
+          {/* Action Buttons */}
           <div style={{ marginTop: '1rem', display: 'flex', gap: '1rem' }}>
             <button
-              onClick={() => setActiveTab('board')}
+              onClick={openCreateDrawer}
               style={{
                 padding: '0.5rem 1rem',
-                backgroundColor: activeTab === 'board' ? '#007bff' : 'transparent',
-                color: activeTab === 'board' ? 'white' : '#007bff',
-                border: `2px solid #007bff`,
+                backgroundColor: '#28a745',
+                color: 'white',
+                border: 'none',
                 borderRadius: '4px',
                 cursor: 'pointer',
-                fontWeight: '500'
+                fontWeight: '500',
+                fontSize: '1rem'
               }}
             >
-              Board
-            </button>
-            <button
-              onClick={() => setActiveTab('plan')}
-              style={{
-                padding: '0.5rem 1rem',
-                backgroundColor: activeTab === 'plan' ? '#007bff' : 'transparent',
-                color: activeTab === 'plan' ? 'white' : '#007bff',
-                border: `2px solid #007bff`,
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontWeight: '500'
-              }}
-            >
-              Plan
+              + Create Work Order
             </button>
           </div>
         </div>
@@ -992,9 +856,8 @@ export default function SupervisorView() {
           </div>
         )}
 
-        {/* Board Tab */}
-        {activeTab === 'board' && (
-          <div>
+        {/* Board Content */}
+        <div>
             {/* KPIs */}
             <div style={{
               display: 'grid',
@@ -1270,148 +1133,12 @@ export default function SupervisorView() {
                   </div>
                 )}
               </div>
-            )}
           </div>
-        )}
-
-        {/* Plan Tab */}
-        {activeTab === 'plan' && (
-          <div>
-            <div style={{
-              backgroundColor: 'white',
-              borderRadius: '8px',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-              padding: '1.25rem'
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '600' }}>
-                  Work Order Planning
-                </h2>
-                <button
-                  onClick={() => setIsCreateModalOpen(true)}
-                  style={{
-                    padding: '0.5rem 1rem',
-                    backgroundColor: '#28a745',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Create Work Order
-                </button>
-              </div>
-              
-              {/* List of planned work orders */}
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                  <thead>
-                    <tr style={{ backgroundColor: '#f8f9fa' }}>
-                      <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #dee2e6' }}>WO Number</th>
-                      <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #dee2e6' }}>Hull ID</th>
-                      <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #dee2e6' }}>Model</th>
-                      <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #dee2e6' }}>Priority</th>
-                      <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #dee2e6' }}>Planned Start</th>
-                      <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #dee2e6' }}>Planned Finish</th>
-                      <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #dee2e6' }}>Status</th>
-                      <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #dee2e6' }}>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {workOrders.filter(wo => wo.status === 'PLANNED').map(wo => {
-                      const priorityColors: Record<string, {bg: string, text: string}> = {
-                        'LOW': { bg: '#e8f5e9', text: '#2e7d32' },
-                        'NORMAL': { bg: '#e3f2fd', text: '#1976d2' },
-                        'HIGH': { bg: '#fff3e0', text: '#ef6c00' },
-                        'CRITICAL': { bg: '#ffebee', text: '#c62828' }
-                      }
-                      const priorityColor = priorityColors[wo.priority || 'NORMAL']
-                      
-                      return (
-                        <tr key={wo.id} style={{ borderBottom: '1px solid #dee2e6' }}>
-                          <td style={{ padding: '0.75rem' }}>
-                            <button
-                              onClick={() => openDetailDrawer(wo)}
-                              style={{
-                                background: 'none',
-                                border: 'none',
-                                color: '#007bff',
-                                cursor: 'pointer',
-                                textDecoration: 'underline',
-                                padding: 0
-                              }}
-                            >
-                              {wo.number}
-                            </button>
-                          </td>
-                          <td style={{ padding: '0.75rem' }}>{wo.hullId}</td>
-                          <td style={{ padding: '0.75rem' }}>
-                            {wo.routingVersion?.model || '-'}
-                          </td>
-                          <td style={{ padding: '0.75rem' }}>
-                            <span style={{
-                              padding: '0.25rem 0.5rem',
-                              borderRadius: '4px',
-                              fontSize: '0.875rem',
-                              backgroundColor: priorityColor.bg,
-                              color: priorityColor.text,
-                              fontWeight: '500'
-                            }}>
-                              {wo.priority || 'NORMAL'}
-                            </span>
-                          </td>
-                          <td style={{ padding: '0.75rem', fontSize: '0.875rem' }}>
-                            {wo.plannedStartDate ? new Date(wo.plannedStartDate).toLocaleDateString() : '-'}
-                          </td>
-                          <td style={{ padding: '0.75rem', fontSize: '0.875rem' }}>
-                            {wo.plannedFinishDate ? new Date(wo.plannedFinishDate).toLocaleDateString() : '-'}
-                          </td>
-                          <td style={{ padding: '0.75rem' }}>
-                            <span style={{
-                              padding: '0.25rem 0.5rem',
-                              borderRadius: '4px',
-                              fontSize: '0.875rem',
-                              backgroundColor: '#e1f5fe',
-                              color: '#01579b'
-                            }}>
-                              PLANNED
-                            </span>
-                          </td>
-                          <td style={{ padding: '0.75rem' }}>
-                            <button
-                              onClick={() => releaseWorkOrder(wo.id)}
-                              style={{
-                                padding: '0.25rem 0.5rem',
-                                fontSize: '0.875rem',
-                                backgroundColor: '#28a745',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '3px',
-                                cursor: 'pointer'
-                              }}
-                            >
-                              Release
-                            </button>
-                          </td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
-                
-                {workOrders.filter(wo => wo.status === 'PLANNED').length === 0 && (
-                  <div style={{ padding: '2rem', textAlign: 'center', color: '#6c757d' }}>
-                    No planned work orders. Click "Create Work Order" to start planning.
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
+        </div>
       </div>
 
-      {/* Work Order Detail Drawer */}
-      {isDetailDrawerOpen && selectedWorkOrder && (
+      {/* Work Order Drawer (View or Create) */}
+      {isDetailDrawerOpen && (
         <div style={{
           position: 'fixed',
           right: 0,
@@ -1431,13 +1158,10 @@ export default function SupervisorView() {
             alignItems: 'center'
           }}>
             <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '600' }}>
-              Work Order Details
+              {drawerMode === 'create' ? 'Create Work Order' : 'Work Order Details'}
             </h2>
             <button
-              onClick={() => {
-                setIsDetailDrawerOpen(false)
-                setSelectedWorkOrder(null)
-              }}
+              onClick={closeDrawer}
               style={{
                 padding: '0.25rem 0.5rem',
                 backgroundColor: 'transparent',
@@ -1452,10 +1176,370 @@ export default function SupervisorView() {
           </div>
           
           <div style={{ padding: '1.25rem' }}>
-            {/* Detail Tabs */}
-            <div style={{ marginBottom: '1rem' }}>
-              <div style={{ display: 'flex', gap: '0.5rem', borderBottom: '1px solid #dee2e6', flexWrap: 'wrap' }}>
-                <button
+            {/* Create Mode Content */}
+            {drawerMode === 'create' && (
+              <div>
+                {/* Work Order Fields */}
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr',
+                  gap: '1rem',
+                  marginBottom: '1.5rem'
+                }}>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '0.25rem', fontWeight: '500' }}>
+                      WO Number (optional)
+                    </label>
+                    <input
+                      type="text"
+                      value={newWO.number}
+                      onChange={(e) => setNewWO({ ...newWO, number: e.target.value })}
+                      placeholder="Auto-generated if blank"
+                      style={{
+                        width: '100%',
+                        padding: '0.5rem',
+                        border: '1px solid #ced4da',
+                        borderRadius: '4px'
+                      }}
+                    />
+                  </div>
+                  
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '0.25rem', fontWeight: '500' }}>
+                      Hull ID *
+                    </label>
+                    <input
+                      type="text"
+                      value={newWO.hullId}
+                      onChange={(e) => setNewWO({ ...newWO, hullId: e.target.value })}
+                      placeholder="e.g., HULL-2024-001"
+                      style={{
+                        width: '100%',
+                        padding: '0.5rem',
+                        border: '1px solid #ced4da',
+                        borderRadius: '4px'
+                      }}
+                    />
+                  </div>
+                  
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '0.25rem', fontWeight: '500' }}>
+                      Quantity
+                    </label>
+                    <input
+                      type="number"
+                      value={newWO.qty}
+                      onChange={(e) => setNewWO({ ...newWO, qty: parseInt(e.target.value) || 1 })}
+                      min="1"
+                      style={{
+                        width: '100%',
+                        padding: '0.5rem',
+                        border: '1px solid #ced4da',
+                        borderRadius: '4px'
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '0.25rem', fontWeight: '500' }}>
+                      Priority
+                    </label>
+                    <select
+                      value={newWO.priority}
+                      onChange={(e) => setNewWO({ ...newWO, priority: e.target.value as any })}
+                      style={{
+                        width: '100%',
+                        padding: '0.5rem',
+                        border: '1px solid #ced4da',
+                        borderRadius: '4px'
+                      }}
+                    >
+                      <option value="LOW">Low</option>
+                      <option value="NORMAL">Normal</option>
+                      <option value="HIGH">High</option>
+                      <option value="CRITICAL">Critical</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '0.25rem', fontWeight: '500' }}>
+                      Planned Start Date
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={newWO.plannedStartDate}
+                      onChange={(e) => setNewWO({ ...newWO, plannedStartDate: e.target.value })}
+                      style={{
+                        width: '100%',
+                        padding: '0.5rem',
+                        border: '1px solid #ced4da',
+                        borderRadius: '4px'
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '0.25rem', fontWeight: '500' }}>
+                      Planned Finish Date
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={newWO.plannedFinishDate}
+                      onChange={(e) => setNewWO({ ...newWO, plannedFinishDate: e.target.value })}
+                      style={{
+                        width: '100%',
+                        padding: '0.5rem',
+                        border: '1px solid #ced4da',
+                        borderRadius: '4px'
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Model/Trim Selection */}
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', fontWeight: '600' }}>
+                    Product Configuration
+                  </h3>
+                  <ModelTrimSelector
+                    selectedModelId={selectedModelId}
+                    selectedTrimId={selectedTrimId}
+                    year={selectedYear}
+                    onModelChange={(modelId, model) => {
+                      setSelectedModelId(modelId)
+                      setNewWO({ ...newWO, model: model?.name || '' })
+                    }}
+                    onTrimChange={(trimId, trim) => {
+                      setSelectedTrimId(trimId)
+                      setNewWO({ ...newWO, trim: trim?.name || '' })
+                    }}
+                    onYearChange={(year) => {
+                      setSelectedYear(year)
+                    }}
+                    onSkuGenerated={(sku) => {
+                      setGeneratedSku(sku)
+                      setNewWO({ ...newWO, productSku: sku })
+                    }}
+                    onError={(error) => setError(error)}
+                  />
+                </div>
+
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <label style={{ display: 'block', marginBottom: '0.25rem', fontWeight: '500' }}>
+                    Features (JSON)
+                  </label>
+                  <textarea
+                    value={newWO.features}
+                    onChange={(e) => setNewWO({ ...newWO, features: e.target.value })}
+                    placeholder='{"color": "blue", "engine": "V8"}'
+                    rows={3}
+                    style={{
+                      width: '100%',
+                      padding: '0.5rem',
+                      border: '1px solid #ced4da',
+                      borderRadius: '4px',
+                      fontFamily: 'monospace'
+                    }}
+                  />
+                </div>
+
+                {/* Routing Configuration */}
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', fontWeight: '600' }}>
+                    Routing Configuration
+                  </h3>
+                  
+                  <div style={{ marginBottom: '1rem' }}>
+                    <label style={{ display: 'block', marginBottom: '0.25rem', fontWeight: '500' }}>
+                      Routing Configuration
+                    </label>
+                    <select
+                      value={routingMode === 'existing' ? `existing_${selectedRoutingVersion?.id}` : routingMode}
+                      onChange={(e) => {
+                        const value = e.target.value
+                        if (value.startsWith('existing_')) {
+                          const routingVersionId = value.replace('existing_', '')
+                          handleRoutingModeChange('existing', routingVersionId)
+                        } else {
+                          handleRoutingModeChange(value as 'default' | 'create_new')
+                        }
+                      }}
+                      style={{
+                        width: '100%',
+                        padding: '0.5rem',
+                        border: '1px solid #ced4da',
+                        borderRadius: '4px',
+                        fontSize: '0.875rem'
+                      }}
+                    >
+                      <option value="default">Default Routing (All Departments)</option>
+                      <option value="create_new">Create New Routing</option>
+                      {availableRoutingVersions.map((rv) => (
+                        <option key={rv.id} value={`existing_${rv.id}`}>
+                          {rv.model}{rv.trim ? `-${rv.trim}` : ''} v{rv.version} ({rv.status})
+                        </option>
+                      ))}
+                    </select>
+                    {loadingRoutings && (
+                      <div style={{ fontSize: '0.75rem', color: '#6c757d', marginTop: '0.25rem' }}>
+                        Loading routing configurations...
+                      </div>
+                    )}
+                  </div>
+
+                  {editableStages.length > 0 && (
+                    <div style={{ marginBottom: '1rem' }}>
+                      <button
+                        onClick={saveCurrentRouting}
+                        style={{
+                          padding: '0.5rem 1rem',
+                          backgroundColor: '#28a745',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          marginRight: '0.5rem'
+                        }}
+                      >
+                        Save New Routing
+                      </button>
+                      <span style={{ fontSize: '0.75rem', color: '#6c757d' }}>
+                        Save current configuration for reuse
+                      </span>
+                    </div>
+                  )}
+
+                  {editableStages.length > 0 && (
+                    <div style={{
+                      border: '1px solid #dee2e6',
+                      borderRadius: '4px',
+                      padding: '1rem'
+                    }}>
+                      <h4 style={{ margin: '0 0 1rem 0', fontSize: '1rem', fontWeight: '500' }}>
+                        Configure Stages
+                      </h4>
+                      {editableStages.map((stage, index) => (
+                        <div key={index} style={{
+                          padding: '0.75rem',
+                          marginBottom: '0.5rem',
+                          backgroundColor: stage.enabled ? '#f8f9fa' : '#fff3cd',
+                          borderRadius: '4px',
+                          border: '1px solid #dee2e6'
+                        }}>
+                          <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '1rem',
+                            marginBottom: '0.5rem'
+                          }}>
+                            <input
+                              type="checkbox"
+                              checked={stage.enabled}
+                              onChange={() => toggleStageEnabled(index)}
+                            />
+                            <strong>
+                              {stage.sequence}. {stage.name} ({stage.code})
+                            </strong>
+                            <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.25rem' }}>
+                              <button
+                                onClick={() => moveStageUp(index)}
+                                disabled={index === 0}
+                                style={{
+                                  padding: '0.25rem 0.5rem',
+                                  fontSize: '0.75rem',
+                                  backgroundColor: index === 0 ? '#6c757d' : '#007bff',
+                                  color: 'white',
+                                  border: 'none',
+                                  borderRadius: '3px',
+                                  cursor: index === 0 ? 'not-allowed' : 'pointer',
+                                  opacity: index === 0 ? 0.5 : 1
+                                }}
+                              >
+                                ↑
+                              </button>
+                              <button
+                                onClick={() => moveStageDown(index)}
+                                disabled={index === editableStages.length - 1}
+                                style={{
+                                  padding: '0.25rem 0.5rem',
+                                  fontSize: '0.75rem',
+                                  backgroundColor: index === editableStages.length - 1 ? '#6c757d' : '#007bff',
+                                  color: 'white',
+                                  border: 'none',
+                                  borderRadius: '3px',
+                                  cursor: index === editableStages.length - 1 ? 'not-allowed' : 'pointer',
+                                  opacity: index === editableStages.length - 1 ? 0.5 : 1
+                                }}
+                              >
+                                ↓
+                              </button>
+                            </div>
+                          </div>
+                          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                            <label style={{ fontSize: '0.875rem' }}>
+                              Standard Time (seconds):
+                              <input
+                                type="number"
+                                value={stage.standardStageSeconds}
+                                onChange={(e) => updateStageSeconds(index, parseInt(e.target.value) || 0)}
+                                min="0"
+                                style={{
+                                  marginLeft: '0.5rem',
+                                  width: '100px',
+                                  padding: '0.25rem',
+                                  border: '1px solid #ced4da',
+                                  borderRadius: '3px'
+                                }}
+                              />
+                            </label>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Action Buttons */}
+                <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', position: 'sticky', bottom: 0, backgroundColor: 'white', paddingTop: '1rem', borderTop: '1px solid #dee2e6' }}>
+                  <button
+                    onClick={closeDrawer}
+                    style={{
+                      padding: '0.5rem 1rem',
+                      backgroundColor: '#6c757d',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={createWorkOrder}
+                    disabled={!newWO.hullId || !newWO.model || editableStages.length === 0}
+                    style={{
+                      padding: '0.5rem 1rem',
+                      backgroundColor: (!newWO.hullId || !newWO.model || editableStages.length === 0) ? '#6c757d' : '#28a745',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: (!newWO.hullId || !newWO.model || editableStages.length === 0) ? 'not-allowed' : 'pointer',
+                      opacity: (!newWO.hullId || !newWO.model || editableStages.length === 0) ? 0.6 : 1
+                    }}
+                  >
+                    Create Work Order
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* View Mode Content */}
+            {drawerMode === 'view' && selectedWorkOrder && (
+              <div>
+                {/* Detail Tabs */}
+                <div style={{ marginBottom: '1rem' }}>
+                  <div style={{ display: 'flex', gap: '0.5rem', borderBottom: '1px solid #dee2e6', flexWrap: 'wrap' }}>
+                    <button
                   onClick={() => setActiveDetailTab('details')}
                   style={{
                     padding: '0.5rem 1rem',
@@ -1841,462 +1925,6 @@ export default function SupervisorView() {
                 )}
               </div>
             )}
-          </div>
-        </div>
-      )}
-
-      {/* Create Work Order Modal */}
-      {isCreateModalOpen && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1100
-        }}>
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '8px',
-            width: '90%',
-            maxWidth: '800px',
-            maxHeight: '90vh',
-            overflowY: 'auto',
-            padding: '1.5rem'
-          }}>
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '1.5rem'
-            }}>
-              <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '600' }}>
-                Create Work Order
-              </h2>
-              <button
-                onClick={() => {
-                  setIsCreateModalOpen(false)
-                  setNewWO({
-                    number: '',
-                    hullId: '',
-                    productSku: '',
-                    qty: 1,
-                    model: '',
-                    trim: '',
-                    features: '',
-                    priority: 'NORMAL',
-                    plannedStartDate: '',
-                    plannedFinishDate: ''
-                  })
-                  setSelectedModelId('')
-                  setSelectedTrimId('')
-                  setSelectedYear(new Date().getFullYear())
-                  setGeneratedSku('')
-                  setSelectedRoutingVersion(null)
-                  setEditableStages([])
-                  setRoutingMode('default')
-                  setAvailableRoutingVersions([])
-                }}
-                style={{
-                  padding: '0.25rem 0.5rem',
-                  backgroundColor: 'transparent',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontSize: '1.5rem',
-                  color: '#6c757d'
-                }}
-              >
-                ×
-              </button>
-            </div>
-
-            {/* Work Order Fields */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              gap: '1rem',
-              marginBottom: '1.5rem'
-            }}>
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.25rem', fontWeight: '500' }}>
-                  WO Number (optional)
-                </label>
-                <input
-                  type="text"
-                  value={newWO.number}
-                  onChange={(e) => setNewWO({ ...newWO, number: e.target.value })}
-                  placeholder="Auto-generated if blank"
-                  style={{
-                    width: '100%',
-                    padding: '0.5rem',
-                    border: '1px solid #ced4da',
-                    borderRadius: '4px'
-                  }}
-                />
-              </div>
-              
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.25rem', fontWeight: '500' }}>
-                  Hull ID *
-                </label>
-                <input
-                  type="text"
-                  value={newWO.hullId}
-                  onChange={(e) => setNewWO({ ...newWO, hullId: e.target.value })}
-                  placeholder="e.g., HULL-2024-001"
-                  style={{
-                    width: '100%',
-                    padding: '0.5rem',
-                    border: '1px solid #ced4da',
-                    borderRadius: '4px'
-                  }}
-                />
-              </div>
-              
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.25rem', fontWeight: '500' }}>
-                  Quantity
-                </label>
-                <input
-                  type="number"
-                  value={newWO.qty}
-                  onChange={(e) => setNewWO({ ...newWO, qty: parseInt(e.target.value) || 1 })}
-                  min="1"
-                  style={{
-                    width: '100%',
-                    padding: '0.5rem',
-                    border: '1px solid #ced4da',
-                    borderRadius: '4px'
-                  }}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.25rem', fontWeight: '500' }}>
-                  Priority
-                </label>
-                <select
-                  value={newWO.priority}
-                  onChange={(e) => setNewWO({ ...newWO, priority: e.target.value as any })}
-                  style={{
-                    width: '100%',
-                    padding: '0.5rem',
-                    border: '1px solid #ced4da',
-                    borderRadius: '4px'
-                  }}
-                >
-                  <option value="LOW">Low</option>
-                  <option value="NORMAL">Normal</option>
-                  <option value="HIGH">High</option>
-                  <option value="CRITICAL">Critical</option>
-                </select>
-              </div>
-
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.25rem', fontWeight: '500' }}>
-                  Planned Start Date
-                </label>
-                <input
-                  type="datetime-local"
-                  value={newWO.plannedStartDate}
-                  onChange={(e) => setNewWO({ ...newWO, plannedStartDate: e.target.value })}
-                  style={{
-                    width: '100%',
-                    padding: '0.5rem',
-                    border: '1px solid #ced4da',
-                    borderRadius: '4px'
-                  }}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.25rem', fontWeight: '500' }}>
-                  Planned Finish Date
-                </label>
-                <input
-                  type="datetime-local"
-                  value={newWO.plannedFinishDate}
-                  onChange={(e) => setNewWO({ ...newWO, plannedFinishDate: e.target.value })}
-                  style={{
-                    width: '100%',
-                    padding: '0.5rem',
-                    border: '1px solid #ced4da',
-                    borderRadius: '4px'
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* Model/Trim Selection */}
-            <div style={{ marginBottom: '1.5rem' }}>
-              <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', fontWeight: '600' }}>
-                Product Configuration
-              </h3>
-              <ModelTrimSelector
-                selectedModelId={selectedModelId}
-                selectedTrimId={selectedTrimId}
-                year={selectedYear}
-                onModelChange={(modelId, model) => {
-                  setSelectedModelId(modelId)
-                  setNewWO({ ...newWO, model: model?.name || '' })
-                }}
-                onTrimChange={(trimId, trim) => {
-                  setSelectedTrimId(trimId)
-                  setNewWO({ ...newWO, trim: trim?.name || '' })
-                }}
-                onYearChange={(year) => {
-                  setSelectedYear(year)
-                }}
-                onSkuGenerated={(sku) => {
-                  setGeneratedSku(sku)
-                  setNewWO({ ...newWO, productSku: sku })
-                }}
-                onError={(error) => setError(error)}
-              />
-            </div>
-
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr',
-              gap: '1rem',
-              marginBottom: '1.5rem'
-            }}>
-              
-              <div style={{ gridColumn: '1 / -1' }}>
-                <label style={{ display: 'block', marginBottom: '0.25rem', fontWeight: '500' }}>
-                  Features (JSON)
-                </label>
-                <textarea
-                  value={newWO.features}
-                  onChange={(e) => setNewWO({ ...newWO, features: e.target.value })}
-                  placeholder='{"color": "blue", "engine": "V8"}'
-                  rows={3}
-                  style={{
-                    width: '100%',
-                    padding: '0.5rem',
-                    border: '1px solid #ced4da',
-                    borderRadius: '4px',
-                    fontFamily: 'monospace'
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* Routing Configuration */}
-            <div style={{ marginBottom: '1.5rem' }}>
-              <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', fontWeight: '600' }}>
-                Routing Configuration
-              </h3>
-              
-              {/* Routing Configuration Dropdown */}
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ display: 'block', marginBottom: '0.25rem', fontWeight: '500' }}>
-                  Routing Configuration
-                </label>
-                <select
-                  value={routingMode === 'existing' ? `existing_${selectedRoutingVersion?.id}` : routingMode}
-                  onChange={(e) => {
-                    const value = e.target.value
-                    if (value.startsWith('existing_')) {
-                      const routingVersionId = value.replace('existing_', '')
-                      handleRoutingModeChange('existing', routingVersionId)
-                    } else {
-                      handleRoutingModeChange(value as 'default' | 'create_new')
-                    }
-                  }}
-                  style={{
-                    width: '100%',
-                    padding: '0.5rem',
-                    border: '1px solid #ced4da',
-                    borderRadius: '4px',
-                    fontSize: '0.875rem'
-                  }}
-                >
-                  <option value="default">Default Routing (All Departments)</option>
-                  <option value="create_new">Create New Routing</option>
-                  {availableRoutingVersions.map((rv) => (
-                    <option key={rv.id} value={`existing_${rv.id}`}>
-                      {rv.model}{rv.trim ? `-${rv.trim}` : ''} v{rv.version} ({rv.status})
-                    </option>
-                  ))}
-                </select>
-                {loadingRoutings && (
-                  <div style={{ fontSize: '0.75rem', color: '#6c757d', marginTop: '0.25rem' }}>
-                    Loading routing configurations...
-                  </div>
-                )}
-              </div>
-
-              {/* Save Routing Button */}
-              {editableStages.length > 0 && (
-                <div style={{ marginBottom: '1rem' }}>
-                  <button
-                    onClick={saveCurrentRouting}
-                    style={{
-                      padding: '0.5rem 1rem',
-                      backgroundColor: '#28a745',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      marginRight: '0.5rem'
-                    }}
-                  >
-                    Save New Routing
-                  </button>
-                  <span style={{ fontSize: '0.75rem', color: '#6c757d' }}>
-                    Save current configuration for reuse
-                  </span>
-                </div>
-              )}
-
-              {editableStages.length > 0 && (
-                <div style={{
-                  border: '1px solid #dee2e6',
-                  borderRadius: '4px',
-                  padding: '1rem'
-                }}>
-                  <h4 style={{ margin: '0 0 1rem 0', fontSize: '1rem', fontWeight: '500' }}>
-                    Configure Stages
-                  </h4>
-                  {editableStages.map((stage, index) => (
-                    <div key={index} style={{
-                      padding: '0.75rem',
-                      marginBottom: '0.5rem',
-                      backgroundColor: stage.enabled ? '#f8f9fa' : '#fff3cd',
-                      borderRadius: '4px',
-                      border: '1px solid #dee2e6'
-                    }}>
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '1rem',
-                        marginBottom: '0.5rem'
-                      }}>
-                        <input
-                          type="checkbox"
-                          checked={stage.enabled}
-                          onChange={() => toggleStageEnabled(index)}
-                        />
-                        <strong>
-                          {stage.sequence}. {stage.name} ({stage.code})
-                        </strong>
-                        <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.25rem' }}>
-                          <button
-                            onClick={() => moveStageUp(index)}
-                            disabled={index === 0}
-                            style={{
-                              padding: '0.25rem 0.5rem',
-                              fontSize: '0.75rem',
-                              backgroundColor: index === 0 ? '#6c757d' : '#007bff',
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: '3px',
-                              cursor: index === 0 ? 'not-allowed' : 'pointer',
-                              opacity: index === 0 ? 0.5 : 1
-                            }}
-                          >
-                            ↑
-                          </button>
-                          <button
-                            onClick={() => moveStageDown(index)}
-                            disabled={index === editableStages.length - 1}
-                            style={{
-                              padding: '0.25rem 0.5rem',
-                              fontSize: '0.75rem',
-                              backgroundColor: index === editableStages.length - 1 ? '#6c757d' : '#007bff',
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: '3px',
-                              cursor: index === editableStages.length - 1 ? 'not-allowed' : 'pointer',
-                              opacity: index === editableStages.length - 1 ? 0.5 : 1
-                            }}
-                          >
-                            ↓
-                          </button>
-                        </div>
-                      </div>
-                      <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                        <label style={{ fontSize: '0.875rem' }}>
-                          Standard Time (seconds):
-                          <input
-                            type="number"
-                            value={stage.standardStageSeconds}
-                            onChange={(e) => updateStageSeconds(index, parseInt(e.target.value) || 0)}
-                            min="0"
-                            style={{
-                              marginLeft: '0.5rem',
-                              width: '100px',
-                              padding: '0.25rem',
-                              border: '1px solid #ced4da',
-                              borderRadius: '3px'
-                            }}
-                          />
-                        </label>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Action Buttons */}
-            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-              <button
-                onClick={() => {
-                  setIsCreateModalOpen(false)
-                  setNewWO({
-                    number: '',
-                    hullId: '',
-                    productSku: '',
-                    qty: 1,
-                    model: '',
-                    trim: '',
-                    features: '',
-                    priority: 'NORMAL',
-                    plannedStartDate: '',
-                    plannedFinishDate: ''
-                  })
-                  setSelectedModelId('')
-                  setSelectedTrimId('')
-                  setSelectedYear(new Date().getFullYear())
-                  setGeneratedSku('')
-                  setSelectedRoutingVersion(null)
-                  setEditableStages([])
-                  setRoutingMode('default')
-                  setAvailableRoutingVersions([])
-                }}
-                style={{
-                  padding: '0.5rem 1rem',
-                  backgroundColor: '#6c757d',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer'
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={createWorkOrder}
-                disabled={!newWO.hullId || !newWO.model || editableStages.length === 0}
-                style={{
-                  padding: '0.5rem 1rem',
-                  backgroundColor: (!newWO.hullId || !newWO.model || editableStages.length === 0) ? '#6c757d' : '#28a745',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: (!newWO.hullId || !newWO.model || editableStages.length === 0) ? 'not-allowed' : 'pointer',
-                  opacity: (!newWO.hullId || !newWO.model || editableStages.length === 0) ? 0.6 : 1
-                }}
-              >
-                Create Work Order
-              </button>
-            </div>
           </div>
         </div>
       )}
