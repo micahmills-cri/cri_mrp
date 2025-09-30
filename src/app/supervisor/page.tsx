@@ -766,37 +766,70 @@ export default function SupervisorView() {
                 {column.title} ({columnWOs.length})
               </h3>
               
-              {columnWOs.map(wo => (
-                <div key={wo.id} style={{
-                  padding: '0.75rem',
-                  marginBottom: '0.5rem',
-                  backgroundColor: '#f8f9fa',
-                  borderRadius: '4px',
-                  border: '1px solid #dee2e6'
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
-                    <div style={{ fontWeight: '500' }}>{wo.number}</div>
-                    <div style={{ display: 'flex', gap: '0.25rem' }}>
-                      {wo._count && wo._count.attachments > 0 && (
-                        <span style={{ fontSize: '0.75rem', backgroundColor: '#e3f2fd', color: '#1976d2', padding: '0.125rem 0.25rem', borderRadius: '10px', fontWeight: '500' }}>
-                          📎 {wo._count.attachments}
-                        </span>
-                      )}
-                      {wo._count && wo._count.notes > 0 && (
-                        <span style={{ fontSize: '0.75rem', backgroundColor: '#e8f5e8', color: '#2e7d32', padding: '0.125rem 0.25rem', borderRadius: '10px', fontWeight: '500' }}>
-                          💬 {wo._count.notes}
-                        </span>
-                      )}
+              {columnWOs.map(wo => {
+                const priorityColors: Record<string, {bg: string, text: string}> = {
+                  'LOW': { bg: '#e8f5e9', text: '#2e7d32' },
+                  'NORMAL': { bg: '#e3f2fd', text: '#1976d2' },
+                  'HIGH': { bg: '#fff3e0', text: '#ef6c00' },
+                  'CRITICAL': { bg: '#ffebee', text: '#c62828' }
+                }
+                const priorityColor = priorityColors[wo.priority || 'NORMAL']
+                
+                return (
+                  <div key={wo.id} style={{
+                    padding: '0.75rem',
+                    marginBottom: '0.5rem',
+                    backgroundColor: '#f8f9fa',
+                    borderRadius: '4px',
+                    border: '1px solid #dee2e6'
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                      <div style={{ fontWeight: '500' }}>{wo.number}</div>
+                      <div style={{ display: 'flex', gap: '0.25rem' }}>
+                        {wo._count && wo._count.attachments > 0 && (
+                          <span style={{ fontSize: '0.75rem', backgroundColor: '#e3f2fd', color: '#1976d2', padding: '0.125rem 0.25rem', borderRadius: '10px', fontWeight: '500' }}>
+                            📎 {wo._count.attachments}
+                          </span>
+                        )}
+                        {wo._count && wo._count.notes > 0 && (
+                          <span style={{ fontSize: '0.75rem', backgroundColor: '#e8f5e8', color: '#2e7d32', padding: '0.125rem 0.25rem', borderRadius: '10px', fontWeight: '500' }}>
+                            💬 {wo._count.notes}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                  <div style={{ fontSize: '0.875rem', color: '#6c757d' }}>
-                    {wo.hullId} • {wo.routingVersion ? `${wo.routingVersion.model}${wo.routingVersion.trim ? `-${wo.routingVersion.trim}` : ''}` : wo.productSku}
-                  </div>
-                  {wo.currentStage && (
-                    <div style={{ fontSize: '0.875rem', marginTop: '0.25rem' }}>
-                      Stage: {wo.currentStage.name}
+                    
+                    {/* Priority Badge */}
+                    <div style={{ marginBottom: '0.25rem' }}>
+                      <span style={{
+                        fontSize: '0.75rem',
+                        backgroundColor: priorityColor.bg,
+                        color: priorityColor.text,
+                        padding: '0.125rem 0.375rem',
+                        borderRadius: '3px',
+                        fontWeight: '600'
+                      }}>
+                        {wo.priority || 'NORMAL'}
+                      </span>
                     </div>
-                  )}
+                    
+                    <div style={{ fontSize: '0.875rem', color: '#6c757d' }}>
+                      {wo.hullId} • {wo.routingVersion ? `${wo.routingVersion.model}${wo.routingVersion.trim ? `-${wo.routingVersion.trim}` : ''}` : wo.productSku}
+                    </div>
+                    
+                    {/* Planned Dates */}
+                    {(wo.plannedStartDate || wo.plannedFinishDate) && (
+                      <div style={{ fontSize: '0.75rem', color: '#6c757d', marginTop: '0.25rem' }}>
+                        {wo.plannedStartDate && <div>Start: {new Date(wo.plannedStartDate).toLocaleDateString()}</div>}
+                        {wo.plannedFinishDate && <div>Finish: {new Date(wo.plannedFinishDate).toLocaleDateString()}</div>}
+                      </div>
+                    )}
+                    
+                    {wo.currentStage && (
+                      <div style={{ fontSize: '0.875rem', marginTop: '0.25rem' }}>
+                        Stage: {wo.currentStage.name}
+                      </div>
+                    )}
                   <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.25rem' }}>
                     <button
                       onClick={() => loadWorkOrderDetails(wo.id)}
@@ -846,7 +879,8 @@ export default function SupervisorView() {
                     )}
                   </div>
                 </div>
-              ))}
+                )
+              })}
             </div>
           )
         })}
@@ -1051,6 +1085,9 @@ export default function SupervisorView() {
                       <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #dee2e6' }}>WO Number</th>
                       <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #dee2e6' }}>Hull ID</th>
                       <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #dee2e6' }}>Model</th>
+                      <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #dee2e6' }}>Priority</th>
+                      <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #dee2e6' }}>Planned Start</th>
+                      <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #dee2e6' }}>Planned Finish</th>
                       <th style={{ padding: '0.75rem', textAlign: 'center', borderBottom: '2px solid #dee2e6', width: '80px' }}>Files</th>
                       <th style={{ padding: '0.75rem', textAlign: 'center', borderBottom: '2px solid #dee2e6', width: '80px' }}>Notes</th>
                       <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #dee2e6' }}>Current Stage</th>
@@ -1061,6 +1098,13 @@ export default function SupervisorView() {
                   <tbody>
                     {workOrders.map(wo => {
                       const statusStyle = getStatusColor(wo.status)
+                      const priorityColors: Record<string, {bg: string, text: string}> = {
+                        'LOW': { bg: '#e8f5e9', text: '#2e7d32' },
+                        'NORMAL': { bg: '#e3f2fd', text: '#1976d2' },
+                        'HIGH': { bg: '#fff3e0', text: '#ef6c00' },
+                        'CRITICAL': { bg: '#ffebee', text: '#c62828' }
+                      }
+                      const priorityColor = priorityColors[wo.priority || 'NORMAL']
                       
                       return (
                         <tr key={wo.id} style={{ borderBottom: '1px solid #dee2e6' }}>
@@ -1080,6 +1124,24 @@ export default function SupervisorView() {
                           <td style={{ padding: '0.75rem' }}>{wo.hullId}</td>
                           <td style={{ padding: '0.75rem' }}>
                             {wo.routingVersion ? `${wo.routingVersion.model}${wo.routingVersion.trim ? `-${wo.routingVersion.trim}` : ''}` : wo.productSku}
+                          </td>
+                          <td style={{ padding: '0.75rem' }}>
+                            <span style={{
+                              padding: '0.25rem 0.5rem',
+                              borderRadius: '4px',
+                              fontSize: '0.875rem',
+                              backgroundColor: priorityColor.bg,
+                              color: priorityColor.text,
+                              fontWeight: '500'
+                            }}>
+                              {wo.priority || 'NORMAL'}
+                            </span>
+                          </td>
+                          <td style={{ padding: '0.75rem', fontSize: '0.875rem' }}>
+                            {wo.plannedStartDate ? new Date(wo.plannedStartDate).toLocaleDateString() : '-'}
+                          </td>
+                          <td style={{ padding: '0.75rem', fontSize: '0.875rem' }}>
+                            {wo.plannedFinishDate ? new Date(wo.plannedFinishDate).toLocaleDateString() : '-'}
                           </td>
                           <td style={{ padding: '0.75rem', textAlign: 'center' }}>
                             {wo._count && wo._count.attachments > 0 ? (
