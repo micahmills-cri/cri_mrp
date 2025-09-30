@@ -49,6 +49,87 @@ export async function POST(
       return NextResponse.json({ error: 'Work order must be in PLANNED status to release' }, { status: 400 })
     }
 
+    // Validate that planned dates are set
+    const plannedStartDate = (workOrder as any).plannedStartDate
+    const plannedFinishDate = (workOrder as any).plannedFinishDate
+
+    if (!plannedStartDate || !plannedFinishDate) {
+      return NextResponse.json({
+        error: 'Cannot release work order without planned start and finish dates'
+      }, { status: 400 })
+    }
+
+    // Validate dates are valid
+    const startDate = new Date(plannedStartDate)
+    const finishDate = new Date(plannedFinishDate)
+    const now = new Date()
+
+    if (startDate >= finishDate) {
+      return NextResponse.json({
+        error: 'Planned start date must be before planned finish date'
+      }, { status: 400 })
+    }
+
+    // Optional: Check if start date is too far in the past (allow some buffer for same-day releases)
+    const yesterday = new Date()
+    yesterday.setDate(yesterday.getDate() - 1)
+    
+    if (startDate < yesterday) {
+      return NextResponse.json({
+        error: 'Planned start date cannot be more than 1 day in the past'
+      }, { status: 400 })
+    }
+
+    // Create version snapshot before release
+    await prisma.$transaction(async (tx) => {
+      // Get latest version number
+      const latestVersion = await tx.workOrderVersion.findFirst({
+        where: { workOrderId: params.id },
+        orderBy: { versionNumber: 'desc' }
+      })
+
+      const newVersionNumber = (latestVersion?.versionNumber || 0) + 1
+
+      // Create snapshot for release
+      const snapshot = {
+        number: workOrder.number,
+        hullId: workOrder.hullId,
+        productSku: workOrder.productSku,
+        qty: workOrder.qty,
+        status: 'RELEASED',
+        priority: (workOrder as any).priority || 'NORMAL',
+        plannedStartDate: plannedStartDate,
+        plannedFinishDate: plannedFinishDate,
+        routingVersionId: workOrder.routingVersionId,
+        currentStageIndex: 0,
+        specSnapshot: workOrder.specSnapshot,
+        routingVersion: {
+          model: workOrder.routingVersion.model,
+          trim: workOrder.routingVersion.trim,
+          version: workOrder.routingVersion.version,
+          stages: workOrder.routingVersion.stages.map(s => ({
+            sequence: s.sequence,
+            code: s.code,
+            name: s.name,
+            enabled: s.enabled,
+            workCenterId: s.workCenterId,
+            standardStageSeconds: s.standardStageSeconds
+          }))
+        }
+      }
+
+      // Create version for release
+      await tx.workOrderVersion.create({
+        data: {
+          workOrderId: params.id,
+          versionNumber: newVersionNumber,
+          snapshotData: snapshot,
+          reason: 'Work order released',
+          createdBy: user.email || user.userId || user.id
+        }
+      })
+    })
+
     // Update routing version status to RELEASED if it's still DRAFT
     if (workOrder.routingVersion.status === RoutingVersionStatus.DRAFT) {
       await prisma.routingVersion.update({

@@ -12,7 +12,10 @@ const createWOSchema = z.object({
   model: z.string().min(1),
   trim: z.string().optional(),
   features: z.any().optional(), // JSON features
-  routingVersionId: z.string()
+  routingVersionId: z.string(),
+  priority: z.enum(['LOW', 'NORMAL', 'HIGH', 'CRITICAL']).optional().default('NORMAL'),
+  plannedStartDate: z.string().datetime().optional().nullable(),
+  plannedFinishDate: z.string().datetime().optional().nullable()
 })
 
 export async function POST(request: NextRequest) {
@@ -29,6 +32,26 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
     const data = createWOSchema.parse(body)
+
+    // Date validation
+    if (data.plannedStartDate && data.plannedFinishDate) {
+      const startDate = new Date(data.plannedStartDate)
+      const finishDate = new Date(data.plannedFinishDate)
+      
+      if (startDate >= finishDate) {
+        return NextResponse.json({
+          error: 'Planned start date must be before planned finish date'
+        }, { status: 400 })
+      }
+
+      // Check if start date is in the future
+      const now = new Date()
+      if (startDate < now) {
+        return NextResponse.json({
+          error: 'Planned start date must be in the future'
+        }, { status: 400 })
+      }
+    }
 
     // Generate work order number if not provided
     const woNumber = data.number || `WO-${Date.now()}-${Math.random().toString(36).substring(7).toUpperCase()}`
@@ -56,6 +79,9 @@ export async function POST(request: NextRequest) {
         productSku: data.productSku,
         qty: data.qty,
         status: WOStatus.PLANNED,
+        priority: data.priority as any || 'NORMAL',
+        plannedStartDate: data.plannedStartDate ? new Date(data.plannedStartDate) : null,
+        plannedFinishDate: data.plannedFinishDate ? new Date(data.plannedFinishDate) : null,
         routingVersionId: data.routingVersionId,
         currentStageIndex: 0,
         specSnapshot: {
@@ -73,6 +99,44 @@ export async function POST(request: NextRequest) {
             standardStageSeconds: s.standardStageSeconds
           }))
         }
+      }
+    })
+
+    // Create initial version (Version 1)
+    const initialSnapshot = {
+      number: workOrder.number,
+      hullId: workOrder.hullId,
+      productSku: workOrder.productSku,
+      qty: workOrder.qty,
+      status: workOrder.status,
+      priority: workOrder.priority,
+      plannedStartDate: workOrder.plannedStartDate,
+      plannedFinishDate: workOrder.plannedFinishDate,
+      routingVersionId: workOrder.routingVersionId,
+      currentStageIndex: workOrder.currentStageIndex,
+      specSnapshot: workOrder.specSnapshot,
+      routingVersion: {
+        model: routingVersion.model,
+        trim: routingVersion.trim,
+        version: routingVersion.version,
+        stages: routingVersion.stages.map(s => ({
+          sequence: s.sequence,
+          code: s.code,
+          name: s.name,
+          enabled: s.enabled,
+          workCenterId: s.workCenterId,
+          standardStageSeconds: s.standardStageSeconds
+        }))
+      }
+    }
+
+    await prisma.workOrderVersion.create({
+      data: {
+        workOrderId: workOrder.id,
+        versionNumber: 1,
+        snapshotData: initialSnapshot,
+        reason: 'Initial creation',
+        createdBy: user.email
       }
     })
 
