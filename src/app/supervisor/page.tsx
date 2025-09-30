@@ -750,8 +750,33 @@ export default function SupervisorView() {
     ]
 
     return (
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
-        {columns.map(column => {
+      <div style={{
+        backgroundColor: 'white',
+        borderRadius: '8px',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+        padding: '1.25rem'
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+          <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '600' }}>
+            Active Work Orders
+          </h2>
+          <button
+            onClick={() => setIsCreateModalOpen(true)}
+            style={{
+              padding: '0.5rem 1rem',
+              backgroundColor: '#28a745',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            Create Work Order
+          </button>
+        </div>
+        
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
+          {columns.map(column => {
           const columnWOs = workOrders.filter(wo => wo.status === column.status)
           
           return (
@@ -884,6 +909,7 @@ export default function SupervisorView() {
             </div>
           )
         })}
+        </div>
       </div>
     )
   }
