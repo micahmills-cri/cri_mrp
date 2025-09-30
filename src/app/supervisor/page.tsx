@@ -119,7 +119,10 @@ export default function SupervisorView() {
     qty: 1,
     model: '',
     trim: '',
-    features: ''
+    features: '',
+    priority: 'NORMAL' as 'LOW' | 'NORMAL' | 'HIGH' | 'CRITICAL',
+    plannedStartDate: '',
+    plannedFinishDate: ''
   })
   // Model/Trim selector states
   const [selectedModelId, setSelectedModelId] = useState('')
@@ -491,7 +494,10 @@ export default function SupervisorView() {
           model: newWO.model,
           trim: newWO.trim || undefined,
           features: newWO.features || undefined,
-          routingVersionId: routingData.routingVersion.id
+          routingVersionId: routingData.routingVersion.id,
+          priority: newWO.priority,
+          plannedStartDate: newWO.plannedStartDate ? new Date(newWO.plannedStartDate).toISOString() : null,
+          plannedFinishDate: newWO.plannedFinishDate ? new Date(newWO.plannedFinishDate).toISOString() : null
         })
       })
 
@@ -507,7 +513,10 @@ export default function SupervisorView() {
           qty: 1,
           model: '',
           trim: '',
-          features: ''
+          features: '',
+          priority: 'NORMAL',
+          plannedStartDate: '',
+          plannedFinishDate: ''
         })
         setSelectedRoutingVersion(null)
         setEditableStages([])
@@ -1399,7 +1408,10 @@ export default function SupervisorView() {
                     qty: 1,
                     model: '',
                     trim: '',
-                    features: ''
+                    features: '',
+                    priority: 'NORMAL',
+                    plannedStartDate: '',
+                    plannedFinishDate: ''
                   })
                   setSelectedModelId('')
                   setSelectedTrimId('')
@@ -1475,6 +1487,61 @@ export default function SupervisorView() {
                   value={newWO.qty}
                   onChange={(e) => setNewWO({ ...newWO, qty: parseInt(e.target.value) || 1 })}
                   min="1"
+                  style={{
+                    width: '100%',
+                    padding: '0.5rem',
+                    border: '1px solid #ced4da',
+                    borderRadius: '4px'
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.25rem', fontWeight: '500' }}>
+                  Priority
+                </label>
+                <select
+                  value={newWO.priority}
+                  onChange={(e) => setNewWO({ ...newWO, priority: e.target.value as any })}
+                  style={{
+                    width: '100%',
+                    padding: '0.5rem',
+                    border: '1px solid #ced4da',
+                    borderRadius: '4px'
+                  }}
+                >
+                  <option value="LOW">Low</option>
+                  <option value="NORMAL">Normal</option>
+                  <option value="HIGH">High</option>
+                  <option value="CRITICAL">Critical</option>
+                </select>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.25rem', fontWeight: '500' }}>
+                  Planned Start Date
+                </label>
+                <input
+                  type="datetime-local"
+                  value={newWO.plannedStartDate}
+                  onChange={(e) => setNewWO({ ...newWO, plannedStartDate: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '0.5rem',
+                    border: '1px solid #ced4da',
+                    borderRadius: '4px'
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.25rem', fontWeight: '500' }}>
+                  Planned Finish Date
+                </label>
+                <input
+                  type="datetime-local"
+                  value={newWO.plannedFinishDate}
+                  onChange={(e) => setNewWO({ ...newWO, plannedFinishDate: e.target.value })}
                   style={{
                     width: '100%',
                     padding: '0.5rem',
@@ -1710,7 +1777,10 @@ export default function SupervisorView() {
                     qty: 1,
                     model: '',
                     trim: '',
-                    features: ''
+                    features: '',
+                    priority: 'NORMAL',
+                    plannedStartDate: '',
+                    plannedFinishDate: ''
                   })
                   setSelectedModelId('')
                   setSelectedTrimId('')
