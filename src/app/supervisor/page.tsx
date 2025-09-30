@@ -108,6 +108,9 @@ export default function SupervisorView() {
   const [viewMode, setViewMode] = useState<'table' | 'kanban'>('table')
   const [selectedWorkOrder, setSelectedWorkOrder] = useState<WorkOrder | null>(null)
   const [isDetailDrawerOpen, setIsDetailDrawerOpen] = useState(false)
+  const [editedWorkOrder, setEditedWorkOrder] = useState<any>(null)
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+  const [versionHistory, setVersionHistory] = useState<any[]>([])
   const router = useRouter()
 
   // Plan tab states
@@ -130,7 +133,7 @@ export default function SupervisorView() {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
   const [generatedSku, setGeneratedSku] = useState('')
   // Detail drawer tab state
-  const [activeDetailTab, setActiveDetailTab] = useState<'timeline' | 'notes' | 'files'>('timeline')
+  const [activeDetailTab, setActiveDetailTab] = useState<'details' | 'timeline' | 'notes' | 'files' | 'versions'>('details')
   const [routingVersions, setRoutingVersions] = useState<RoutingVersion[]>([])
   const [selectedRoutingVersion, setSelectedRoutingVersion] = useState<RoutingVersion | null>(null)
   const [editableStages, setEditableStages] = useState<RoutingStage[]>([])
@@ -247,8 +250,7 @@ export default function SupervisorView() {
       
       if (response.ok) {
         const data = await response.json()
-        setSelectedWorkOrder(data.workOrder)
-        setIsDetailDrawerOpen(true)
+        openDetailDrawer(data.workOrder)
       } else {
         const data = await response.json()
         setError(data.error || 'Failed to load work order details')
@@ -549,6 +551,139 @@ export default function SupervisorView() {
       }
     } catch (err) {
       setError('Network error releasing work order')
+    }
+  }
+
+  const loadVersionHistory = async (woId: string) => {
+    try {
+      const response = await fetch(`/api/work-orders/${woId}/versions`, {
+        credentials: 'include'
+      })
+      const data = await response.json()
+      if (response.ok && data.success) {
+        setVersionHistory(data.versions || [])
+      }
+    } catch (err) {
+      console.error('Error loading version history:', err)
+    }
+  }
+
+  const openDetailDrawer = (wo: WorkOrder) => {
+    setSelectedWorkOrder(wo)
+    setEditedWorkOrder({
+      priority: wo.priority || 'NORMAL',
+      plannedStartDate: wo.plannedStartDate ? new Date(wo.plannedStartDate).toISOString().slice(0, 16) : '',
+      plannedFinishDate: wo.plannedFinishDate ? new Date(wo.plannedFinishDate).toISOString().slice(0, 16) : ''
+    })
+    setHasUnsavedChanges(false)
+    setIsDetailDrawerOpen(true)
+    setActiveDetailTab('details')
+    loadVersionHistory(wo.id)
+  }
+
+  const saveWorkOrderChanges = async () => {
+    if (!selectedWorkOrder || !editedWorkOrder) return
+
+    try {
+      const response = await fetch(`/api/work-orders/${selectedWorkOrder.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          priority: editedWorkOrder.priority,
+          plannedStartDate: editedWorkOrder.plannedStartDate ? new Date(editedWorkOrder.plannedStartDate).toISOString() : null,
+          plannedFinishDate: editedWorkOrder.plannedFinishDate ? new Date(editedWorkOrder.plannedFinishDate).toISOString() : null
+        })
+      })
+
+      const data = await response.json()
+
+      if (response.ok && data.success) {
+        setMessage('Changes saved successfully')
+        setHasUnsavedChanges(false)
+        
+        // Refresh the work order details to get the latest server state
+        const refreshResponse = await fetch(`/api/work-orders/${selectedWorkOrder.id}`, {
+          credentials: 'include'
+        })
+        
+        if (refreshResponse.ok) {
+          const refreshData = await refreshResponse.json()
+          setSelectedWorkOrder(refreshData.workOrder)
+          setEditedWorkOrder({
+            priority: refreshData.workOrder.priority || 'NORMAL',
+            plannedStartDate: refreshData.workOrder.plannedStartDate ? new Date(refreshData.workOrder.plannedStartDate).toISOString().slice(0, 16) : '',
+            plannedFinishDate: refreshData.workOrder.plannedFinishDate ? new Date(refreshData.workOrder.plannedFinishDate).toISOString().slice(0, 16) : ''
+          })
+        }
+        
+        await loadBoardData()
+        loadVersionHistory(selectedWorkOrder.id)
+        setTimeout(() => setMessage(''), 3000)
+      } else {
+        setError(data.error || 'Failed to save changes')
+      }
+    } catch (err) {
+      setError('Network error saving changes')
+    }
+  }
+
+  const discardWorkOrderChanges = () => {
+    if (selectedWorkOrder) {
+      setEditedWorkOrder({
+        priority: selectedWorkOrder.priority || 'NORMAL',
+        plannedStartDate: selectedWorkOrder.plannedStartDate ? new Date(selectedWorkOrder.plannedStartDate).toISOString().slice(0, 16) : '',
+        plannedFinishDate: selectedWorkOrder.plannedFinishDate ? new Date(selectedWorkOrder.plannedFinishDate).toISOString().slice(0, 16) : ''
+      })
+      setHasUnsavedChanges(false)
+    }
+  }
+
+  const cancelWorkOrder = async (woId: string) => {
+    try {
+      const response = await fetch('/api/supervisor/cancel-wo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ workOrderId: woId })
+      })
+
+      const data = await response.json()
+
+      if (response.ok && data.success) {
+        setMessage('Work order cancelled successfully')
+        setIsDetailDrawerOpen(false)
+        setSelectedWorkOrder(null)
+        await loadBoardData()
+        setTimeout(() => setMessage(''), 3000)
+      } else {
+        setError(data.error || 'Failed to cancel work order')
+      }
+    } catch (err) {
+      setError('Network error cancelling work order')
+    }
+  }
+
+  const uncancelWorkOrder = async (woId: string) => {
+    try {
+      const response = await fetch('/api/supervisor/uncancel-wo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ workOrderId: woId })
+      })
+
+      const data = await response.json()
+
+      if (response.ok && data.success) {
+        setMessage('Work order restored to PLANNED status')
+        await loadBoardData()
+        setTimeout(() => setMessage(''), 3000)
+      } else {
+        setError(data.error || 'Failed to restore work order')
+      }
+    } catch (err) {
+      setError('Network error restoring work order')
     }
   }
 
@@ -1210,32 +1345,23 @@ export default function SupervisorView() {
           </div>
           
           <div style={{ padding: '1.25rem' }}>
-            {/* Basic Info */}
-            <div style={{ marginBottom: '1.5rem' }}>
-              <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', fontWeight: '600' }}>
-                Basic Information
-              </h3>
-              <div style={{ display: 'grid', gap: '0.5rem' }}>
-                <div><strong>WO Number:</strong> {selectedWorkOrder.number}</div>
-                <div><strong>Hull ID:</strong> {selectedWorkOrder.hullId}</div>
-                <div><strong>SKU:</strong> {selectedWorkOrder.productSku}</div>
-                <div><strong>Quantity:</strong> {selectedWorkOrder.qty}</div>
-                <div><strong>Status:</strong> {' '}
-                  <span style={{
-                    padding: '0.25rem 0.5rem',
-                    borderRadius: '4px',
-                    ...getStatusColor(selectedWorkOrder.status)
-                  }}>
-                    {selectedWorkOrder.status}
-                  </span>
-                </div>
-                <div><strong>Created:</strong> {new Date(selectedWorkOrder.createdAt).toLocaleString()}</div>
-              </div>
-            </div>
-
             {/* Detail Tabs */}
             <div style={{ marginBottom: '1rem' }}>
-              <div style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid #dee2e6' }}>
+              <div style={{ display: 'flex', gap: '0.5rem', borderBottom: '1px solid #dee2e6', flexWrap: 'wrap' }}>
+                <button
+                  onClick={() => setActiveDetailTab('details')}
+                  style={{
+                    padding: '0.5rem 1rem',
+                    backgroundColor: 'transparent',
+                    color: activeDetailTab === 'details' ? '#007bff' : '#6c757d',
+                    border: 'none',
+                    borderBottom: `2px solid ${activeDetailTab === 'details' ? '#007bff' : 'transparent'}`,
+                    cursor: 'pointer',
+                    fontWeight: activeDetailTab === 'details' ? '600' : '400'
+                  }}
+                >
+                  Details
+                </button>
                 <button
                   onClick={() => setActiveDetailTab('timeline')}
                   style={{
@@ -1278,10 +1404,196 @@ export default function SupervisorView() {
                 >
                   Files
                 </button>
+                <button
+                  onClick={() => setActiveDetailTab('versions')}
+                  style={{
+                    padding: '0.5rem 1rem',
+                    backgroundColor: 'transparent',
+                    color: activeDetailTab === 'versions' ? '#007bff' : '#6c757d',
+                    border: 'none',
+                    borderBottom: `2px solid ${activeDetailTab === 'versions' ? '#007bff' : 'transparent'}`,
+                    cursor: 'pointer',
+                    fontWeight: activeDetailTab === 'versions' ? '600' : '400'
+                  }}
+                >
+                  Versions
+                </button>
               </div>
             </div>
 
             {/* Tab Content */}
+            {activeDetailTab === 'details' && editedWorkOrder && (
+              <div>
+                {/* Read-only Info */}
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', fontWeight: '600' }}>
+                    Basic Information
+                  </h3>
+                  <div style={{ display: 'grid', gap: '0.5rem', marginBottom: '1rem' }}>
+                    <div><strong>WO Number:</strong> {selectedWorkOrder.number}</div>
+                    <div><strong>Hull ID:</strong> {selectedWorkOrder.hullId}</div>
+                    <div><strong>SKU:</strong> {selectedWorkOrder.productSku}</div>
+                    <div><strong>Quantity:</strong> {selectedWorkOrder.qty}</div>
+                    <div><strong>Status:</strong> {' '}
+                      <span style={{
+                        padding: '0.25rem 0.5rem',
+                        borderRadius: '4px',
+                        ...getStatusColor(selectedWorkOrder.status)
+                      }}>
+                        {selectedWorkOrder.status}
+                      </span>
+                    </div>
+                    <div><strong>Created:</strong> {new Date(selectedWorkOrder.createdAt).toLocaleString()}</div>
+                  </div>
+                </div>
+
+                {/* Editable Fields (PLANNED status only) */}
+                {selectedWorkOrder.status === 'PLANNED' && (
+                  <div style={{ marginBottom: '1.5rem' }}>
+                    <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', fontWeight: '600' }}>
+                      Planning Details
+                    </h3>
+                    
+                    <div style={{ display: 'grid', gap: '1rem' }}>
+                      <div>
+                        <label style={{ display: 'block', marginBottom: '0.25rem', fontWeight: '500' }}>
+                          Priority
+                        </label>
+                        <select
+                          value={editedWorkOrder.priority}
+                          onChange={(e) => {
+                            setEditedWorkOrder({ ...editedWorkOrder, priority: e.target.value })
+                            setHasUnsavedChanges(true)
+                          }}
+                          style={{
+                            width: '100%',
+                            padding: '0.5rem',
+                            border: '1px solid #ced4da',
+                            borderRadius: '4px'
+                          }}
+                        >
+                          <option value="LOW">Low</option>
+                          <option value="NORMAL">Normal</option>
+                          <option value="HIGH">High</option>
+                          <option value="CRITICAL">Critical</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label style={{ display: 'block', marginBottom: '0.25rem', fontWeight: '500' }}>
+                          Planned Start Date
+                        </label>
+                        <input
+                          type="datetime-local"
+                          value={editedWorkOrder.plannedStartDate}
+                          onChange={(e) => {
+                            setEditedWorkOrder({ ...editedWorkOrder, plannedStartDate: e.target.value })
+                            setHasUnsavedChanges(true)
+                          }}
+                          style={{
+                            width: '100%',
+                            padding: '0.5rem',
+                            border: '1px solid #ced4da',
+                            borderRadius: '4px'
+                          }}
+                        />
+                      </div>
+
+                      <div>
+                        <label style={{ display: 'block', marginBottom: '0.25rem', fontWeight: '500' }}>
+                          Planned Finish Date
+                        </label>
+                        <input
+                          type="datetime-local"
+                          value={editedWorkOrder.plannedFinishDate}
+                          onChange={(e) => {
+                            setEditedWorkOrder({ ...editedWorkOrder, plannedFinishDate: e.target.value })
+                            setHasUnsavedChanges(true)
+                          }}
+                          style={{
+                            width: '100%',
+                            padding: '0.5rem',
+                            border: '1px solid #ced4da',
+                            borderRadius: '4px'
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    {hasUnsavedChanges && (
+                      <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
+                        <button
+                          onClick={saveWorkOrderChanges}
+                          style={{
+                            padding: '0.5rem 1rem',
+                            backgroundColor: '#28a745',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            fontWeight: '500'
+                          }}
+                        >
+                          Save Changes
+                        </button>
+                        <button
+                          onClick={discardWorkOrderChanges}
+                          style={{
+                            padding: '0.5rem 1rem',
+                            backgroundColor: '#6c757d',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            fontWeight: '500'
+                          }}
+                        >
+                          Discard
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Cancel Button */}
+                    <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid #dee2e6' }}>
+                      <button
+                        onClick={() => {
+                          if (confirm('Are you sure you want to cancel this work order? This action creates a version snapshot.')) {
+                            cancelWorkOrder(selectedWorkOrder.id)
+                          }
+                        }}
+                        style={{
+                          padding: '0.5rem 1rem',
+                          backgroundColor: '#dc3545',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontWeight: '500'
+                        }}
+                      >
+                        Cancel Work Order
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Show priority and dates for non-PLANNED statuses (read-only) */}
+                {selectedWorkOrder.status !== 'PLANNED' && (
+                  <div style={{ marginBottom: '1.5rem' }}>
+                    <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', fontWeight: '600' }}>
+                      Planning Details
+                    </h3>
+                    <div style={{ display: 'grid', gap: '0.5rem' }}>
+                      <div><strong>Priority:</strong> {selectedWorkOrder.priority || 'NORMAL'}</div>
+                      <div><strong>Planned Start:</strong> {selectedWorkOrder.plannedStartDate ? new Date(selectedWorkOrder.plannedStartDate).toLocaleString() : 'Not set'}</div>
+                      <div><strong>Planned Finish:</strong> {selectedWorkOrder.plannedFinishDate ? new Date(selectedWorkOrder.plannedFinishDate).toLocaleString() : 'Not set'}</div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             {activeDetailTab === 'timeline' && (
               <div>
                 {/* Stage Timeline */}
@@ -1361,6 +1673,66 @@ export default function SupervisorView() {
                   setTimeout(() => setMessage(''), 3000)
                 }}
               />
+            )}
+
+            {activeDetailTab === 'versions' && (
+              <div>
+                <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', fontWeight: '600' }}>
+                  Version History
+                </h3>
+                {versionHistory.length > 0 ? (
+                  <div>
+                    {versionHistory.map((version: any) => (
+                      <div key={version.id} style={{
+                        padding: '1rem',
+                        marginBottom: '0.75rem',
+                        backgroundColor: '#f8f9fa',
+                        borderRadius: '4px',
+                        border: '1px solid #dee2e6'
+                      }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '0.5rem' }}>
+                          <div>
+                            <div style={{ fontWeight: '600', fontSize: '1rem' }}>
+                              Version {version.versionNumber}
+                            </div>
+                            <div style={{ fontSize: '0.875rem', color: '#6c757d', marginTop: '0.25rem' }}>
+                              {new Date(version.createdAt).toLocaleString()}
+                            </div>
+                            <div style={{ fontSize: '0.875rem', color: '#6c757d' }}>
+                              By: {version.createdBy}
+                            </div>
+                          </div>
+                        </div>
+                        {version.reason && (
+                          <div style={{ marginTop: '0.5rem', fontStyle: 'italic', color: '#495057' }}>
+                            Reason: {version.reason}
+                          </div>
+                        )}
+                        <details style={{ marginTop: '0.75rem' }}>
+                          <summary style={{ cursor: 'pointer', fontWeight: '500', color: '#007bff' }}>
+                            View Snapshot
+                          </summary>
+                          <pre style={{
+                            marginTop: '0.5rem',
+                            padding: '0.75rem',
+                            backgroundColor: 'white',
+                            borderRadius: '4px',
+                            fontSize: '0.75rem',
+                            overflow: 'auto',
+                            maxHeight: '300px'
+                          }}>
+                            {JSON.stringify(version.snapshotData, null, 2)}
+                          </pre>
+                        </details>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div style={{ textAlign: 'center', padding: '2rem', color: '#6c757d' }}>
+                    No version history available.
+                  </div>
+                )}
+              </div>
             )}
           </div>
         </div>
