@@ -135,23 +135,46 @@ export async function POST(
 
     const objectStorageService = new ObjectStorageService();
     
-    // Normalize the file URL and set ACL policy
-    const filePath = await objectStorageService.trySetObjectEntityAclPolicy(
-      fileUrl,
-      {
-        owner: user.id,
-        visibility: 'private',
-        aclRules: [
-          {
-            group: {
-              type: 'DEPARTMENT' as any,
-              id: user.departmentId || 'all'
-            },
-            permission: ObjectPermission.READ
+    // Normalize the file URL to get a clean file path
+    let filePath: string;
+    try {
+      // Try to set ACL policy and normalize path
+      filePath = await objectStorageService.trySetObjectEntityAclPolicy(
+        fileUrl,
+        {
+          owner: user.id,
+          visibility: 'private',
+          aclRules: [
+            {
+              group: {
+                type: 'DEPARTMENT' as any,
+                id: user.departmentId || 'all'
+              },
+              permission: ObjectPermission.READ
+            }
           }
-        ]
+        }
+      );
+    } catch (aclError) {
+      // If ACL setting fails, just normalize the path without ACL
+      console.warn('Could not set ACL policy, proceeding without it:', aclError);
+      filePath = objectStorageService.normalizeObjectEntityPath(fileUrl);
+      
+      // If normalization also fails, extract path from URL manually
+      if (!filePath.startsWith('/')) {
+        try {
+          const url = new URL(fileUrl);
+          const bucketId = process.env.STORAGE_BUCKET_ID;
+          // Extract just the UUID from the path
+          const pathParts = url.pathname.split('/');
+          const uuid = pathParts[pathParts.length - 1];
+          filePath = `/attachments/${uuid}`;
+        } catch (urlError) {
+          console.error('Could not parse file URL:', urlError);
+          throw new Error('Invalid file URL format');
+        }
       }
-    );
+    }
 
     // Extract filename from file path
     const filename = filePath.split('/').pop() || originalName;
