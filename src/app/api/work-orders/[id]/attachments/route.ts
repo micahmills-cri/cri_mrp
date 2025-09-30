@@ -152,7 +152,7 @@ export async function POST(
               },
               permission: ObjectPermission.READ
             }
-          }
+          ]
         }
       );
     } catch (aclError) {
