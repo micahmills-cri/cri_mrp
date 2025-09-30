@@ -43,8 +43,13 @@ export class ObjectStorageService {
 
   // Gets the private object directory using your specific Work Order Attachments bucket.
   getPrivateObjectDir(): string {
-    // Using your specific "Work Order Attachments" bucket ID
-    const bucketId = "replit-objstore-ce5d5edc-1bae-43a7-8949-4f36f7b5b0dd";
+    const bucketId = process.env.STORAGE_BUCKET_ID;
+    if (!bucketId) {
+      throw new Error(
+        "STORAGE_BUCKET_ID environment variable is not set. " +
+        "Please set it to your Replit object storage bucket ID."
+      );
+    }
     const prefix = "attachments";
     
     // Construct the proper path for your bucket

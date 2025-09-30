@@ -10,6 +10,11 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Updates - All Four Phases Completed
 
+### Latest Fix (September 30, 2025)
+- **Object Storage Configuration**: Fixed file upload functionality by migrating from hardcoded bucket ID to environment variable (STORAGE_BUCKET_ID)
+- **Build Error Resolution**: Resolved Next.js build error with @google-cloud/storage by adding proper webpack externals configuration
+- **Environment Variables**: Storage bucket ID now properly configured in .env file for easy maintenance and bucket changes
+
 ### Phase 1 Foundation Components (Completed)
 - **NotesTimeline**: Complete notes management system with timeline visualization, department scoping, and edit/delete capabilities
 - **FileUpload**: Drag-and-drop file upload system with progress tracking and type validation  
@@ -95,6 +100,7 @@ Preferred communication style: Simple, everyday language.
 ### Environment Configuration
 - **DATABASE_URL**: PostgreSQL connection string
 - **JWT_SECRET**: Secret key for JWT signing (defaults to 'your-secret-key')
+- **STORAGE_BUCKET_ID**: Replit object storage bucket ID for file attachments
 - **NODE_ENV**: Environment detection for production optimizations
 
 The system runs on Node.js 20+ and uses port 5000 for development. Database migrations and seeding are handled through Prisma CLI commands.
