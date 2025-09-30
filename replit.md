@@ -10,7 +10,14 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Updates - All Four Phases Completed
 
-### Latest Fix (September 30, 2025) - File Upload Authentication Issue Resolved
+### Latest UI Simplification (September 30, 2025) - Plan Tab Removal
+- **Plan Tab Removed**: Eliminated redundant Plan tab from Supervisor Dashboard - all planning functionality now accessible via "Create Work Order" buttons in Board and Table views
+- **Simplified Navigation**: Streamlined dashboard with single Board view containing both Kanban and Table modes, reducing cognitive load
+- **Preserved Functionality**: PLANNED work orders remain fully accessible in Board view columns and can be edited via detail drawer - no data access lost
+- **State Cleanup**: Simplified activeTab state from 'board' | 'plan' to just 'board', removing unnecessary conditional rendering
+- **UI Consistency**: Both Board (Kanban) and Table views now feature matching header layouts with "Create Work Order" buttons
+
+### File Upload Authentication Issue Fix (September 30, 2025)
 - **JWT Payload Fix**: Fixed critical file upload bug where `user.id` was undefined - changed to `user.userId` to match JWT token structure
 - **Upload Flow Verified**: Complete end-to-end testing confirms file uploads now work correctly (upload URL → storage → database record creation)
 - **Simplified ACL Handling**: Removed complex ACL metadata system that was causing upload failures, using streamlined path normalization instead
