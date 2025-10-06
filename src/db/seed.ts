@@ -12,6 +12,8 @@ async function main() {
   // Note: Some models may not exist yet on first run, so we handle errors gracefully
   try { await prisma.workOrderNote.deleteMany() } catch {}
   try { await prisma.workOrderAttachment.deleteMany() } catch {}
+  try { await prisma.workOrderVersion.deleteMany() } catch {}
+  try { await prisma.auditLog.deleteMany() } catch {}
   await prisma.wOStageLog.deleteMany()
   await prisma.workOrder.deleteMany()
   await prisma.routingStage.deleteMany()
