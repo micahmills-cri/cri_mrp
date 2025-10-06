@@ -7,24 +7,37 @@ const prisma = new PrismaClient()
 async function main() {
   console.log('Starting database seed with backup restoration...')
 
-  // Clear existing data
+  // Clear existing data in proper dependency order (children first, parents last)
   console.log('Clearing existing data...')
-  // Note: Some models may not exist yet on first run, so we handle errors gracefully
+  
+  // Delete child records first (respecting foreign key constraints)
   try { await prisma.workOrderNote.deleteMany() } catch {}
   try { await prisma.workOrderAttachment.deleteMany() } catch {}
   try { await prisma.workOrderVersion.deleteMany() } catch {}
-  try { await prisma.auditLog.deleteMany() } catch {}
   await prisma.wOStageLog.deleteMany()
+  
+  // Now delete work orders (children removed)
   await prisma.workOrder.deleteMany()
+  
+  // Delete routing-related tables
+  try { await prisma.workInstructionVersion.deleteMany() } catch {}
   await prisma.routingStage.deleteMany()
   await prisma.routingVersion.deleteMany()
-  await prisma.workInstructionVersion.deleteMany()
+  
+  // Delete product-related tables (trims before models)
+  try { await prisma.productTrim.deleteMany() } catch {}
+  try { await prisma.productModel.deleteMany() } catch {}
+  
+  // Delete station and work center data
   await prisma.station.deleteMany()
   await prisma.workCenter.deleteMany()
+  
+  // Delete audit logs before users (audit logs reference users)
+  try { await prisma.auditLog.deleteMany() } catch {}
+  
+  // Finally delete users and departments
   await prisma.user.deleteMany()
   await prisma.department.deleteMany()
-  try { await prisma.productModel.deleteMany() } catch {}
-  try { await prisma.productTrim.deleteMany() } catch {}
 
   console.log('Creating departments from backup...')
   for (const dept of backupData.departments) {
@@ -141,60 +154,96 @@ async function main() {
     })
   }
 
-  console.log('Creating product models and trims...')
-  const [lx24Model, lx26Model] = await Promise.all([
-    prisma.productModel.create({
+  console.log('Creating product models from backup...')
+  for (const model of backupData.productModels) {
+    await prisma.productModel.create({
       data: {
-        name: 'LX24',
-        description: '24-foot luxury boat model',
-        isActive: true
-      }
-    }),
-    prisma.productModel.create({
-      data: {
-        name: 'LX26',
-        description: '26-foot luxury boat model',
-        isActive: true
+        id: model.id,
+        name: model.name,
+        description: model.description,
+        isActive: model.isActive,
+        createdAt: new Date(model.createdAt)
       }
     })
-  ])
+  }
 
-  await Promise.all([
-    prisma.productTrim.create({
+  console.log('Creating product trims from backup...')
+  for (const trim of backupData.productTrims) {
+    await prisma.productTrim.create({
       data: {
-        productModelId: lx24Model.id,
-        name: 'LT',
-        description: 'Luxury Touring - High-end touring package with premium features',
-        isActive: true
-      }
-    }),
-    prisma.productTrim.create({
-      data: {
-        productModelId: lx24Model.id,
-        name: 'LE',
-        description: 'Luxury Edition - Elite package with all premium features and upgrades',
-        isActive: true
-      }
-    }),
-    prisma.productTrim.create({
-      data: {
-        productModelId: lx26Model.id,
-        name: 'LT',
-        description: 'Luxury Touring - High-end touring package with premium features',
-        isActive: true
-      }
-    }),
-    prisma.productTrim.create({
-      data: {
-        productModelId: lx26Model.id,
-        name: 'LE',
-        description: 'Luxury Edition - Elite package with all premium features and upgrades',
-        isActive: true
+        id: trim.id,
+        productModelId: trim.productModelId,
+        name: trim.name,
+        description: trim.description,
+        isActive: trim.isActive,
+        createdAt: new Date(trim.createdAt)
       }
     })
-  ])
+  }
 
-  console.log('Database seed completed successfully with backup data restored and new models/trims added!')
+  console.log('Creating work order notes from backup...')
+  for (const note of backupData.workOrderNotes) {
+    await prisma.workOrderNote.create({
+      data: {
+        id: note.id,
+        workOrderId: note.workOrderId,
+        userId: note.userId,
+        departmentId: note.departmentId,
+        scope: note.scope,
+        content: note.content,
+        createdAt: new Date(note.createdAt),
+        updatedAt: new Date(note.updatedAt)
+      }
+    })
+  }
+
+  console.log('Creating work order attachments from backup...')
+  for (const attachment of backupData.workOrderAttachments) {
+    await prisma.workOrderAttachment.create({
+      data: {
+        id: attachment.id,
+        workOrderId: attachment.workOrderId,
+        userId: attachment.userId,
+        filename: attachment.filename,
+        originalName: attachment.originalName,
+        fileSize: attachment.fileSize,
+        mimeType: attachment.mimeType,
+        filePath: attachment.filePath,
+        createdAt: new Date(attachment.createdAt)
+      }
+    })
+  }
+
+  console.log('Creating work order versions from backup...')
+  for (const version of backupData.workOrderVersions) {
+    await prisma.workOrderVersion.create({
+      data: {
+        id: version.id,
+        workOrderId: version.workOrderId,
+        versionNumber: version.versionNumber,
+        snapshotData: version.snapshotData,
+        reason: version.reason,
+        createdBy: version.createdBy,
+        createdAt: new Date(version.createdAt)
+      }
+    })
+  }
+
+  console.log('Creating work instruction versions from backup...')
+  for (const instruction of backupData.workInstructionVersions) {
+    await prisma.workInstructionVersion.create({
+      data: {
+        id: instruction.id,
+        routingStageId: instruction.routingStageId,
+        version: instruction.version,
+        contentMd: instruction.contentMd,
+        isActive: instruction.isActive,
+        createdAt: new Date(instruction.createdAt)
+      }
+    })
+  }
+
+  console.log('Database seed completed successfully with all backup data restored!')
 }
 
 main()
