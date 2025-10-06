@@ -1,4 +1,4 @@
-import { PrismaClient, Role, RoutingVersionStatus } from '@prisma/client'
+ import { PrismaClient, Role, RoutingVersionStatus } from '@prisma/client'
 import { hashPassword } from '../lib/auth'
 import { backupData } from './backup-data'
 
