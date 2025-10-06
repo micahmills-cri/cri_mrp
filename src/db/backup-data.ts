@@ -155,5 +155,26 @@ export const backupData = {
       note: null,
       createdAt: "2025-09-24T15:35:00.673Z"
     }
-  ]
+  ],
+  productModels: [
+    {
+      id: "cmg6o0tot0000vwgdgtbkfgkw",
+      name: "LX24",
+      description: "24-foot luxury boat model",
+      isActive: true,
+      createdAt: "2025-09-30T14:41:13.805Z"
+    },
+    {
+      id: "cmg6o0tot0001vwgdytuxaj48",
+      name: "LX26",
+      description: "26-foot luxury boat model",
+      isActive: true,
+      createdAt: "2025-09-30T14:41:13.805Z"
+    }
+  ],
+  productTrims: [],
+  workOrderNotes: [],
+  workOrderAttachments: [],
+  workOrderVersions: [],
+  workInstructionVersions: []
 };
