@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import type { NextRequest } from "next/server";
+import env from './env';
 
 export type JwtPayload = {
   userId: string;
@@ -8,8 +9,7 @@ export type JwtPayload = {
   departmentId?: string | null;
 };
 
-const SECRET = process.env.JWT_SECRET!;
-if (!SECRET) console.warn("JWT_SECRET is not set");
+const SECRET = env.JWT_SECRET;
 
 export function signToken(payload: JwtPayload): string {
   return jwt.sign(payload, SECRET, { expiresIn: "7d" });

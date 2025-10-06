@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '../../../lib/db'
 import { getUserFromRequest } from '../../../lib/auth'
+import { getPaginationParams, createPaginatedResponse } from '../../../lib/pagination'
 import { z } from 'zod'
 import { WOStatus, Role } from '@prisma/client'
 
@@ -180,10 +181,14 @@ export async function GET(request: NextRequest) {
     const id = searchParams.get('id')
     
     if (!id) {
-      // Return list of work orders
+      // Return list of work orders with pagination
+      const { cursor, limit } = getPaginationParams(searchParams)
+
       const workOrders = await prisma.workOrder.findMany({
+        take: (limit ?? 20) + 1, // Fetch one extra to determine if there's more
+        skip: cursor ? 1 : 0,
+        cursor: cursor ? { id: cursor } : undefined,
         orderBy: { createdAt: 'desc' },
-        take: 100,
         include: {
           routingVersion: true,
           _count: {
@@ -194,8 +199,9 @@ export async function GET(request: NextRequest) {
           }
         }
       })
-      
-      return NextResponse.json({ workOrders })
+
+      const paginatedResponse = createPaginatedResponse(workOrders, limit ?? 20)
+      return NextResponse.json(paginatedResponse)
     }
 
     // Get specific work order with details

@@ -95,6 +95,12 @@ model WorkOrder {
   attachments       WorkOrderAttachment[]
   versions          WorkOrderVersion[]
   routingVersion    RoutingVersion        @relation(fields: [routingVersionId], references: [id])
+
+  @@index([hullId])
+  @@index([productSku])
+  @@index([status])
+  @@index([status, createdAt])
+  @@index([routingVersionId])
 }
 
 model WorkOrderVersion {
@@ -105,7 +111,7 @@ model WorkOrderVersion {
   reason         String
   createdBy      String
   createdAt      DateTime  @default(now())
-  workOrder      WorkOrder @relation(fields: [workOrderId], references: [id])
+  workOrder      WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
 }
 
 model WOStageLog {
@@ -122,7 +128,9 @@ model WOStageLog {
   routingStage   RoutingStage @relation(fields: [routingStageId], references: [id])
   station        Station      @relation(fields: [stationId], references: [id])
   user           User         @relation(fields: [userId], references: [id])
-  workOrder      WorkOrder    @relation(fields: [workOrderId], references: [id])
+  workOrder      WorkOrder    @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+
+  @@index([workOrderId, createdAt])
 }
 
 model WorkInstructionVersion {

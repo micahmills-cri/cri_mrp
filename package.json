@@ -7,6 +7,9 @@
     "dev": "next dev -p ${PORT:-5000}",
     "build": "next build",
     "start": "next start",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "seed": "node --import tsx src/db/seed.ts"
