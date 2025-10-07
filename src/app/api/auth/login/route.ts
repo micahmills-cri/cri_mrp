@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '../../../../lib/db'
+import { prisma } from '@/server/db/client'
 import { verifyPassword, signJWT } from '../../../../lib/auth'
 import { z } from 'zod'
 
