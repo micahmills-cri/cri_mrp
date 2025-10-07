@@ -10,6 +10,15 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Updates - All Four Phases Completed
 
+### Product Trim Data Restoration (October 7, 2025)
+- **Root Cause Fixed**: Product trim data was being lost during reseeds because `backup-data.ts` had an empty `productTrims: []` array
+- **Trim Levels Added**: Added 7 realistic trim configurations to `backup-data.ts`:
+  - **LX24**: Base, Sport, Luxury (3 trims)
+  - **LX26**: Base, Sport, Luxury, Premium (4 trims)
+- **Database Reseeded**: Successfully populated database with all trim data, enabling work order creation
+- **Prevention Strategy**: All seed data is now stored in `backup-data.ts` - the seed script deletes and repopulates from this file, so any reference data must be included in the backup file to persist across reseeds
+- **Important Note**: When adding new models/trims via the UI in the future, they must be manually added to `backup-data.ts` to survive database reseeds
+
 ### Latest UI Simplification (September 30, 2025) - Plan Tab Removal
 - **Plan Tab Removed**: Eliminated redundant Plan tab from Supervisor Dashboard - all planning functionality now accessible via "Create Work Order" buttons in Board and Table views
 - **Simplified Navigation**: Streamlined dashboard with single Board view containing both Kanban and Table modes, reducing cognitive load
