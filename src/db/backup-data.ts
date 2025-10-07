@@ -172,7 +172,64 @@ export const backupData = {
       createdAt: "2025-09-30T14:41:13.805Z"
     }
   ],
-  productTrims: [],
+  productTrims: [
+    {
+      id: "cmg6o0tou0002vwgd8ht7mklp",
+      productModelId: "cmg6o0tot0000vwgdgtbkfgkw",
+      name: "Base",
+      description: "Entry-level trim with essential features",
+      isActive: true,
+      createdAt: "2025-09-30T14:41:13.810Z"
+    },
+    {
+      id: "cmg6o0tou0003vwgdp9x4nqrs",
+      productModelId: "cmg6o0tot0000vwgdgtbkfgkw",
+      name: "Sport",
+      description: "Performance-oriented trim with enhanced features",
+      isActive: true,
+      createdAt: "2025-09-30T14:41:13.811Z"
+    },
+    {
+      id: "cmg6o0tou0004vwgdt2y5wvnm",
+      productModelId: "cmg6o0tot0000vwgdgtbkfgkw",
+      name: "Luxury",
+      description: "Premium trim with luxury amenities and finishes",
+      isActive: true,
+      createdAt: "2025-09-30T14:41:13.812Z"
+    },
+    {
+      id: "cmg6o0tou0005vwgdx7k9plqw",
+      productModelId: "cmg6o0tot0001vwgdytuxaj48",
+      name: "Base",
+      description: "Entry-level trim with essential features",
+      isActive: true,
+      createdAt: "2025-09-30T14:41:13.813Z"
+    },
+    {
+      id: "cmg6o0tou0006vwgdm4r8szbn",
+      productModelId: "cmg6o0tot0001vwgdytuxaj48",
+      name: "Sport",
+      description: "Performance-oriented trim with enhanced features",
+      isActive: true,
+      createdAt: "2025-09-30T14:41:13.814Z"
+    },
+    {
+      id: "cmg6o0tou0007vwgdq9t3hxyz",
+      productModelId: "cmg6o0tot0001vwgdytuxaj48",
+      name: "Luxury",
+      description: "Premium trim with luxury amenities and finishes",
+      isActive: true,
+      createdAt: "2025-09-30T14:41:13.815Z"
+    },
+    {
+      id: "cmg6o0tou0008vwgdv6p2mjkl",
+      productModelId: "cmg6o0tot0001vwgdytuxaj48",
+      name: "Premium",
+      description: "Top-tier trim with all available features and upgrades",
+      isActive: true,
+      createdAt: "2025-09-30T14:41:13.816Z"
+    }
+  ],
   workOrderNotes: [],
   workOrderAttachments: [],
   workOrderVersions: [],
