@@ -2,9 +2,11 @@ import { NextRequest } from 'next/server'
 import { describe, expect, it, beforeEach, vi } from 'vitest'
 import { WOStatus } from '@prisma/client'
 
-const findManyMock = vi.fn()
-const findUniqueMock = vi.fn()
-const getUserFromRequestMock = vi.fn()
+const { findManyMock, findUniqueMock, getUserFromRequestMock } = vi.hoisted(() => ({
+  findManyMock: vi.fn(),
+  findUniqueMock: vi.fn(),
+  getUserFromRequestMock: vi.fn(),
+}))
 
 vi.mock('@/server/db/client', () => ({
   prisma: {
