@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '../../../../../lib/db';
+import { prisma } from '@/server/db/client';
 import { getUserFromRequest } from '../../../../../lib/auth';
 
 // GET /api/product-models/[id]/trims - Get trims for a specific product model

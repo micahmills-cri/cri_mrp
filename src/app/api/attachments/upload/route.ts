@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { ObjectStorageService } from '../../../../lib/objectStorage';
+import { ObjectStorageService } from '@/server/storage/objectStorage';
 import { getUserFromRequest } from '../../../../lib/auth';
 
 // POST /api/attachments/upload - Get presigned URL for file upload

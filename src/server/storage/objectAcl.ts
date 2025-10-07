@@ -1,5 +1,4 @@
 import { File } from "@google-cloud/storage";
-import { prisma } from './db';
 
 const ACL_POLICY_METADATA_KEY = "custom:aclPolicy";
 
