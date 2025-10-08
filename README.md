@@ -1,112 +1,70 @@
 # Boat Factory Operations MVP
 
-Next.js 14 Operations MVP for high-mix, low-volume boat factory.
+Next.js 14 operations platform supporting a high-mix, low-volume boat factory. The app coordinates what operators execute on the floor and how supervisors plan, release, and monitor work.
 
-## Features
+## Product Features
 
-### Operator Console (Interactive)
-- **Work Order Queue**: Real-time view of READY and IN_PROGRESS work orders
-- **Search**: Find work orders by WO number or Hull ID
-- **Stage Actions**: Start, Pause, and Complete operations with quantity tracking
-- **Station Selection**: Persisted station assignment
-- **Department Scoped**: Operators only see/act on their department's work
-- **Auto-refresh**: Queue updates every 5 seconds
+### Operator Console
 
-### Supervisor Dashboard (Interactive)
-- **Board Tab**: 
-  - Table/Kanban view toggle for work orders
-  - Real-time KPIs (Released, In Progress, Completed, On Hold)
-  - Hold/Unhold work orders with reason tracking
-  - Detail drawer with full stage timeline
-- **Plan Tab**:
-  - Create new work orders with routing configuration
-  - Clone and edit routing versions
-  - Enable/disable stages, reorder, adjust standard times
-  - Release work orders to production
-- **Department Filter**: Admins can view all departments
+- Real-time queue of READY and IN_PROGRESS work orders scoped to the operator's department, refreshed every five seconds.
+- Search across work orders by number or hull ID and open any result directly from the queue.
+- Guided action panel for the active stage with persisted station selection, quantity capture, and Start/Pause/Complete controls.
+- Department picker for multi-skilled operators, backed by role-aware authentication and redirects.
 
-### Core Systems
-- **Authentication**: JWT httpOnly cookies with role-based redirects
-- **Stage Gating**: Only current enabled stage is actionable
-- **Audit Logging**: Complete traceability of all actions
-- **Database**: PostgreSQL with Prisma ORM
-- **Department Scoping**: All operations filtered by user's department
+### Supervisor Workspace
 
-## Quick Start
+- Single workspace that merges planning and execution views with a table/Kanban toggle, live KPI cards, and department filtering for administrators.
+- Detail drawer that surfaces the entire stage timeline, operator notes, file attachments, and version history in dedicated tabs.
+- Integrated routing editor to enable/disable stages, reorder sequences, adjust standard times, and persist new routing versions for reuse.
+- Work-order creation modal with model/trim selection, automatic SKU generation, and the ability to clone or reuse existing routings before release.
+- Hold, unhold, and release actions with reason tracking to control production flow without leaving the workspace.
 
-1. **Install dependencies**:
+### Platform Capabilities
+
+- JWT-backed authentication with httpOnly cookies and role-based redirects between operator, supervisor, and admin experiences.
+- Prisma/PostgreSQL data layer with audit history, notes, and attachments for end-to-end traceability.
+- Department-aware stage gating so only the current enabled stage is actionable and recorded.
+- Shared component library for stats, data grids, notes timelines, and file management to keep UI patterns consistent.
+
+## Getting Started
+
+Follow `docs/ONBOARDING.md` for environment prerequisites and secrets management, then:
+
+1. **Install dependencies**
    ```bash
    npm install
    ```
-
-2. **Generate Prisma client**:
+2. **Generate the Prisma client**
    ```bash
-   npx prisma generate
+   npm run prisma:generate
    ```
-
-3. **Run database migration**:
+3. **Apply database migrations**
    ```bash
-   npx prisma migrate dev --name init
+   npm run prisma:migrate -- --name init
    ```
-
-4. **Seed the database**:
+4. **Seed the database with demo data**
    ```bash
    npm run seed
    ```
-
-5. **Start development server**:
+5. **Start the development server (defaults to port 5000)**
    ```bash
    npm run dev
    ```
 
-## Test Accounts
+## Testing
+
+- Run the Vitest suite before opening a pull request:
+  ```bash
+  npm run test
+  ```
+
+## Reference Accounts
 
 - **Admin**: admin@cri.local / Admin123!
 - **Supervisor**: supervisor@cri.local / Supervisor123!
 - **Operator**: operator@cri.local / Operator123!
 
-## Architecture
+## Documentation & Change Tracking
 
-- **Frontend**: Next.js 14 App Router with TypeScript
-- **Backend**: Next.js API routes
-- **Database**: PostgreSQL with Prisma
-- **Authentication**: JWT with httpOnly cookies
-- **Authorization**: Role-based access control (RBAC)
-
-## Database Schema
-
-- **Users**: Admin, Supervisor, Operator roles
-- **Departments**: One per manufacturing stage
-- **Work Centers & Stations**: Manufacturing resources
-- **Routing Versions**: Product routing definitions
-- **Work Orders**: Production orders with stage tracking
-- **Audit Logs**: Complete change history
-
-## Usage Notes
-
-### For Operators
-1. Login with your operator credentials
-2. Your department's work queue loads automatically
-3. Search for specific work orders using WO number or Hull ID
-4. Click "Open" on any queue item or search result to view the action panel
-5. Select your station (persisted between sessions)
-6. Enter quantities and optional notes
-7. Use Start/Pause/Complete buttons to manage work progress
-8. Queue refreshes automatically every 5 seconds
-
-### For Supervisors
-1. Login with supervisor credentials
-2. **Board Tab** - Monitor work in progress:
-   - Toggle between Table and Kanban views
-   - Put work orders on hold (with reason) or release from hold
-   - Click "Open" to see detailed stage timeline and notes
-3. **Plan Tab** - Create and manage work orders:
-   - Click "Create Work Order" to define new production
-   - Configure routing by enabling/disabling stages
-   - Reorder stages and adjust standard times
-   - Release planned work orders to start production
-
-### For Administrators
-- All supervisor features plus:
-- Department filter to view/manage all departments
-- Access to all work orders across the factory
+- Developer onboarding instructions live in `docs/ONBOARDING.md`.
+- Each agent must append their work to `docs/CHANGELOG.md` with a timestamp, summary, and reasoning.
