@@ -1,119 +1,135 @@
-import React from 'react'
-import clsx from 'clsx'
+import React from "react";
+import clsx from "clsx";
 
-export interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
+export interface TextareaProps
+  extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   /** Textarea variant */
-  variant?: 'default' | 'error'
+  variant?: "default" | "error";
   /** Full width textarea */
-  fullWidth?: boolean
+  fullWidth?: boolean;
   /** Label text */
-  label?: string
+  label?: string;
   /** Error message to display */
-  error?: string
+  error?: string;
   /** Helper text */
-  helperText?: string
+  helperText?: string;
   /** Required field indicator */
-  isRequired?: boolean
+  isRequired?: boolean;
   /** Resize behavior */
-  resize?: 'none' | 'vertical' | 'horizontal' | 'both'
+  resize?: "none" | "vertical" | "horizontal" | "both";
 }
 
 export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
-  ({ 
-    className, 
-    variant = 'default',
-    fullWidth = true,
-    label,
-    error,
-    helperText,
-    isRequired,
-    disabled,
-    id,
-    resize = 'vertical',
-    rows = 3,
-    ...props 
-  }, ref) => {
-    const generatedId = React.useId()
-    const textareaId = id || generatedId
-    const errorId = `${textareaId}-error`
-    const helperTextId = `${textareaId}-helper`
-    const hasError = variant === 'error' || !!error
-    const isDisabled = disabled
+  (
+    {
+      className,
+      variant = "default",
+      fullWidth = true,
+      label,
+      error,
+      helperText,
+      isRequired,
+      disabled,
+      id,
+      resize = "vertical",
+      rows = 3,
+      ...props
+    },
+    ref,
+  ) => {
+    const generatedId = React.useId();
+    const textareaId = id || generatedId;
+    const errorId = `${textareaId}-error`;
+    const helperTextId = `${textareaId}-helper`;
+    const hasError = variant === "error" || !!error;
+    const isDisabled = disabled;
 
     return (
-      <div className={clsx('space-y-1', { 'w-full': fullWidth }, className)}>
+      <div className={clsx("space-y-1", { "w-full": fullWidth }, className)}>
         {label && (
-          <label 
+          <label
             htmlFor={textareaId}
-            className="block text-sm font-medium text-slate-700"
+            className="block text-sm font-medium text-[color:var(--muted-strong)]"
           >
             {label}
             {isRequired && <span className="text-danger-600 ml-1">*</span>}
           </label>
         )}
-        
+
         <textarea
           ref={ref}
           id={textareaId}
           rows={rows}
           required={isRequired}
           aria-invalid={hasError}
-          aria-describedby={clsx(
-            error && errorId,
-            helperText && !error && helperTextId
-          ) || undefined}
+          aria-describedby={
+            clsx(error && errorId, helperText && !error && helperTextId) ||
+            undefined
+          }
           className={clsx(
-            // Base styles
-            'block border rounded-md shadow-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2',
-            'px-3 py-2 text-sm placeholder-slate-400 font-normal',
-            // Resize behavior
+            "block rounded-md border px-3 py-2 text-sm font-normal shadow-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-[var(--ring-offset)]",
+            "bg-[var(--surface)] text-[color:var(--foreground)] placeholder:text-[color:var(--muted)]",
             {
-              'resize-none': resize === 'none',
-              'resize-y': resize === 'vertical',
-              'resize-x': resize === 'horizontal', 
-              'resize': resize === 'both',
+              "resize-none": resize === "none",
+              "resize-y": resize === "vertical",
+              "resize-x": resize === "horizontal",
+              resize: resize === "both",
             },
-            // Size
-            {
-              'w-full': fullWidth,
-            },
-            // State variants
-            {
-              // Default state
-              'border-slate-300 bg-white text-slate-900': !hasError && !isDisabled,
-              'hover:border-slate-400 focus:border-primary-500 focus:ring-primary-500': !hasError && !isDisabled,
-              
-              // Error state
-              'border-danger-300 bg-danger-50 text-danger-900': hasError && !isDisabled,
-              'hover:border-danger-400 focus:border-danger-500 focus:ring-danger-500': hasError && !isDisabled,
-              
-              // Disabled state
-              'border-slate-200 bg-slate-50 text-slate-500 cursor-not-allowed': isDisabled,
-              'placeholder-slate-300': isDisabled,
-            }
+            fullWidth && "w-full",
+            !hasError &&
+              !isDisabled && [
+                "border-[var(--border)]",
+                "hover:border-[var(--border-strong)]",
+                "focus:border-primary-500",
+              ],
+            hasError &&
+              !isDisabled && [
+                "border-[var(--status-danger-border)] bg-[var(--status-danger-surface)] text-[color:var(--status-danger-foreground)]",
+                "hover:border-[var(--status-danger-accent)] focus:border-[var(--status-danger-accent)] focus:ring-danger-500",
+              ],
+            isDisabled && [
+              "border-[var(--border)] bg-[var(--surface-muted)] text-[color:var(--input-disabled-foreground)] cursor-not-allowed",
+              "placeholder:text-[color:var(--input-disabled-foreground)]",
+            ],
           )}
           disabled={isDisabled}
           {...props}
         />
-        
+
         {(error || helperText) && (
           <div className="space-y-1">
             {error && (
-              <p id={errorId} className="text-xs text-danger-600 flex items-center">
-                <svg className="w-3 h-3 mr-1 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              <p
+                id={errorId}
+                className="text-xs text-danger-600 flex items-center"
+              >
+                <svg
+                  className="w-3 h-3 mr-1 flex-shrink-0"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                    clipRule="evenodd"
+                  />
                 </svg>
                 {error}
               </p>
             )}
             {helperText && !error && (
-              <p id={helperTextId} className="text-xs text-slate-500">{helperText}</p>
+              <p
+                id={helperTextId}
+                className="text-xs text-[color:var(--muted)]"
+              >
+                {helperText}
+              </p>
             )}
           </div>
         )}
       </div>
-    )
-  }
-)
+    );
+  },
+);
 
-Textarea.displayName = 'Textarea'
+Textarea.displayName = "Textarea";
