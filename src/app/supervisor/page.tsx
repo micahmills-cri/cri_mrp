@@ -103,7 +103,9 @@ export default function SupervisorView() {
   const [selectedDepartment, setSelectedDepartment] = useState<string>("");
   const [userRole, setUserRole] = useState<string>("");
   const [userDepartmentId, setUserDepartmentId] = useState<string>("");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [viewMode, setViewMode] = useState<"table" | "kanban">("table");
@@ -177,7 +179,7 @@ export default function SupervisorView() {
         setUserRole(authData.user.role);
         setUserDepartmentId(authData.user.departmentId || "");
         setSelectedDepartment(authData.user.departmentId || "");
-        loadBoardData();
+        loadBoardData({ trigger: "initial" });
         loadWorkCenters();
       })
       .catch(() => router.push("/login"));
@@ -209,57 +211,82 @@ export default function SupervisorView() {
   };
 
   // Load board data
-  const loadBoardData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await fetch("/api/supervisor/dashboard", {
-        credentials: "include",
-      });
-      const result = await response.json();
+  const loadBoardData = useCallback(
+    async (options?: { trigger?: "initial" | "poll" | "manual" }) => {
+      const trigger = options?.trigger ?? (isInitialLoad ? "initial" : "manual");
 
-      if (result.success) {
-        // Transform the WIP data to work orders
-        const transformedOrders: WorkOrder[] = result.data.wipData.map(
-          (item: any) => ({
-            id: item.id,
-            number: item.number,
-            hullId: item.hullId,
-            productSku: item.productSku,
-            status: item.status,
-            qty: item.qty,
-            currentStageIndex: 0,
-            specSnapshot: {},
-            createdAt: item.createdAt,
-            _count: item._count, // Pass through count data for badges
-            currentStage: item.currentStage
-              ? {
-                  id: item.currentStage.id || "",
-                  code: item.currentStage.code,
-                  name: item.currentStage.name,
-                  sequence: item.currentStage.sequence,
-                  workCenter: item.currentStage.workCenter,
-                  department: "",
-                  standardSeconds: 0,
-                }
-              : undefined,
-          }),
-        );
-        setWorkOrders(transformedOrders);
-        setSummary(result.data.summary);
-      } else {
-        setError(result.error || "Failed to load dashboard");
+      if (trigger === "poll") {
+        setIsRefreshing(true);
       }
-    } catch (err) {
-      setError("Network error loading dashboard");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+
+      if (trigger === "initial" && isInitialLoad) {
+        setLoading(true);
+      }
+
+      try {
+        const response = await fetch("/api/supervisor/dashboard", {
+          credentials: "include",
+        });
+        const result = await response.json();
+
+        if (result.success) {
+          // Transform the WIP data to work orders
+          const transformedOrders: WorkOrder[] = result.data.wipData.map(
+            (item: any) => ({
+              id: item.id,
+              number: item.number,
+              hullId: item.hullId,
+              productSku: item.productSku,
+              status: item.status,
+              qty: item.qty,
+              currentStageIndex: 0,
+              specSnapshot: {},
+              createdAt: item.createdAt,
+              _count: item._count, // Pass through count data for badges
+              currentStage: item.currentStage
+                ? {
+                    id: item.currentStage.id || "",
+                    code: item.currentStage.code,
+                    name: item.currentStage.name,
+                    sequence: item.currentStage.sequence,
+                    workCenter: item.currentStage.workCenter,
+                    department: "",
+                    standardSeconds: 0,
+                  }
+                : undefined,
+            }),
+          );
+          setWorkOrders(transformedOrders);
+          setSummary(result.data.summary);
+        } else {
+          setError(result.error || "Failed to load dashboard");
+        }
+      } catch (err) {
+        setError("Network error loading dashboard");
+      } finally {
+        if (trigger === "poll") {
+          setIsRefreshing(false);
+        }
+
+        if (trigger === "initial" && isInitialLoad) {
+          setLoading(false);
+        }
+
+        if (isInitialLoad) {
+          setIsInitialLoad(false);
+        }
+      }
+    },
+    [isInitialLoad],
+  );
 
   // Poll for updates
   useEffect(() => {
     if (activeTab === "board") {
-      const interval = setInterval(loadBoardData, 10000); // Poll every 10 seconds
+      const interval = setInterval(
+        () => loadBoardData({ trigger: "poll" }),
+        10000,
+      ); // Poll every 10 seconds
       return () => clearInterval(interval);
     }
   }, [activeTab, loadBoardData]);
@@ -288,6 +315,7 @@ export default function SupervisorView() {
     const reason = prompt("Please enter reason for hold:");
     if (!reason) return;
 
+    setLoading(true);
     try {
       const response = await fetch(`/api/work-orders/${woId}/hold`, {
         method: "POST",
@@ -300,18 +328,21 @@ export default function SupervisorView() {
 
       if (response.ok && data.success) {
         setMessage(data.message);
-        await loadBoardData();
+        await loadBoardData({ trigger: "manual" });
         setTimeout(() => setMessage(""), 3000);
       } else {
         setError(data.error || "Failed to hold work order");
       }
     } catch (err) {
       setError("Network error holding work order");
+    } finally {
+      setLoading(false);
     }
   };
 
   // Unhold work order
   const unholdWorkOrder = async (woId: string) => {
+    setLoading(true);
     try {
       const response = await fetch(`/api/work-orders/${woId}/unhold`, {
         method: "POST",
@@ -322,13 +353,15 @@ export default function SupervisorView() {
 
       if (response.ok && data.success) {
         setMessage(data.message);
-        await loadBoardData();
+        await loadBoardData({ trigger: "manual" });
         setTimeout(() => setMessage(""), 3000);
       } else {
         setError(data.error || "Failed to unhold work order");
       }
     } catch (err) {
       setError("Network error unholding work order");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -509,6 +542,7 @@ export default function SupervisorView() {
       return;
     }
 
+    setLoading(true);
     try {
       // First create/clone the routing version with edited stages
       const routingResponse = await fetch("/api/routing-versions/clone", {
@@ -575,18 +609,21 @@ export default function SupervisorView() {
         });
         setSelectedRoutingVersion(null);
         setEditableStages([]);
-        await loadBoardData();
+        await loadBoardData({ trigger: "manual" });
         setTimeout(() => setMessage(""), 3000);
       } else {
         setError(woData.error || "Failed to create work order");
       }
     } catch (err) {
       setError("Network error creating work order");
+    } finally {
+      setLoading(false);
     }
   };
 
   // Release work order
   const releaseWorkOrder = async (woId: string) => {
+    setLoading(true);
     try {
       const response = await fetch(`/api/work-orders/${woId}/release`, {
         method: "POST",
@@ -597,13 +634,15 @@ export default function SupervisorView() {
 
       if (response.ok && data.success) {
         setMessage(data.message);
-        await loadBoardData();
+        await loadBoardData({ trigger: "manual" });
         setTimeout(() => setMessage(""), 3000);
       } else {
         setError(data.error || "Failed to release work order");
       }
     } catch (err) {
       setError("Network error releasing work order");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -641,6 +680,7 @@ export default function SupervisorView() {
   const saveWorkOrderChanges = async () => {
     if (!selectedWorkOrder || !editedWorkOrder) return;
 
+    setLoading(true);
     try {
       const response = await fetch(`/api/work-orders/${selectedWorkOrder.id}`, {
         method: "PATCH",
@@ -689,7 +729,7 @@ export default function SupervisorView() {
           });
         }
 
-        await loadBoardData();
+        await loadBoardData({ trigger: "manual" });
         loadVersionHistory(selectedWorkOrder.id);
         setTimeout(() => setMessage(""), 3000);
       } else {
@@ -697,6 +737,8 @@ export default function SupervisorView() {
       }
     } catch (err) {
       setError("Network error saving changes");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -720,6 +762,7 @@ export default function SupervisorView() {
   };
 
   const cancelWorkOrder = async (woId: string) => {
+    setLoading(true);
     try {
       const response = await fetch("/api/supervisor/cancel-wo", {
         method: "POST",
@@ -734,17 +777,20 @@ export default function SupervisorView() {
         setMessage("Work order cancelled successfully");
         setIsDetailDrawerOpen(false);
         setSelectedWorkOrder(null);
-        await loadBoardData();
+        await loadBoardData({ trigger: "manual" });
         setTimeout(() => setMessage(""), 3000);
       } else {
         setError(data.error || "Failed to cancel work order");
       }
     } catch (err) {
       setError("Network error cancelling work order");
+    } finally {
+      setLoading(false);
     }
   };
 
   const uncancelWorkOrder = async (woId: string) => {
+    setLoading(true);
     try {
       const response = await fetch("/api/supervisor/uncancel-wo", {
         method: "POST",
@@ -757,13 +803,15 @@ export default function SupervisorView() {
 
       if (response.ok && data.success) {
         setMessage("Work order restored to PLANNED status");
-        await loadBoardData();
+        await loadBoardData({ trigger: "manual" });
         setTimeout(() => setMessage(""), 3000);
       } else {
         setError(data.error || "Failed to restore work order");
       }
     } catch (err) {
       setError("Network error restoring work order");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -1095,6 +1143,24 @@ export default function SupervisorView() {
     );
   };
 
+  if (isInitialLoad) {
+    return (
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: "var(--background)",
+          color: "var(--foreground)",
+          fontFamily: "var(--font-sans)",
+        }}
+      >
+        Loading...
+      </div>
+    );
+  }
+
   return (
     <div
       style={{
@@ -1298,15 +1364,36 @@ export default function SupervisorView() {
                     marginBottom: "1rem",
                   }}
                 >
-                  <h2
+                  <div
                     style={{
-                      margin: 0,
-                      fontSize: "1.25rem",
-                      fontWeight: "600",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.5rem",
                     }}
                   >
-                    Active Work Orders
-                  </h2>
+                    <h2
+                      style={{
+                        margin: 0,
+                        fontSize: "1.25rem",
+                        fontWeight: "600",
+                      }}
+                    >
+                      Active Work Orders
+                    </h2>
+                    {isRefreshing && (
+                      <span
+                        style={{
+                          fontSize: "0.75rem",
+                          color: "var(--muted)",
+                          backgroundColor: "var(--surface-muted, rgba(0,0,0,0.05))",
+                          borderRadius: "999px",
+                          padding: "0.25rem 0.5rem",
+                        }}
+                      >
+                        Refreshing…
+                      </span>
+                    )}
+                  </div>
                   <Button
                     variant="success"
                     size="sm"
