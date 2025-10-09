@@ -2,6 +2,12 @@
 
 > Record every pull request chronologically with the newest entry at the top. Use UTC timestamps in ISO 8601 format.
 
+## 2025-10-09T14:22:24Z — Agent: gpt-5-codex
+
+- **Summary:** Rebuilt the operator console UI to consume theme-aware tokens, shared form primitives, and semantic status badges so every panel, table, and action control honors dark mode. Refreshed the product model/trim selector to lean on the shared Select/Input components, ensuring supervisor planning forms inherit the same adaptive styling.
+- **Reasoning:** Replace the ad hoc inline styles that hardcoded light-theme colors so operators and supervisors get consistent, accessible experiences across light and dark themes while centralizing future styling updates.
+- **Hats:** role-ui, docs, qa-gate.
+
 ## 2025-10-08T19:45:00Z — Agent: gpt-5-codex
 
 - **Summary:** Applied theme-aware palettes to shared UI primitives, refreshed supervisor dashboard styling to respect CSS vari
