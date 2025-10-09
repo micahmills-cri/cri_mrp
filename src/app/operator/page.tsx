@@ -1,560 +1,547 @@
-'use client'
+"use client";
 
-import { useState, useEffect, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, useCallback } from "react";
+import clsx from "clsx";
+import { useRouter } from "next/navigation";
+
+import {
+  ActionButton,
+  Button,
+  PauseButton,
+  SecondaryButton,
+  StartButton,
+} from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Select } from "@/components/ui/Select";
+import { Textarea } from "@/components/ui/Textarea";
 
 type Station = {
-  id: string
-  code: string
-  name: string
-}
+  id: string;
+  code: string;
+  name: string;
+};
 
 type QueueWorkOrder = {
-  id: string
-  number: string
-  hullId: string
-  productSku: string
-  status: string
-  qty: number
+  id: string;
+  number: string;
+  hullId: string;
+  productSku: string;
+  status: string;
+  qty: number;
   currentStage: {
-    id: string
-    code: string
-    name: string
-    sequence: number
+    id: string;
+    code: string;
+    name: string;
+    sequence: number;
     workCenter: {
-      id: string
-      name: string
-    }
-    stations: Station[]
-  }
+      id: string;
+      name: string;
+    };
+    stations: Station[];
+  };
   lastEvent: {
-    event: string
-    createdAt: string
-    station: string
-    user: string
-  } | null
-  currentStageIndex: number
-  totalEnabledStages: number
-  createdAt: string
-}
+    event: string;
+    createdAt: string;
+    station: string;
+    user: string;
+  } | null;
+  currentStageIndex: number;
+  totalEnabledStages: number;
+  createdAt: string;
+};
 
 type WorkOrderDetails = {
   workOrder: {
-    id: string
-    number: string
-    hullId: string
-    productSku: string
-    status: string
-    qty: number
-    currentStageIndex: number
-    specSnapshot: any
+    id: string;
+    number: string;
+    hullId: string;
+    productSku: string;
+    status: string;
+    qty: number;
+    currentStageIndex: number;
+    specSnapshot: any;
     currentStage: {
-      id: string
-      code: string
-      name: string
-      sequence: number
-      enabled: boolean
-      standardSeconds: number
+      id: string;
+      code: string;
+      name: string;
+      sequence: number;
+      enabled: boolean;
+      standardSeconds: number;
       workCenter: {
-        id: string
-        name: string
+        id: string;
+        name: string;
         department: {
-          id: string
-          name: string
-        }
-        stations: Station[]
-      }
+          id: string;
+          name: string;
+        };
+        stations: Station[];
+      };
       workInstruction: {
-        id: string
-        version: number
-        contentMd: string
-      } | null
-    }
+        id: string;
+        version: number;
+        contentMd: string;
+      } | null;
+    };
     lastEvent: {
-      event: string
-      createdAt: string
-      station: string
-      user: string
-      note: string | null
-      goodQty: number
-      scrapQty: number
-    } | null
-    enabledStagesCount: number
-  }
-}
+      event: string;
+      createdAt: string;
+      station: string;
+      user: string;
+      note: string | null;
+      goodQty: number;
+      scrapQty: number;
+    } | null;
+    enabledStagesCount: number;
+  };
+};
 
 type Department = {
-  id: string
-  name: string
-}
+  id: string;
+  name: string;
+};
+
+const queueStatusVariants: Record<string, string> = {
+  READY:
+    "border-[var(--status-neutral-border)] bg-[var(--status-neutral-surface)] text-[color:var(--status-neutral-foreground)]",
+  IN_PROGRESS:
+    "border-[var(--status-info-border)] bg-[var(--status-info-surface)] text-[color:var(--status-info-foreground)]",
+  HOLD:
+    "border-[var(--status-warning-border)] bg-[var(--status-warning-surface)] text-[color:var(--status-warning-foreground)]",
+};
+
+const workOrderStatusVariants: Record<string, string> = {
+  IN_PROGRESS:
+    "border-[var(--status-info-border)] bg-[var(--status-info-surface)] text-[color:var(--status-info-foreground)]",
+  HOLD:
+    "border-[var(--status-warning-border)] bg-[var(--status-warning-surface)] text-[color:var(--status-warning-foreground)]",
+  COMPLETED:
+    "border-[var(--status-success-border)] bg-[var(--status-success-surface)] text-[color:var(--status-success-foreground)]",
+  CANCELLED:
+    "border-[var(--status-danger-border)] bg-[var(--status-danger-surface)] text-[color:var(--status-danger-foreground)]",
+};
+
+const fallbackStatusClass =
+  "border-[var(--border)] bg-[var(--surface-muted)] text-[color:var(--muted-strong)]";
+
+const formatDate = (value: string) => new Date(value).toLocaleString();
 
 export default function OperatorConsole() {
-  const [department, setDepartment] = useState<{ id: string; name: string } | null>(null)
-  const [availableDepartments, setAvailableDepartments] = useState<Department[]>([])
-  const [selectedDepartmentId, setSelectedDepartmentId] = useState<string>('')
-  const [queue, setQueue] = useState<QueueWorkOrder[]>([])
-  const [searchQuery, setSearchQuery] = useState('')
-  const [selectedWorkOrder, setSelectedWorkOrder] = useState<WorkOrderDetails | null>(null)
-  const [selectedStation, setSelectedStation] = useState('')
-  const [note, setNote] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [actionLoading, setActionLoading] = useState(false)
-  const [message, setMessage] = useState('')
-  const [error, setError] = useState('')
-  const [goodQty, setGoodQty] = useState('')
-  const [scrapQty, setScrapQty] = useState('')
-  const [isActionPanelOpen, setIsActionPanelOpen] = useState(false)
-  const router = useRouter()
+  const [department, setDepartment] = useState<Department | null>(null);
+  const [availableDepartments, setAvailableDepartments] = useState<Department[]>([]);
+  const [selectedDepartmentId, setSelectedDepartmentId] = useState<string>("");
+  const [queue, setQueue] = useState<QueueWorkOrder[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedWorkOrder, setSelectedWorkOrder] = useState<WorkOrderDetails | null>(
+    null,
+  );
+  const [selectedStation, setSelectedStation] = useState("");
+  const [note, setNote] = useState("");
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [openLoadingId, setOpenLoadingId] = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [pendingAction, setPendingAction] = useState<
+    null | "start" | "pause" | "complete"
+  >(null);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const [goodQty, setGoodQty] = useState("");
+  const [scrapQty, setScrapQty] = useState("");
+  const [isActionPanelOpen, setIsActionPanelOpen] = useState(false);
+  const router = useRouter();
 
-  // Load station and department from localStorage
   useEffect(() => {
-    const savedStation = localStorage.getItem('operator-selected-station')
-    const savedDepartmentId = localStorage.getItem('operator-selected-department')
+    const savedStation = localStorage.getItem("operator-selected-station");
+    const savedDepartmentId = localStorage.getItem("operator-selected-department");
     if (savedStation) {
-      setSelectedStation(savedStation)
+      setSelectedStation(savedStation);
     }
     if (savedDepartmentId) {
-      setSelectedDepartmentId(savedDepartmentId)
+      setSelectedDepartmentId(savedDepartmentId);
     }
-  }, [])
+  }, []);
 
-  // Save station and department to localStorage when changed
   useEffect(() => {
     if (selectedStation) {
-      localStorage.setItem('operator-selected-station', selectedStation)
+      localStorage.setItem("operator-selected-station", selectedStation);
     }
-  }, [selectedStation])
+  }, [selectedStation]);
 
   useEffect(() => {
     if (selectedDepartmentId) {
-      localStorage.setItem('operator-selected-department', selectedDepartmentId)
+      localStorage.setItem("operator-selected-department", selectedDepartmentId);
     }
-  }, [selectedDepartmentId])
+  }, [selectedDepartmentId]);
 
-  // Check authentication and fetch initial data
   useEffect(() => {
-    fetch('/api/auth/me', { 
-      credentials: 'include' 
+    fetch("/api/auth/me", {
+      credentials: "include",
     })
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         if (!data.ok) {
-          router.push('/login')
-        } else {
-          // Set default department if none selected
-          if (!selectedDepartmentId && data.user?.departmentId) {
-            setSelectedDepartmentId(data.user.departmentId)
-          }
+          router.push("/login");
+        } else if (!selectedDepartmentId && data.user?.departmentId) {
+          setSelectedDepartmentId(data.user.departmentId);
         }
       })
-      .catch(() => router.push('/login'))
-  }, [router, selectedDepartmentId])
+      .catch(() => router.push("/login"));
+  }, [router, selectedDepartmentId]);
 
-  // Fetch available departments
   useEffect(() => {
     const fetchDepartments = async () => {
       try {
-        const response = await fetch('/api/departments', {
-          credentials: 'include'
-        })
+        const response = await fetch("/api/departments", {
+          credentials: "include",
+        });
         if (response.ok) {
-          const data = await response.json()
-          setAvailableDepartments(data.departments || [])
+          const data = await response.json();
+          setAvailableDepartments(data.departments || []);
         }
       } catch (err) {
-        console.error('Error fetching departments:', err)
+        console.error("Error fetching departments:", err);
       }
-    }
-    
-    fetchDepartments()
-  }, [])
+    };
 
-  // Fetch queue data
+    void fetchDepartments();
+  }, []);
+
   const fetchQueue = useCallback(async () => {
-    if (!selectedDepartmentId) return
-    
+    if (!selectedDepartmentId) return;
+
     try {
-      const response = await fetch(`/api/queues/my-department?departmentId=${selectedDepartmentId}`, {
-        credentials: 'include'
-      })
-      
+      const response = await fetch(
+        `/api/queues/my-department?departmentId=${selectedDepartmentId}`,
+        {
+          credentials: "include",
+        },
+      );
+
       if (response.ok) {
-        const data = await response.json()
-        setQueue(data.queue || [])
+        const data = await response.json();
+        setQueue(data.queue || []);
         if (data.department) {
-          setDepartment(data.department)
+          setDepartment(data.department);
         }
       } else if (response.status === 401) {
-        router.push('/login')
+        router.push("/login");
       }
     } catch (err) {
-      console.error('Error fetching queue:', err)
+      console.error("Error fetching queue:", err);
     }
-  }, [router, selectedDepartmentId])
+  }, [router, selectedDepartmentId]);
 
-  // Poll queue every 5 seconds
   useEffect(() => {
-    fetchQueue()
-    const interval = setInterval(fetchQueue, 5000)
-    return () => clearInterval(interval)
-  }, [fetchQueue])
+    void fetchQueue();
+    const interval = setInterval(() => {
+      void fetchQueue();
+    }, 5000);
 
-  // Search for work order
+    return () => clearInterval(interval);
+  }, [fetchQueue]);
+
   const searchWorkOrder = async () => {
-    if (!searchQuery.trim() || !selectedDepartmentId) return
-    
-    setLoading(true)
-    setError('')
-    setMessage('')
-    
+    if (!searchQuery.trim() || !selectedDepartmentId) return;
+
+    setSearchLoading(true);
+    setError("");
+    setMessage("");
+
     try {
-      const response = await fetch(`/api/work-orders/find?query=${encodeURIComponent(searchQuery.trim())}&departmentId=${selectedDepartmentId}`, {
-        credentials: 'include'
-      })
+      const response = await fetch(
+        `/api/work-orders/find?query=${encodeURIComponent(searchQuery.trim())}&departmentId=${selectedDepartmentId}`,
+        {
+          credentials: "include",
+        },
+      );
 
       if (response.ok) {
-        const data = await response.json()
-        setSelectedWorkOrder(data)
-        setIsActionPanelOpen(true)
-        // Set station if only one available
+        const data = await response.json();
+        setSelectedWorkOrder(data);
+        setIsActionPanelOpen(true);
         if (data.workOrder.currentStage.workCenter.stations.length === 1) {
-          setSelectedStation(data.workOrder.currentStage.workCenter.stations[0].id)
+          setSelectedStation(data.workOrder.currentStage.workCenter.stations[0].id);
         }
       } else {
-        const data = await response.json()
-        setError(data.error || 'Work order not found')
-        setSelectedWorkOrder(null)
+        const data = await response.json();
+        setError(data.error || "Work order not found");
+        setSelectedWorkOrder(null);
       }
     } catch (err) {
-      setError('Network error searching for work order')
-      setSelectedWorkOrder(null)
+      setError("Network error searching for work order");
+      setSelectedWorkOrder(null);
     } finally {
-      setLoading(false)
+      setSearchLoading(false);
     }
-  }
+  };
 
-  // Open work order from queue
   const openWorkOrder = async (woId: string) => {
-    if (!selectedDepartmentId) return
-    
-    setLoading(true)
-    setError('')
-    setMessage('')
-    
+    if (!selectedDepartmentId) return;
+
+    setOpenLoadingId(woId);
+    setError("");
+    setMessage("");
+
     try {
-      const wo = queue.find(q => q.id === woId)
+      const wo = queue.find((entry) => entry.id === woId);
       if (wo) {
-        const response = await fetch(`/api/work-orders/find?query=${encodeURIComponent(wo.number)}&departmentId=${selectedDepartmentId}`, {
-          credentials: 'include'
-        })
+        const response = await fetch(
+          `/api/work-orders/find?query=${encodeURIComponent(wo.number)}&departmentId=${selectedDepartmentId}`,
+          { credentials: "include" },
+        );
 
         if (response.ok) {
-          const data = await response.json()
-          setSelectedWorkOrder(data)
-          setIsActionPanelOpen(true)
-          // Set station if only one available
+          const data = await response.json();
+          setSelectedWorkOrder(data);
+          setIsActionPanelOpen(true);
           if (data.workOrder.currentStage.workCenter.stations.length === 1) {
-            setSelectedStation(data.workOrder.currentStage.workCenter.stations[0].id)
+            setSelectedStation(data.workOrder.currentStage.workCenter.stations[0].id);
           }
         } else {
-          const data = await response.json()
-          setError(data.error || 'Failed to load work order details')
+          const data = await response.json();
+          setError(data.error || "Failed to load work order details");
         }
       }
     } catch (err) {
-      setError('Network error loading work order')
+      setError("Network error loading work order");
     } finally {
-      setLoading(false)
+      setOpenLoadingId(null);
     }
-  }
+  };
 
-  // Perform action (start, pause, complete)
-  const performAction = async (action: 'start' | 'pause' | 'complete') => {
+  const performAction = async (action: "start" | "pause" | "complete") => {
     if (!selectedWorkOrder || !selectedStation) {
-      setError('Please select a station')
-      return
+      setError("Please select a station");
+      return;
     }
 
-    if (action === 'complete' && !goodQty) {
-      setError('Please enter good quantity')
-      return
+    if (action === "complete" && !goodQty) {
+      setError("Please enter good quantity");
+      return;
     }
 
-    setActionLoading(true)
-    setError('')
-    setMessage('')
+    setActionLoading(true);
+    setPendingAction(action);
+    setError("");
+    setMessage("");
 
     try {
-      let requestBody: any = {
+      const requestBody: Record<string, unknown> = {
         workOrderId: selectedWorkOrder.workOrder.id,
         stationId: selectedStation,
-        note: note || undefined
+        note: note || undefined,
+      };
+
+      if (action === "complete") {
+        requestBody.goodQty = parseInt(goodQty, 10) || 0;
+        requestBody.scrapQty = parseInt(scrapQty, 10) || 0;
       }
 
-      if (action === 'complete') {
-        requestBody.goodQty = parseInt(goodQty) || 0
-        requestBody.scrapQty = parseInt(scrapQty) || 0
-      }
+      const response = await fetch(
+        `/api/work-orders/${action}?departmentId=${selectedDepartmentId}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify(requestBody),
+        },
+      );
 
-      const response = await fetch(`/api/work-orders/${action}?departmentId=${selectedDepartmentId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(requestBody)
-      })
+      const data = await response.json();
 
-      const data = await response.json()
-      
       if (response.ok && data.success) {
-        setMessage(data.message)
-        setNote('')
-        setGoodQty('')
-        setScrapQty('')
-        
-        // Refresh work order and queue
-        await fetchQueue()
-        
-        // If completed, close panel and clear selection
-        if (action === 'complete' && data.isComplete) {
+        setMessage(data.message);
+        setNote("");
+        setGoodQty("");
+        setScrapQty("");
+
+        await fetchQueue();
+
+        if (action === "complete" && data.isComplete) {
           setTimeout(() => {
-            setIsActionPanelOpen(false)
-            setSelectedWorkOrder(null)
-            setMessage('')
-          }, 2000)
+            setIsActionPanelOpen(false);
+            setSelectedWorkOrder(null);
+            setMessage("");
+          }, 2000);
         } else {
-          // Refresh work order details
           const refreshResponse = await fetch(
             `/api/work-orders/find?query=${encodeURIComponent(selectedWorkOrder.workOrder.number)}&departmentId=${selectedDepartmentId}`,
-            { credentials: 'include' }
-          )
+            { credentials: "include" },
+          );
           if (refreshResponse.ok) {
-            const refreshData = await refreshResponse.json()
-            setSelectedWorkOrder(refreshData)
+            const refreshData = await refreshResponse.json();
+            setSelectedWorkOrder(refreshData);
           }
         }
       } else {
-        setError(data.error || `Failed to ${action}`)
+        setError(data.error || `Failed to ${action}`);
       }
     } catch (err) {
-      setError(`Network error during ${action}`)
+      setError(`Network error during ${action}`);
     } finally {
-      setActionLoading(false)
+      setActionLoading(false);
+      setPendingAction(null);
     }
-  }
+  };
 
-  const canStart = selectedWorkOrder && 
-    selectedWorkOrder.workOrder.currentStage.enabled && 
-    selectedWorkOrder.workOrder.status !== 'HOLD'
-    
-  const canPause = selectedWorkOrder && 
-    selectedWorkOrder.workOrder.status === 'IN_PROGRESS'
-    
-  const canComplete = selectedWorkOrder && 
-    selectedWorkOrder.workOrder.status === 'IN_PROGRESS'
+  const canStart =
+    !!selectedWorkOrder &&
+    selectedWorkOrder.workOrder.currentStage.enabled &&
+    selectedWorkOrder.workOrder.status !== "HOLD";
+
+  const canPause =
+    !!selectedWorkOrder && selectedWorkOrder.workOrder.status === "IN_PROGRESS";
+
+  const canComplete =
+    !!selectedWorkOrder && selectedWorkOrder.workOrder.status === "IN_PROGRESS";
+
+  const departmentOptions = availableDepartments.map((dept) => ({
+    value: dept.id,
+    label: dept.name,
+  }));
+
+  const stationOptions =
+    selectedWorkOrder?.workOrder.currentStage.workCenter.stations.map((station) => ({
+      value: station.id,
+      label: `${station.code} — ${station.name}`,
+    })) ?? [];
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      backgroundColor: '#f8f9fa',
-      fontFamily: 'system-ui, sans-serif'
-    }}>
-      {/* Top Bar */}
-      <div style={{
-        backgroundColor: 'white',
-        padding: '1rem',
-        borderBottom: '1px solid #dee2e6',
-        boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
-      }}>
-        <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-            <h1 style={{ margin: 0, fontSize: '1.5rem', fontWeight: '600' }}>
-              Operator Console
-            </h1>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <label style={{ fontSize: '0.875rem', fontWeight: '500' }}>Department:</label>
-                <select
-                  value={selectedDepartmentId}
-                  onChange={(e) => setSelectedDepartmentId(e.target.value)}
-                  style={{
-                    padding: '0.375rem 0.5rem',
-                    border: '1px solid #ced4da',
-                    borderRadius: '4px',
-                    backgroundColor: 'white',
-                    fontSize: '0.875rem'
-                  }}
-                >
-                  <option value="">Select Department...</option>
-                  {availableDepartments.map(dept => (
-                    <option key={dept.id} value={dept.id}>
-                      {dept.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+    <div className="min-h-screen bg-[var(--background)] text-[color:var(--foreground)]">
+      <div className="border-b border-[var(--border-strong)] bg-[var(--surface)] shadow-sm">
+        <div className="mx-auto flex max-w-6xl flex-col gap-6 px-6 py-6">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div className="space-y-2">
+              <h1 className="text-2xl font-semibold">Operator Console</h1>
               {department && (
-                <div style={{ fontSize: '0.875rem', color: '#6c757d', fontStyle: 'italic' }}>
-                  Current: {department.name}
-                </div>
+                <p className="text-sm text-[color:var(--muted)]">
+                  Current department: <span className="font-medium">{department.name}</span>
+                </p>
               )}
             </div>
-          </div>
-          
-          {/* Search Bar */}
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-            <input
-              type="text"
-              placeholder="Enter WO Number or Hull ID..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && searchWorkOrder()}
-              style={{
-                flex: 1,
-                maxWidth: '400px',
-                padding: '0.5rem 0.75rem',
-                border: '1px solid #ced4da',
-                borderRadius: '4px',
-                fontSize: '1rem'
-              }}
-            />
-            <button
-              onClick={searchWorkOrder}
-              disabled={loading}
-              style={{
-                padding: '0.5rem 1.25rem',
-                backgroundColor: '#007bff',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: loading ? 'not-allowed' : 'pointer',
-                opacity: loading ? 0.7 : 1,
-                fontSize: '1rem'
-              }}
-            >
-              {loading ? 'Searching...' : 'Search'}
-            </button>
+            <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-end sm:justify-end">
+              <Select
+                className="sm:w-64"
+                label="Department"
+                value={selectedDepartmentId}
+                onChange={(event) => setSelectedDepartmentId(event.target.value)}
+                options={departmentOptions}
+                placeholder="Select department…"
+              />
+              <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
+                <Input
+                  className="sm:w-80"
+                  placeholder="Enter WO Number or Hull ID…"
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+                      void searchWorkOrder();
+                    }
+                  }}
+                />
+                <Button
+                  onClick={() => void searchWorkOrder()}
+                  disabled={searchLoading}
+                  loading={searchLoading}
+                >
+                  Search
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '1.5rem' }}>
-        {/* Messages */}
+      <div className="mx-auto flex max-w-6xl flex-col gap-6 px-6 py-8">
         {error && (
-          <div style={{
-            backgroundColor: '#f8d7da',
-            color: '#721c24',
-            padding: '0.75rem',
-            borderRadius: '4px',
-            marginBottom: '1rem',
-            border: '1px solid #f5c6cb'
-          }}>
+          <div className="rounded-md border border-[var(--status-danger-border)] bg-[var(--status-danger-surface)] px-4 py-3 text-[color:var(--status-danger-foreground)]">
             {error}
           </div>
         )}
 
         {message && (
-          <div style={{
-            backgroundColor: '#d4edda',
-            color: '#155724',
-            padding: '0.75rem',
-            borderRadius: '4px',
-            marginBottom: '1rem',
-            border: '1px solid #c3e6cb'
-          }}>
+          <div className="rounded-md border border-[var(--status-success-border)] bg-[var(--status-success-surface)] px-4 py-3 text-[color:var(--status-success-foreground)]">
             {message}
           </div>
         )}
 
-        {/* Queue Table */}
-        <div style={{
-          backgroundColor: 'white',
-          borderRadius: '8px',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-          marginBottom: '1.5rem',
-          overflow: 'hidden'
-        }}>
-          <div style={{
-            padding: '1rem 1.25rem',
-            backgroundColor: '#f8f9fa',
-            borderBottom: '1px solid #dee2e6'
-          }}>
-            <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '600' }}>
-              Work Order Queue
-            </h2>
+        <div className="rounded-lg border border-[var(--border)] bg-[var(--surface)] shadow-sm">
+          <div className="flex items-center justify-between border-b border-[var(--border)] bg-[var(--surface-muted)] px-6 py-4">
+            <div>
+              <h2 className="text-lg font-semibold">Work Orders in Queue</h2>
+              <p className="text-sm text-[color:var(--muted)]">Live updates every 5 seconds</p>
+            </div>
+            <span className="text-xs uppercase tracking-wide text-[color:var(--muted)]">
+              {queue.length} active
+            </span>
           </div>
-          
+
           {queue.length > 0 ? (
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr style={{ backgroundColor: '#f8f9fa' }}>
-                    <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #dee2e6' }}>Status</th>
-                    <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #dee2e6' }}>WO Number</th>
-                    <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #dee2e6' }}>Hull ID</th>
-                    <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #dee2e6' }}>SKU</th>
-                    <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #dee2e6' }}>Current Stage</th>
-                    <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #dee2e6' }}>Work Center</th>
-                    <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #dee2e6' }}>Progress</th>
-                    <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #dee2e6' }}>Last Activity</th>
-                    <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '2px solid #dee2e6' }}>Action</th>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-[color:var(--border)]">
+                <thead className="bg-[var(--table-header-surface)]">
+                  <tr className="text-left text-xs font-medium uppercase tracking-wide text-[color:var(--muted-strong)]">
+                    <th className="px-6 py-3">Status</th>
+                    <th className="px-6 py-3">WO Number</th>
+                    <th className="px-6 py-3">Hull ID</th>
+                    <th className="px-6 py-3">SKU</th>
+                    <th className="px-6 py-3">Current Stage</th>
+                    <th className="px-6 py-3">Work Center</th>
+                    <th className="px-6 py-3">Progress</th>
+                    <th className="px-6 py-3">Last Activity</th>
+                    <th className="px-6 py-3">Action</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-[color:var(--border)]">
                   {queue.map((wo) => (
-                    <tr key={wo.id} style={{ borderBottom: '1px solid #dee2e6' }}>
-                      <td style={{ padding: '0.75rem' }}>
-                        <span style={{
-                          padding: '0.25rem 0.5rem',
-                          borderRadius: '4px',
-                          fontSize: '0.875rem',
-                          fontWeight: '500',
-                          backgroundColor: wo.status === 'IN_PROGRESS' ? '#e7f3ff' : '#f8f9fa',
-                          color: wo.status === 'IN_PROGRESS' ? '#0056b3' : '#6c757d'
-                        }}>
-                          {wo.status === 'IN_PROGRESS' ? 'IN PROGRESS' : 'READY'}
+                    <tr
+                      key={wo.id}
+                      className="bg-[var(--surface)] transition-colors hover:bg-[color:var(--table-row-hover)]"
+                    >
+                      <td className="px-6 py-3">
+                        <span
+                          className={clsx(
+                            "inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold",
+                            queueStatusVariants[wo.status] ?? fallbackStatusClass,
+                          )}
+                        >
+                          {wo.status === "IN_PROGRESS" ? "In Progress" : wo.status}
                         </span>
                       </td>
-                      <td style={{ padding: '0.75rem', fontWeight: '500' }}>{wo.number}</td>
-                      <td style={{ padding: '0.75rem' }}>{wo.hullId}</td>
-                      <td style={{ padding: '0.75rem' }}>{wo.productSku}</td>
-                      <td style={{ padding: '0.75rem' }}>
-                        <div>{wo.currentStage.name}</div>
-                        <div style={{ fontSize: '0.875rem', color: '#6c757d' }}>
-                          {wo.currentStage.code}
-                        </div>
+                      <td className="px-6 py-3 text-sm font-semibold">
+                        {wo.number}
                       </td>
-                      <td style={{ padding: '0.75rem' }}>{wo.currentStage.workCenter.name}</td>
-                      <td style={{ padding: '0.75rem' }}>
+                      <td className="px-6 py-3 text-sm">{wo.hullId}</td>
+                      <td className="px-6 py-3 text-sm">{wo.productSku}</td>
+                      <td className="px-6 py-3 text-sm">
+                        <div className="font-medium">{wo.currentStage.name}</div>
+                        <div className="text-xs text-[color:var(--muted)]">{wo.currentStage.code}</div>
+                      </td>
+                      <td className="px-6 py-3 text-sm">{wo.currentStage.workCenter.name}</td>
+                      <td className="px-6 py-3 text-sm">
                         Stage {wo.currentStageIndex + 1} of {wo.totalEnabledStages}
                       </td>
-                      <td style={{ padding: '0.75rem' }}>
+                      <td className="px-6 py-3 text-sm">
                         {wo.lastEvent ? (
-                          <div>
-                            <div style={{ fontSize: '0.875rem' }}>{wo.lastEvent.event}</div>
-                            <div style={{ fontSize: '0.75rem', color: '#6c757d' }}>
-                              {new Date(wo.lastEvent.createdAt).toLocaleString()}
+                          <div className="space-y-1">
+                            <div className="font-medium">{wo.lastEvent.event}</div>
+                            <div className="text-xs text-[color:var(--muted)]">
+                              {formatDate(wo.lastEvent.createdAt)}
                             </div>
                           </div>
                         ) : (
-                          <span style={{ color: '#6c757d' }}>No activity</span>
+                          <span className="text-xs text-[color:var(--muted)]">No activity</span>
                         )}
                       </td>
-                      <td style={{ padding: '0.75rem' }}>
-                        <button
-                          onClick={() => openWorkOrder(wo.id)}
-                          style={{
-                            padding: '0.375rem 0.75rem',
-                            backgroundColor: '#007bff',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            fontSize: '0.875rem'
-                          }}
+                      <td className="px-6 py-3">
+                        <Button
+                          size="sm"
+                          onClick={() => void openWorkOrder(wo.id)}
+                          loading={openLoadingId === wo.id}
                         >
                           Open
-                        </button>
+                        </Button>
                       </td>
                     </tr>
                   ))}
@@ -562,317 +549,212 @@ export default function OperatorConsole() {
               </table>
             </div>
           ) : (
-            <div style={{
-              padding: '3rem',
-              textAlign: 'center',
-              color: '#6c757d'
-            }}>
+            <div className="px-6 py-12 text-center text-sm text-[color:var(--muted)]">
               No work orders in queue
             </div>
           )}
         </div>
 
-        {/* Action Panel */}
         {isActionPanelOpen && selectedWorkOrder && (
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '8px',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-            overflow: 'hidden'
-          }}>
-            <div style={{
-              padding: '1rem 1.25rem',
-              backgroundColor: '#f8f9fa',
-              borderBottom: '1px solid #dee2e6',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center'
-            }}>
-              <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '600' }}>
-                Work Order Action Panel
-              </h2>
-              <button
+          <div className="rounded-lg border border-[var(--border)] bg-[var(--surface)] shadow-sm">
+            <div className="flex flex-col gap-3 border-b border-[var(--border)] bg-[var(--surface-muted)] px-6 py-4 md:flex-row md:items-center md:justify-between">
+              <div>
+                <h2 className="text-lg font-semibold">Work Order Action Panel</h2>
+                <p className="text-sm text-[color:var(--muted)]">
+                  {selectedWorkOrder.workOrder.number} · Stage {" "}
+                  {selectedWorkOrder.workOrder.currentStage.sequence} —{
+                    " "
+                  }
+                  {selectedWorkOrder.workOrder.currentStage.name}
+                </p>
+              </div>
+              <SecondaryButton
+                size="sm"
                 onClick={() => {
-                  setIsActionPanelOpen(false)
-                  setSelectedWorkOrder(null)
-                  setMessage('')
-                  setError('')
-                }}
-                style={{
-                  padding: '0.25rem 0.5rem',
-                  backgroundColor: 'transparent',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontSize: '1.5rem',
-                  color: '#6c757d'
+                  setIsActionPanelOpen(false);
+                  setSelectedWorkOrder(null);
+                  setMessage("");
+                  setError("");
                 }}
               >
-                ×
-              </button>
+                Close
+              </SecondaryButton>
             </div>
-            
-            <div style={{ padding: '1.25rem' }}>
-              {/* Work Order Info */}
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                gap: '1rem',
-                marginBottom: '1.5rem',
-                paddingBottom: '1.5rem',
-                borderBottom: '1px solid #dee2e6'
-              }}>
-                <div>
-                  <strong>WO Number:</strong> {selectedWorkOrder.workOrder.number}
+
+            <div className="space-y-6 px-6 py-6">
+              <div className="grid gap-4 border-b border-[var(--border)] pb-6 md:grid-cols-2 lg:grid-cols-3">
+                <div className="space-y-1">
+                  <p className="text-xs uppercase tracking-wide text-[color:var(--muted)]">WO Number</p>
+                  <p className="text-sm font-semibold">
+                    {selectedWorkOrder.workOrder.number}
+                  </p>
                 </div>
-                <div>
-                  <strong>Hull ID:</strong> {selectedWorkOrder.workOrder.hullId}
+                <div className="space-y-1">
+                  <p className="text-xs uppercase tracking-wide text-[color:var(--muted)]">Hull ID</p>
+                  <p className="text-sm font-medium">{selectedWorkOrder.workOrder.hullId}</p>
                 </div>
-                <div>
-                  <strong>SKU:</strong> {selectedWorkOrder.workOrder.productSku}
+                <div className="space-y-1">
+                  <p className="text-xs uppercase tracking-wide text-[color:var(--muted)]">SKU</p>
+                  <p className="text-sm font-medium">{selectedWorkOrder.workOrder.productSku}</p>
                 </div>
-                <div>
-                  <strong>Quantity:</strong> {selectedWorkOrder.workOrder.qty}
+                <div className="space-y-1">
+                  <p className="text-xs uppercase tracking-wide text-[color:var(--muted)]">Quantity</p>
+                  <p className="text-sm font-medium">{selectedWorkOrder.workOrder.qty}</p>
                 </div>
-                <div>
-                  <strong>Status:</strong>{' '}
-                  <span style={{
-                    padding: '0.25rem 0.5rem',
-                    borderRadius: '4px',
-                    backgroundColor: selectedWorkOrder.workOrder.status === 'IN_PROGRESS' ? '#e7f3ff' : 
-                                   selectedWorkOrder.workOrder.status === 'HOLD' ? '#fff3cd' : '#f8f9fa',
-                    color: selectedWorkOrder.workOrder.status === 'IN_PROGRESS' ? '#0056b3' : 
-                           selectedWorkOrder.workOrder.status === 'HOLD' ? '#856404' : '#6c757d',
-                    fontSize: '0.875rem'
-                  }}>
-                    {selectedWorkOrder.workOrder.status}
+                <div className="space-y-1">
+                  <p className="text-xs uppercase tracking-wide text-[color:var(--muted)]">Status</p>
+                  <span
+                    className={clsx(
+                      "inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold",
+                      workOrderStatusVariants[selectedWorkOrder.workOrder.status] ??
+                        fallbackStatusClass,
+                    )}
+                  >
+                    {selectedWorkOrder.workOrder.status.replace("_", " ")}
                   </span>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs uppercase tracking-wide text-[color:var(--muted)]">Stage Progress</p>
+                  <p className="text-sm font-medium">
+                    {selectedWorkOrder.workOrder.currentStageIndex + 1} of{" "}
+                    {selectedWorkOrder.workOrder.enabledStagesCount}
+                  </p>
                 </div>
               </div>
 
-              {/* Current Stage Info */}
-              <div style={{ marginBottom: '1.5rem' }}>
-                <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', fontWeight: '600' }}>
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">
                   Current Stage: {selectedWorkOrder.workOrder.currentStage.name}
                 </h3>
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                  gap: '1rem'
-                }}>
-                  <div>
-                    <strong>Stage Code:</strong> {selectedWorkOrder.workOrder.currentStage.code}
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-1 text-sm">
+                    <p className="text-xs uppercase tracking-wide text-[color:var(--muted)]">Stage Code</p>
+                    <p className="font-medium">
+                      {selectedWorkOrder.workOrder.currentStage.code}
+                    </p>
                   </div>
-                  <div>
-                    <strong>Sequence:</strong> {selectedWorkOrder.workOrder.currentStage.sequence}
+                  <div className="space-y-1 text-sm">
+                    <p className="text-xs uppercase tracking-wide text-[color:var(--muted)]">Sequence</p>
+                    <p className="font-medium">
+                      {selectedWorkOrder.workOrder.currentStage.sequence}
+                    </p>
                   </div>
-                  <div>
-                    <strong>Work Center:</strong> {selectedWorkOrder.workOrder.currentStage.workCenter.name}
+                  <div className="space-y-1 text-sm">
+                    <p className="text-xs uppercase tracking-wide text-[color:var(--muted)]">Work Center</p>
+                    <p className="font-medium">
+                      {selectedWorkOrder.workOrder.currentStage.workCenter.name}
+                    </p>
                   </div>
-                  <div>
-                    <strong>Department:</strong> {selectedWorkOrder.workOrder.currentStage.workCenter.department.name}
+                  <div className="space-y-1 text-sm">
+                    <p className="text-xs uppercase tracking-wide text-[color:var(--muted)]">Department</p>
+                    <p className="font-medium">
+                      {selectedWorkOrder.workOrder.currentStage.workCenter.department.name}
+                    </p>
                   </div>
-                  <div>
-                    <strong>Standard Time:</strong> {selectedWorkOrder.workOrder.currentStage.standardSeconds} seconds
+                  <div className="space-y-1 text-sm">
+                    <p className="text-xs uppercase tracking-wide text-[color:var(--muted)]">Standard Time</p>
+                    <p className="font-medium">
+                      {selectedWorkOrder.workOrder.currentStage.standardSeconds} seconds
+                    </p>
                   </div>
                 </div>
-                
-                {/* Last Event */}
+
                 {selectedWorkOrder.workOrder.lastEvent && (
-                  <div style={{
-                    marginTop: '1rem',
-                    padding: '0.75rem',
-                    backgroundColor: '#f8f9fa',
-                    borderRadius: '4px'
-                  }}>
-                    <strong>Last Activity:</strong> {selectedWorkOrder.workOrder.lastEvent.event} at station{' '}
-                    {selectedWorkOrder.workOrder.lastEvent.station} on{' '}
-                    {new Date(selectedWorkOrder.workOrder.lastEvent.createdAt).toLocaleString()}
+                  <div className="rounded-md border border-[var(--border)] bg-[var(--surface-muted)] px-4 py-3 text-sm">
+                    <p className="font-medium">Last Activity</p>
+                    <p className="mt-1 text-[color:var(--muted)]">
+                      {selectedWorkOrder.workOrder.lastEvent.event} at station {" "}
+                      {selectedWorkOrder.workOrder.lastEvent.station} on {" "}
+                      {formatDate(selectedWorkOrder.workOrder.lastEvent.createdAt)}
+                    </p>
                     {selectedWorkOrder.workOrder.lastEvent.note && (
-                      <div style={{ marginTop: '0.5rem', fontStyle: 'italic' }}>
+                      <p className="mt-2 text-sm italic text-[color:var(--muted-strong)]">
                         Note: {selectedWorkOrder.workOrder.lastEvent.note}
-                      </div>
+                      </p>
                     )}
                   </div>
                 )}
-                
-                {/* Work Instruction Link */}
+
                 {selectedWorkOrder.workOrder.currentStage.workInstruction && (
-                  <div style={{
-                    marginTop: '1rem',
-                    padding: '0.75rem',
-                    backgroundColor: '#e7f3ff',
-                    borderRadius: '4px'
-                  }}>
-                    <strong>Work Instruction Available</strong> (Version {selectedWorkOrder.workOrder.currentStage.workInstruction.version})
+                  <div className="rounded-md border border-[var(--status-info-border)] bg-[var(--status-info-surface)] px-4 py-3 text-sm text-[color:var(--status-info-foreground)]">
+                    Work instruction version {selectedWorkOrder.workOrder.currentStage.workInstruction.version} available
                   </div>
                 )}
               </div>
 
-              {/* Controls */}
-              <div>
-                <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', fontWeight: '600' }}>
-                  Actions
-                </h3>
-                
-                {/* Station Selection */}
-                <div style={{ marginBottom: '1rem' }}>
-                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
-                    Station:
-                  </label>
-                  <select
-                    value={selectedStation}
-                    onChange={(e) => setSelectedStation(e.target.value)}
-                    style={{
-                      width: '100%',
-                      maxWidth: '300px',
-                      padding: '0.5rem',
-                      border: '1px solid #ced4da',
-                      borderRadius: '4px'
-                    }}
-                  >
-                    <option value="">Select a station...</option>
-                    {selectedWorkOrder.workOrder.currentStage.workCenter.stations.map(station => (
-                      <option key={station.id} value={station.id}>
-                        {station.code} - {station.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Actions</h3>
+                <Select
+                  label="Station"
+                  value={selectedStation}
+                  onChange={(event) => setSelectedStation(event.target.value)}
+                  options={stationOptions}
+                  placeholder="Select a station…"
+                  helperText={stationOptions.length === 0 ? "No stations configured for this stage" : undefined}
+                />
 
-                {/* Quantities for Complete action */}
-                <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
-                      Good Qty:
-                    </label>
-                    <input
-                      type="number"
-                      value={goodQty}
-                      onChange={(e) => setGoodQty(e.target.value)}
-                      min="0"
-                      style={{
-                        width: '120px',
-                        padding: '0.5rem',
-                        border: '1px solid #ced4da',
-                        borderRadius: '4px'
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
-                      Scrap Qty (optional):
-                    </label>
-                    <input
-                      type="number"
-                      value={scrapQty}
-                      onChange={(e) => setScrapQty(e.target.value)}
-                      min="0"
-                      style={{
-                        width: '120px',
-                        padding: '0.5rem',
-                        border: '1px solid #ced4da',
-                        borderRadius: '4px'
-                      }}
-                    />
-                  </div>
-                </div>
-
-                {/* Note */}
-                <div style={{ marginBottom: '1.5rem' }}>
-                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
-                    Note (optional):
-                  </label>
-                  <textarea
-                    value={note}
-                    onChange={(e) => setNote(e.target.value)}
-                    placeholder="Add a note..."
-                    rows={3}
-                    style={{
-                      width: '100%',
-                      maxWidth: '500px',
-                      padding: '0.5rem',
-                      border: '1px solid #ced4da',
-                      borderRadius: '4px',
-                      resize: 'vertical'
-                    }}
+                <div className="flex flex-col gap-4 sm:flex-row">
+                  <Input
+                    label="Good Qty"
+                    type="number"
+                    value={goodQty}
+                    onChange={(event) => setGoodQty(event.target.value)}
+                    min={0}
+                    className="sm:w-40"
+                    fullWidth={false}
+                  />
+                  <Input
+                    label="Scrap Qty"
+                    type="number"
+                    value={scrapQty}
+                    onChange={(event) => setScrapQty(event.target.value)}
+                    min={0}
+                    className="sm:w-40"
+                    fullWidth={false}
                   />
                 </div>
 
-                {/* Action Buttons */}
-                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                  <button
-                    onClick={() => performAction('start')}
+                <Textarea
+                  label="Note (optional)"
+                  value={note}
+                  onChange={(event) => setNote(event.target.value)}
+                  placeholder="Add context for the next shift…"
+                  rows={3}
+                />
+
+                <div className="flex flex-wrap gap-3">
+                  <StartButton
+                    onClick={() => void performAction("start")}
                     disabled={!canStart || actionLoading || !selectedStation}
-                    style={{
-                      padding: '0.75rem 1.5rem',
-                      backgroundColor: canStart && selectedStation ? '#28a745' : '#6c757d',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: canStart && selectedStation && !actionLoading ? 'pointer' : 'not-allowed',
-                      opacity: canStart && selectedStation && !actionLoading ? 1 : 0.6
-                    }}
+                    loading={pendingAction === "start"}
                   >
-                    {actionLoading ? 'Processing...' : 'Start'}
-                  </button>
-                  
-                  <button
-                    onClick={() => performAction('pause')}
+                    Start
+                  </StartButton>
+                  <PauseButton
+                    onClick={() => void performAction("pause")}
                     disabled={!canPause || actionLoading || !selectedStation}
-                    style={{
-                      padding: '0.75rem 1.5rem',
-                      backgroundColor: canPause && selectedStation ? '#ffc107' : '#6c757d',
-                      color: canPause && selectedStation ? '#212529' : 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: canPause && selectedStation && !actionLoading ? 'pointer' : 'not-allowed',
-                      opacity: canPause && selectedStation && !actionLoading ? 1 : 0.6
-                    }}
+                    loading={pendingAction === "pause"}
                   >
-                    {actionLoading ? 'Processing...' : 'Pause'}
-                  </button>
-                  
-                  <button
-                    onClick={() => performAction('complete')}
+                    Pause
+                  </PauseButton>
+                  <ActionButton
+                    onClick={() => void performAction("complete")}
                     disabled={!canComplete || actionLoading || !selectedStation || !goodQty}
-                    style={{
-                      padding: '0.75rem 1.5rem',
-                      backgroundColor: canComplete && selectedStation && goodQty ? '#007bff' : '#6c757d',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: canComplete && selectedStation && goodQty && !actionLoading ? 'pointer' : 'not-allowed',
-                      opacity: canComplete && selectedStation && goodQty && !actionLoading ? 1 : 0.6
-                    }}
+                    loading={pendingAction === "complete"}
                   >
-                    {actionLoading ? 'Processing...' : 'Complete'}
-                  </button>
+                    Complete
+                  </ActionButton>
                 </div>
-                
-                {/* Status Messages */}
+
                 {!selectedWorkOrder.workOrder.currentStage.enabled && (
-                  <div style={{
-                    marginTop: '1rem',
-                    padding: '0.75rem',
-                    backgroundColor: '#fff3cd',
-                    color: '#856404',
-                    borderRadius: '4px',
-                    border: '1px solid #ffeaa7'
-                  }}>
-                    This stage is not currently enabled
+                  <div className="rounded-md border border-[var(--status-warning-border)] bg-[var(--status-warning-surface)] px-4 py-3 text-sm text-[color:var(--status-warning-foreground)]">
+                    This stage is not currently enabled.
                   </div>
                 )}
-                
-                {selectedWorkOrder.workOrder.status === 'HOLD' && (
-                  <div style={{
-                    marginTop: '1rem',
-                    padding: '0.75rem',
-                    backgroundColor: '#fff3cd',
-                    color: '#856404',
-                    borderRadius: '4px',
-                    border: '1px solid #ffeaa7'
-                  }}>
-                    Work order is on HOLD - actions are not available
+
+                {selectedWorkOrder.workOrder.status === "HOLD" && (
+                  <div className="rounded-md border border-[var(--status-warning-border)] bg-[var(--status-warning-surface)] px-4 py-3 text-sm text-[color:var(--status-warning-foreground)]">
+                    Work order is on HOLD — actions are not available.
                   </div>
                 )}
               </div>
@@ -881,5 +763,5 @@ export default function OperatorConsole() {
         )}
       </div>
     </div>
-  )
+  );
 }
