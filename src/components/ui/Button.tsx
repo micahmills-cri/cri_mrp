@@ -1,79 +1,83 @@
-'use client'
+"use client";
 
-import React from 'react'
-import { clsx } from 'clsx'
+import React from "react";
+import { clsx } from "clsx";
 
-export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'success' | 'warning' | 'danger'
-  size?: 'sm' | 'md' | 'lg'
-  loading?: boolean
-  icon?: React.ReactNode
-  iconPosition?: 'left' | 'right'
-  fullWidth?: boolean
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: "primary" | "secondary" | "success" | "warning" | "danger";
+  size?: "sm" | "md" | "lg";
+  loading?: boolean;
+  icon?: React.ReactNode;
+  iconPosition?: "left" | "right";
+  fullWidth?: boolean;
 }
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   (
     {
       className,
-      variant = 'primary',
-      size = 'md',
+      variant = "primary",
+      size = "md",
       loading = false,
       disabled,
       children,
       icon,
-      iconPosition = 'left',
+      iconPosition = "left",
       fullWidth = false,
       ...props
     },
-    ref
+    ref,
   ) => {
-    const isDisabled = disabled || loading
+    const isDisabled = disabled || loading;
 
     return (
       <button
         className={clsx(
-          // Base button styles
-          'inline-flex items-center border font-medium rounded-md shadow-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2',
-          // Size variants
+          "inline-flex items-center border font-medium rounded-md shadow-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-[var(--ring-offset)]",
           {
-            'px-3 py-1.5 text-xs': size === 'sm',
-            'px-4 py-2 text-sm': size === 'md',
-            'px-6 py-3 text-base': size === 'lg',
+            "px-3 py-1.5 text-xs": size === "sm",
+            "px-4 py-2 text-sm": size === "md",
+            "px-6 py-3 text-base": size === "lg",
           },
-          // Color variants
-          {
-            // Primary variant
-            'border-transparent text-white bg-primary-600': variant === 'primary',
-            'hover:bg-primary-700 focus:ring-primary-500': variant === 'primary' && !isDisabled,
-            'disabled:bg-primary-600 disabled:text-white disabled:opacity-50': variant === 'primary',
-            
-            // Secondary variant  
-            'border-slate-300 text-slate-700 bg-white': variant === 'secondary',
-            'hover:bg-slate-50 focus:ring-slate-500': variant === 'secondary' && !isDisabled,
-            'disabled:bg-white disabled:text-slate-700 disabled:opacity-50': variant === 'secondary',
-            
-            // Success variant
-            'border-transparent text-white bg-success-600': variant === 'success',
-            'hover:bg-success-700 focus:ring-success-500': variant === 'success' && !isDisabled,
-            'disabled:bg-success-600 disabled:text-white disabled:opacity-50': variant === 'success',
-            
-            // Warning variant
-            'border-transparent text-white bg-warning-600': variant === 'warning',
-            'hover:bg-warning-700 focus:ring-warning-500': variant === 'warning' && !isDisabled,
-            'disabled:bg-warning-600 disabled:text-white disabled:opacity-50': variant === 'warning',
-            
-            // Danger variant
-            'border-transparent text-white bg-danger-600': variant === 'danger',
-            'hover:bg-danger-700 focus:ring-danger-500': variant === 'danger' && !isDisabled,
-            'disabled:bg-danger-600 disabled:text-white disabled:opacity-50': variant === 'danger',
-          },
-          // State variants
-          {
-            'w-full': fullWidth,
-            'cursor-not-allowed': isDisabled,
-          },
-          className
+          variant === "primary" && [
+            "border-transparent",
+            "text-[color:var(--color-primary-foreground)]",
+            "bg-[var(--color-primary-600)]",
+            !isDisabled && "hover:bg-[var(--color-primary-700)]",
+            "disabled:bg-[var(--color-primary-600)] disabled:text-[color:var(--color-primary-foreground)] disabled:opacity-60",
+          ],
+          variant === "secondary" && [
+            "border-[var(--button-secondary-border)]",
+            "text-[color:var(--button-secondary-foreground)]",
+            "bg-[var(--button-secondary-surface)]",
+            !isDisabled && "hover:bg-[var(--button-secondary-hover-surface)]",
+            "disabled:bg-[var(--button-secondary-surface)] disabled:text-[color:var(--button-secondary-foreground)] disabled:opacity-60 disabled:border-[var(--button-secondary-border)]",
+          ],
+          variant === "success" && [
+            "border-transparent",
+            "text-[color:var(--color-success-foreground)]",
+            "bg-[var(--color-success-600)]",
+            !isDisabled && "hover:bg-[var(--color-success-700)]",
+            "disabled:bg-[var(--color-success-600)] disabled:text-[color:var(--color-success-foreground)] disabled:opacity-60",
+          ],
+          variant === "warning" && [
+            "border-transparent",
+            "text-[color:var(--color-warning-foreground)]",
+            "bg-[var(--color-warning-600)]",
+            !isDisabled && "hover:bg-[var(--color-warning-700)]",
+            "disabled:bg-[var(--color-warning-600)] disabled:text-[color:var(--color-warning-foreground)] disabled:opacity-60",
+          ],
+          variant === "danger" && [
+            "border-transparent",
+            "text-[color:var(--color-danger-foreground)]",
+            "bg-[var(--color-danger-600)]",
+            !isDisabled && "hover:bg-[var(--color-danger-700)]",
+            "disabled:bg-[var(--color-danger-600)] disabled:text-[color:var(--color-danger-foreground)] disabled:opacity-60",
+          ],
+          fullWidth && "w-full",
+          isDisabled && "cursor-not-allowed",
+          className,
         )}
         disabled={isDisabled}
         ref={ref}
@@ -101,43 +105,48 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
             />
           </svg>
         )}
-        {icon && iconPosition === 'left' && !loading && (
+        {icon && iconPosition === "left" && !loading && (
           <span className="mr-2">{icon}</span>
         )}
         {children}
-        {icon && iconPosition === 'right' && !loading && (
+        {icon && iconPosition === "right" && !loading && (
           <span className="ml-2">{icon}</span>
         )}
       </button>
-    )
-  }
-)
+    );
+  },
+);
 
-Button.displayName = 'Button'
+Button.displayName = "Button";
 
 // Manufacturing-specific button variants for common operations
-export const ActionButton = React.forwardRef<HTMLButtonElement, Omit<ButtonProps, 'variant'>>(
-  (props, ref) => <Button variant="primary" ref={ref} {...props} />
-)
+export const ActionButton = React.forwardRef<
+  HTMLButtonElement,
+  Omit<ButtonProps, "variant">
+>((props, ref) => <Button variant="primary" ref={ref} {...props} />);
 
-export const StartButton = React.forwardRef<HTMLButtonElement, Omit<ButtonProps, 'variant'>>(
-  (props, ref) => <Button variant="success" ref={ref} {...props} />
-)
+export const StartButton = React.forwardRef<
+  HTMLButtonElement,
+  Omit<ButtonProps, "variant">
+>((props, ref) => <Button variant="success" ref={ref} {...props} />);
 
-export const PauseButton = React.forwardRef<HTMLButtonElement, Omit<ButtonProps, 'variant'>>(
-  (props, ref) => <Button variant="warning" ref={ref} {...props} />
-)
+export const PauseButton = React.forwardRef<
+  HTMLButtonElement,
+  Omit<ButtonProps, "variant">
+>((props, ref) => <Button variant="warning" ref={ref} {...props} />);
 
-export const StopButton = React.forwardRef<HTMLButtonElement, Omit<ButtonProps, 'variant'>>(
-  (props, ref) => <Button variant="danger" ref={ref} {...props} />
-)
+export const StopButton = React.forwardRef<
+  HTMLButtonElement,
+  Omit<ButtonProps, "variant">
+>((props, ref) => <Button variant="danger" ref={ref} {...props} />);
 
-export const SecondaryButton = React.forwardRef<HTMLButtonElement, Omit<ButtonProps, 'variant'>>(
-  (props, ref) => <Button variant="secondary" ref={ref} {...props} />
-)
+export const SecondaryButton = React.forwardRef<
+  HTMLButtonElement,
+  Omit<ButtonProps, "variant">
+>((props, ref) => <Button variant="secondary" ref={ref} {...props} />);
 
-ActionButton.displayName = 'ActionButton'
-StartButton.displayName = 'StartButton'
-PauseButton.displayName = 'PauseButton'
-StopButton.displayName = 'StopButton'
-SecondaryButton.displayName = 'SecondaryButton'
+ActionButton.displayName = "ActionButton";
+StartButton.displayName = "StartButton";
+PauseButton.displayName = "PauseButton";
+StopButton.displayName = "StopButton";
+SecondaryButton.displayName = "SecondaryButton";

@@ -2,6 +2,13 @@
 
 > Record every pull request chronologically with the newest entry at the top. Use UTC timestamps in ISO 8601 format.
 
+## 2025-10-08T19:45:00Z — Agent: gpt-5-codex
+
+- **Summary:** Applied theme-aware palettes to shared UI primitives, refreshed supervisor dashboard styling to respect CSS vari
+  able tokens, and centralized status/priority color maps for dark-mode parity.
+- **Reasoning:** Eliminate the lingering light-theme assumptions so supervisors see accessible contrast in both light and dark
+  modes while keeping future component work anchored to shared tokens.
+
 ## 2025-10-08T17:30:00Z — Agent: gpt-5-codex
 
 - **Summary:** Introduced a global theme provider and floating toggle to support persistent light/dark modes and refreshed shared styles to respect theme-aware tokens across forms, tables, and layout chrome.
