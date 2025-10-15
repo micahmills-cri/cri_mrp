@@ -99,4 +99,47 @@ describe("buildKanbanColumns", () => {
       "wo-complete",
     ]);
   });
+
+  it("places in-progress work orders with unknown work centers into the unassigned column", () => {
+    const workCenters: KanbanWorkCenter[] = [
+      {
+        id: "wc-known",
+        name: "Known Station",
+        departmentId: "dept-1",
+        departmentName: "Department",
+        sequence: 1,
+      },
+    ];
+
+    const workOrders: SupervisorWorkOrder[] = [
+      {
+        hullId: "HULL",
+        productSku: "SKU",
+        qty: 1,
+        currentStageIndex: 0,
+        specSnapshot: {},
+        createdAt: new Date("2025-02-01T00:00:00Z").toISOString(),
+        plannedStartDate: null,
+        plannedFinishDate: null,
+        priority: "NORMAL",
+        _count: { notes: 0, attachments: 0 },
+        currentWorkCenterId: "wc-missing",
+        currentWorkCenterName: "Missing Station",
+        currentDepartmentName: "Missing Department",
+        currentStage: undefined,
+        id: "wo-missing-station",
+        number: "WO-MISSING",
+        status: "IN_PROGRESS",
+      },
+    ];
+
+    const columns = buildKanbanColumns(workOrders, workCenters);
+
+    const unassignedColumn = columns.find(
+      (column) => column.key === "unassigned",
+    );
+    expect(unassignedColumn?.workOrders.map((wo) => wo.id)).toEqual([
+      "wo-missing-station",
+    ]);
+  });
 });

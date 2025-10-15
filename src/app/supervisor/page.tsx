@@ -147,10 +147,15 @@ export function buildKanbanColumns(
   );
 
   const workCenterBuckets = new Map<string, WorkOrder[]>();
+  const knownWorkCenterIds = new Set(workCenters.map((center) => center.id));
   const unassigned: WorkOrder[] = [];
 
   for (const wo of inProgressOrders) {
     if (wo.currentWorkCenterId) {
+      if (!knownWorkCenterIds.has(wo.currentWorkCenterId)) {
+        unassigned.push(wo);
+        continue;
+      }
       if (!workCenterBuckets.has(wo.currentWorkCenterId)) {
         workCenterBuckets.set(wo.currentWorkCenterId, []);
       }
