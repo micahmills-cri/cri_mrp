@@ -4,6 +4,9 @@ import { getUserFromRequest } from "../../../../lib/auth";
 import { Role } from "@prisma/client";
 import { z } from "zod";
 
+const WORK_ORDER_SNAPSHOT_SCHEMA_HASH =
+  "sha256:9432e0852b36e8977fa28b81779c5366c58005fab189cd16ebe38bb644145d9d";
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } },
@@ -397,6 +400,8 @@ export async function PATCH(
 
         const newVersionNumber = (latestVersion?.versionNumber || 0) + 1;
         const snapshot = {
+          schema_hash: WORK_ORDER_SNAPSHOT_SCHEMA_HASH,
+          versionNumber: newVersionNumber,
           number: updated.number,
           hullId: updated.hullId,
           productSku: updated.productSku,
