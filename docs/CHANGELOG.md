@@ -2,6 +2,12 @@
 
 > Record every pull request chronologically with the newest entry at the top. Use UTC timestamps in ISO 8601 format.
 
+## 2025-10-15T15:40:02Z — Agent: gpt-5-codex
+
+- **Summary:** Refined the supervisor Kanban into an accessible horizontal gallery with snap scrolling, stable gutters, and responsive column sizing while anchoring the theme toggle to the safe-area inset on touch devices.
+- **Reasoning:** Ensure supervisors can browse every lane on mobile and desktop without layout overflow and keep the dark mode control unobtrusive yet reachable across devices with dynamic safe-area spacing.
+- **Hats:** role-ui, qa-gate, docs.
+
 ## 2025-10-10T12:00:00Z — Agent: gpt-5-codex
 
 - **Summary:** Enriched the supervisor dashboard API with workstation metadata, reworked the Kanban board to build dynamic work-center lanes with fallbacks, and added contract/unit tests covering the new dashboard payload and kanban grouping.
