@@ -1870,7 +1870,13 @@ export default function SupervisorView() {
                               )}
                             </td>
                             <td style={{ padding: "0.75rem" }}>
-                              {wo.currentStage?.workCenter || "-"}
+                              {wo.currentStage?.workCenter?.name
+                                ? `${wo.currentStage.workCenter.name}${
+                                    wo.currentStage.department?.name
+                                      ? ` (${wo.currentStage.department.name})`
+                                      : ""
+                                  }`
+                                : "-"}
                             </td>
                             <td style={{ padding: "0.75rem" }}>
                               <div style={{ display: "flex", gap: "0.25rem" }}>
