@@ -2,6 +2,12 @@
 
 > Record every pull request chronologically with the newest entry at the top. Use UTC timestamps in ISO 8601 format.
 
+## 2025-10-10T12:00:00Z — Agent: gpt-5-codex
+
+- **Summary:** Enriched the supervisor dashboard API with workstation metadata, reworked the Kanban board to build dynamic work-center lanes with fallbacks, and added contract/unit tests covering the new dashboard payload and kanban grouping.
+- **Reasoning:** Provide supervisors with workstation-aware visibility so the board layout matches active centers while ensuring future regressions are caught automatically.
+- **Hats:** api-contract, role-ui, qa-gate.
+
 ## 2025-10-09T14:22:24Z — Agent: gpt-5-codex
 
 - **Summary:** Rebuilt the operator console UI to consume theme-aware tokens, shared form primitives, and semantic status badges so every panel, table, and action control honors dark mode. Refreshed the product model/trim selector to lean on the shared Select/Input components, ensuring supervisor planning forms inherit the same adaptive styling.
