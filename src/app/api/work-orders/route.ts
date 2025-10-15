@@ -69,10 +69,12 @@ export async function POST(request: NextRequest) {
           { status: 400 },
         );
       }
+    }
 
+    if (plannedStartDate) {
       // Check if start date is in the future
       const now = new Date();
-      now.setHours(0, 0, 0, 0);
+      now.setUTCHours(0, 0, 0, 0);
       if (plannedStartDate < now) {
         return NextResponse.json(
           {
