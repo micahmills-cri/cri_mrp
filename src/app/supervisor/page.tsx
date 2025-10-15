@@ -1023,7 +1023,8 @@ export default function SupervisorView() {
     return (
       <div
         style={{
-          backgroundColor: "var(--surface)",
+          backgroundColor: "var(--surface-muted)",
+          border: "1px solid var(--border)",
           borderRadius: "8px",
           boxShadow: "var(--shadow-card)",
           padding: "1.25rem",
@@ -1080,9 +1081,10 @@ export default function SupervisorView() {
                   role="listitem"
                   style={{
                     backgroundColor: "var(--surface)",
+                    border: "1px solid var(--border)",
                     borderRadius: "8px",
                     padding: "1rem",
-                    boxShadow: "var(--shadow-card)",
+                    boxShadow: "var(--shadow-card-hover)",
                     minHeight: "400px",
                     display: "flex",
                     flexDirection: "column",
