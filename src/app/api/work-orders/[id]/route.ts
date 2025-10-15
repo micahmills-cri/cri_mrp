@@ -294,6 +294,46 @@ export async function PATCH(
     const updateData: Record<string, any> = {};
     const changes: string[] = [];
 
+    const planningStatuses = ["PLANNED", "CANCELLED"] as const;
+    const isPlanningPhase = planningStatuses.includes(currentWorkOrder.status);
+
+    if (
+      data.hullId &&
+      data.hullId !== currentWorkOrder.hullId &&
+      !isPlanningPhase
+    ) {
+      return NextResponse.json(
+        {
+          error: "Hull cannot be changed once the work order is active",
+        },
+        { status: 400 },
+      );
+    }
+    if (
+      data.productSku &&
+      data.productSku !== currentWorkOrder.productSku &&
+      !isPlanningPhase
+    ) {
+      return NextResponse.json(
+        {
+          error: "Product SKU cannot be changed once the work order is active",
+        },
+        { status: 400 },
+      );
+    }
+    if (
+      data.qty !== undefined &&
+      data.qty !== currentWorkOrder.qty &&
+      !isPlanningPhase
+    ) {
+      return NextResponse.json(
+        {
+          error: "Quantity cannot be changed once the work order is active",
+        },
+        { status: 400 },
+      );
+    }
+
     if (data.hullId && data.hullId !== currentWorkOrder.hullId) {
       updateData.hullId = data.hullId;
       changes.push(
