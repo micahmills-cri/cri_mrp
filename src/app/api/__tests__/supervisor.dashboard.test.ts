@@ -154,7 +154,7 @@ describe("GET /api/supervisor/dashboard", () => {
     expect(firstWorkOrder).toMatchObject({
       id: "wo-1",
       priority: WOPriority.HIGH,
-      plannedStartDate: createdAt.toISOString(),
+      plannedStartDate: createdAt.toISOString().slice(0, 10),
       currentStage: {
         id: "stage-2",
         sequence: 2,

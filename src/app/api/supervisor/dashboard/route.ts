@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/server/db/client";
 import { getUserFromRequest } from "../../../../lib/auth";
+import { formatDateOnly } from "@/server/work-orders/date-utils";
 
 export async function GET(request: NextRequest) {
   try {
@@ -113,8 +114,8 @@ export async function GET(request: NextRequest) {
         status: wo.status,
         priority: wo.priority,
         qty: wo.qty,
-        plannedStartDate: wo.plannedStartDate,
-        plannedFinishDate: wo.plannedFinishDate,
+        plannedStartDate: formatDateOnly(wo.plannedStartDate),
+        plannedFinishDate: formatDateOnly(wo.plannedFinishDate),
         currentStage: currentStage
           ? {
               id: currentStage.id,

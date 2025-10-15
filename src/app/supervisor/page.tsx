@@ -230,6 +230,32 @@ export default function SupervisorView() {
   const [versionHistory, setVersionHistory] = useState<any[]>([]);
   const router = useRouter();
 
+  const toDateInputValue = (value?: string | null) => value ?? "";
+  const formatPlannedDate = (value?: string | null) => {
+    if (!value) {
+      return null;
+    }
+
+    const parsed = new Date(`${value}T00:00:00Z`);
+    if (Number.isNaN(parsed.getTime())) {
+      return value;
+    }
+
+    return parsed.toLocaleDateString();
+  };
+  const renderPlannedDate = (label: string, value?: string | null) => {
+    const formatted = formatPlannedDate(value);
+    if (!formatted) {
+      return null;
+    }
+
+    return (
+      <div>
+        {label}: {formatted}
+      </div>
+    );
+  };
+
   // Plan tab states
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [newWO, setNewWO] = useState({
@@ -711,12 +737,14 @@ export default function SupervisorView() {
           features: newWO.features || undefined,
           routingVersionId: routingData.routingVersion.id,
           priority: newWO.priority,
-          plannedStartDate: newWO.plannedStartDate
-            ? new Date(newWO.plannedStartDate).toISOString()
-            : null,
-          plannedFinishDate: newWO.plannedFinishDate
-            ? new Date(newWO.plannedFinishDate).toISOString()
-            : null,
+          plannedStartDate:
+            newWO.plannedStartDate.trim() === ""
+              ? null
+              : newWO.plannedStartDate,
+          plannedFinishDate:
+            newWO.plannedFinishDate.trim() === ""
+              ? null
+              : newWO.plannedFinishDate,
         }),
       });
 
@@ -796,12 +824,8 @@ export default function SupervisorView() {
     setSelectedWorkOrder(wo);
     setEditedWorkOrder({
       priority: wo.priority || "NORMAL",
-      plannedStartDate: wo.plannedStartDate
-        ? new Date(wo.plannedStartDate).toISOString().slice(0, 16)
-        : "",
-      plannedFinishDate: wo.plannedFinishDate
-        ? new Date(wo.plannedFinishDate).toISOString().slice(0, 16)
-        : "",
+      plannedStartDate: toDateInputValue(wo.plannedStartDate),
+      plannedFinishDate: toDateInputValue(wo.plannedFinishDate),
     });
     setHasUnsavedChanges(false);
     setIsEditingPlanningDetails(false);
@@ -821,12 +845,14 @@ export default function SupervisorView() {
         credentials: "include",
         body: JSON.stringify({
           priority: editedWorkOrder.priority,
-          plannedStartDate: editedWorkOrder.plannedStartDate
-            ? new Date(editedWorkOrder.plannedStartDate).toISOString()
-            : null,
-          plannedFinishDate: editedWorkOrder.plannedFinishDate
-            ? new Date(editedWorkOrder.plannedFinishDate).toISOString()
-            : null,
+          plannedStartDate:
+            editedWorkOrder.plannedStartDate?.trim() === ""
+              ? null
+              : editedWorkOrder.plannedStartDate,
+          plannedFinishDate:
+            editedWorkOrder.plannedFinishDate?.trim() === ""
+              ? null
+              : editedWorkOrder.plannedFinishDate,
         }),
       });
 
@@ -850,16 +876,12 @@ export default function SupervisorView() {
           setSelectedWorkOrder(refreshData.workOrder);
           setEditedWorkOrder({
             priority: refreshData.workOrder.priority || "NORMAL",
-            plannedStartDate: refreshData.workOrder.plannedStartDate
-              ? new Date(refreshData.workOrder.plannedStartDate)
-                  .toISOString()
-                  .slice(0, 16)
-              : "",
-            plannedFinishDate: refreshData.workOrder.plannedFinishDate
-              ? new Date(refreshData.workOrder.plannedFinishDate)
-                  .toISOString()
-                  .slice(0, 16)
-              : "",
+            plannedStartDate: toDateInputValue(
+              refreshData.workOrder.plannedStartDate,
+            ),
+            plannedFinishDate: toDateInputValue(
+              refreshData.workOrder.plannedFinishDate,
+            ),
           });
         }
 
@@ -880,16 +902,10 @@ export default function SupervisorView() {
     if (selectedWorkOrder) {
       setEditedWorkOrder({
         priority: selectedWorkOrder.priority || "NORMAL",
-        plannedStartDate: selectedWorkOrder.plannedStartDate
-          ? new Date(selectedWorkOrder.plannedStartDate)
-              .toISOString()
-              .slice(0, 16)
-          : "",
-        plannedFinishDate: selectedWorkOrder.plannedFinishDate
-          ? new Date(selectedWorkOrder.plannedFinishDate)
-              .toISOString()
-              .slice(0, 16)
-          : "",
+        plannedStartDate: toDateInputValue(selectedWorkOrder.plannedStartDate),
+        plannedFinishDate: toDateInputValue(
+          selectedWorkOrder.plannedFinishDate,
+        ),
       });
       setHasUnsavedChanges(false);
       setIsEditingPlanningDetails(false);
@@ -1268,21 +1284,10 @@ export default function SupervisorView() {
                                 color: "var(--muted)",
                               }}
                             >
-                              {wo.plannedStartDate && (
-                                <div>
-                                  Start:{" "}
-                                  {new Date(
-                                    wo.plannedStartDate,
-                                  ).toLocaleDateString()}
-                                </div>
-                              )}
-                              {wo.plannedFinishDate && (
-                                <div>
-                                  Finish:{" "}
-                                  {new Date(
-                                    wo.plannedFinishDate,
-                                  ).toLocaleDateString()}
-                                </div>
+                              {renderPlannedDate("Start", wo.plannedStartDate)}
+                              {renderPlannedDate(
+                                "Finish",
+                                wo.plannedFinishDate,
                               )}
                             </div>
                           ) : null}
@@ -1806,11 +1811,7 @@ export default function SupervisorView() {
                                 fontSize: "0.875rem",
                               }}
                             >
-                              {wo.plannedStartDate
-                                ? new Date(
-                                    wo.plannedStartDate,
-                                  ).toLocaleDateString()
-                                : "-"}
+                              {formatPlannedDate(wo.plannedStartDate) || "-"}
                             </td>
                             <td
                               style={{
@@ -1818,11 +1819,7 @@ export default function SupervisorView() {
                                 fontSize: "0.875rem",
                               }}
                             >
-                              {wo.plannedFinishDate
-                                ? new Date(
-                                    wo.plannedFinishDate,
-                                  ).toLocaleDateString()
-                                : "-"}
+                              {formatPlannedDate(wo.plannedFinishDate) || "-"}
                             </td>
                             <td
                               style={{
@@ -2301,7 +2298,7 @@ export default function SupervisorView() {
                             Planned Start Date
                           </label>
                           <input
-                            type="datetime-local"
+                            type="date"
                             value={editedWorkOrder.plannedStartDate}
                             onChange={(e) => {
                               setEditedWorkOrder({
@@ -2330,7 +2327,7 @@ export default function SupervisorView() {
                             Planned Finish Date
                           </label>
                           <input
-                            type="datetime-local"
+                            type="date"
                             value={editedWorkOrder.plannedFinishDate}
                             onChange={(e) => {
                               setEditedWorkOrder({
@@ -2403,19 +2400,15 @@ export default function SupervisorView() {
                       </div>
                       <div>
                         <strong>Planned Start:</strong>{" "}
-                        {selectedWorkOrder.plannedStartDate
-                          ? new Date(
-                              selectedWorkOrder.plannedStartDate,
-                            ).toLocaleString()
-                          : "Not set"}
+                        {formatPlannedDate(
+                          selectedWorkOrder.plannedStartDate,
+                        ) || "Not set"}
                       </div>
                       <div>
                         <strong>Planned Finish:</strong>{" "}
-                        {selectedWorkOrder.plannedFinishDate
-                          ? new Date(
-                              selectedWorkOrder.plannedFinishDate,
-                            ).toLocaleString()
-                          : "Not set"}
+                        {formatPlannedDate(
+                          selectedWorkOrder.plannedFinishDate,
+                        ) || "Not set"}
                       </div>
                     </div>
                   )}
@@ -2889,7 +2882,7 @@ export default function SupervisorView() {
                   Planned Start Date
                 </label>
                 <input
-                  type="datetime-local"
+                  type="date"
                   value={newWO.plannedStartDate}
                   onChange={(e) =>
                     setNewWO({ ...newWO, plannedStartDate: e.target.value })
@@ -2914,7 +2907,7 @@ export default function SupervisorView() {
                   Planned Finish Date
                 </label>
                 <input
-                  type="datetime-local"
+                  type="date"
                   value={newWO.plannedFinishDate}
                   onChange={(e) =>
                     setNewWO({ ...newWO, plannedFinishDate: e.target.value })

@@ -4,6 +4,12 @@ import { getUserFromRequest } from "../../../../lib/auth";
 import { Role } from "@prisma/client";
 import { z } from "zod";
 import { WORK_ORDER_SNAPSHOT_SCHEMA_HASH } from "@/server/work-orders/snapshot-metadata";
+import {
+  DATE_ONLY_REGEX,
+  formatDateOnly,
+  normalizeDateInput,
+  parseDateOnlyToUTC,
+} from "@/server/work-orders/date-utils";
 
 export async function GET(
   request: NextRequest,
@@ -135,8 +141,8 @@ export async function GET(
         qty: workOrder.qty,
         status: workOrder.status,
         priority: workOrder.priority,
-        plannedStartDate: workOrder.plannedStartDate,
-        plannedFinishDate: workOrder.plannedFinishDate,
+        plannedStartDate: formatDateOnly(workOrder.plannedStartDate),
+        plannedFinishDate: formatDateOnly(workOrder.plannedFinishDate),
         currentStageIndex: workOrder.currentStageIndex,
         specSnapshot: workOrder.specSnapshot,
         createdAt: workOrder.createdAt,
@@ -189,13 +195,17 @@ export async function GET(
 }
 
 // Schema for PATCH request validation
+const dateOnlySchema = z
+  .string()
+  .regex(DATE_ONLY_REGEX, "Date must be in YYYY-MM-DD format");
+
 const updateWorkOrderSchema = z.object({
   hullId: z.string().min(1).optional(),
   productSku: z.string().min(1).optional(),
   qty: z.number().positive().optional(),
   priority: z.enum(["LOW", "NORMAL", "HIGH", "CRITICAL"]).optional(),
-  plannedStartDate: z.string().datetime().optional().nullable(),
-  plannedFinishDate: z.string().datetime().optional().nullable(),
+  plannedStartDate: dateOnlySchema.nullable().optional(),
+  plannedFinishDate: dateOnlySchema.nullable().optional(),
 });
 
 export async function PATCH(
@@ -237,13 +247,13 @@ export async function PATCH(
       data.plannedStartDate === undefined
         ? undefined
         : data.plannedStartDate
-          ? new Date(data.plannedStartDate)
+          ? parseDateOnlyToUTC(data.plannedStartDate)
           : null;
     const requestedFinish =
       data.plannedFinishDate === undefined
         ? undefined
         : data.plannedFinishDate
-          ? new Date(data.plannedFinishDate)
+          ? parseDateOnlyToUTC(data.plannedFinishDate)
           : null;
 
     const currentWorkOrder = await prisma.workOrder.findUnique({
@@ -257,14 +267,17 @@ export async function PATCH(
       );
     }
 
+    const currentStartDate = normalizeDateInput(
+      currentWorkOrder.plannedStartDate,
+    );
+    const currentFinishDate = normalizeDateInput(
+      currentWorkOrder.plannedFinishDate,
+    );
+
     const finalStart =
-      requestedStart !== undefined
-        ? requestedStart
-        : currentWorkOrder.plannedStartDate;
+      requestedStart !== undefined ? requestedStart : currentStartDate;
     const finalFinish =
-      requestedFinish !== undefined
-        ? requestedFinish
-        : currentWorkOrder.plannedFinishDate;
+      requestedFinish !== undefined ? requestedFinish : currentFinishDate;
 
     if (finalStart && finalFinish && finalStart >= finalFinish) {
       return NextResponse.json(
@@ -365,15 +378,17 @@ export async function PATCH(
     }
 
     if (requestedStart !== undefined) {
-      const currentStartIso = currentWorkOrder.plannedStartDate
-        ? currentWorkOrder.plannedStartDate.toISOString()
+      const currentStartLabel = formatDateOnly(
+        currentWorkOrder.plannedStartDate,
+      );
+      const newStartLabel = requestedStart
+        ? formatDateOnly(requestedStart)
         : null;
-      const newStartIso = requestedStart ? requestedStart.toISOString() : null;
 
-      if (currentStartIso !== newStartIso) {
+      if (currentStartLabel !== newStartLabel) {
         updateData.plannedStartDate = requestedStart;
-        const previousLabel = currentStartIso ?? "not set";
-        const nextLabel = newStartIso ?? "cleared";
+        const previousLabel = currentStartLabel ?? "not set";
+        const nextLabel = newStartLabel ?? "cleared";
         changes.push(
           `Planned start date changed from ${previousLabel} to ${nextLabel}`,
         );
@@ -381,17 +396,17 @@ export async function PATCH(
     }
 
     if (requestedFinish !== undefined) {
-      const currentFinishIso = currentWorkOrder.plannedFinishDate
-        ? currentWorkOrder.plannedFinishDate.toISOString()
-        : null;
-      const newFinishIso = requestedFinish
-        ? requestedFinish.toISOString()
+      const currentFinishLabel = formatDateOnly(
+        currentWorkOrder.plannedFinishDate,
+      );
+      const newFinishLabel = requestedFinish
+        ? formatDateOnly(requestedFinish)
         : null;
 
-      if (currentFinishIso !== newFinishIso) {
+      if (currentFinishLabel !== newFinishLabel) {
         updateData.plannedFinishDate = requestedFinish;
-        const previousLabel = currentFinishIso ?? "not set";
-        const nextLabel = newFinishIso ?? "cleared";
+        const previousLabel = currentFinishLabel ?? "not set";
+        const nextLabel = newFinishLabel ?? "cleared";
         changes.push(
           `Planned finish date changed from ${previousLabel} to ${nextLabel}`,
         );
@@ -401,7 +416,11 @@ export async function PATCH(
     if (Object.keys(updateData).length === 0) {
       return NextResponse.json({
         success: true,
-        workOrder: currentWorkOrder,
+        workOrder: {
+          ...currentWorkOrder,
+          plannedStartDate: formatDateOnly(currentWorkOrder.plannedStartDate),
+          plannedFinishDate: formatDateOnly(currentWorkOrder.plannedFinishDate),
+        },
         changes: ["No changes detected"],
       });
     }
@@ -448,8 +467,8 @@ export async function PATCH(
           qty: updated.qty,
           status: updated.status,
           priority: updated.priority,
-          plannedStartDate: updated.plannedStartDate,
-          plannedFinishDate: updated.plannedFinishDate,
+          plannedStartDate: formatDateOnly(updated.plannedStartDate),
+          plannedFinishDate: formatDateOnly(updated.plannedFinishDate),
           routingVersionId: updated.routingVersionId,
           currentStageIndex: updated.currentStageIndex,
           specSnapshot: updated.specSnapshot,
@@ -466,8 +485,8 @@ export async function PATCH(
                     name: stage.name,
                     enabled: stage.enabled,
                     workCenterId: stage.workCenterId,
-                  standardStageSeconds: stage.standardStageSeconds,
-                })),
+                    standardStageSeconds: stage.standardStageSeconds,
+                  })),
               }
             : null,
         };
@@ -494,7 +513,11 @@ export async function PATCH(
 
     return NextResponse.json({
       success: true,
-      workOrder: updatedWorkOrder,
+      workOrder: {
+        ...updatedWorkOrder,
+        plannedStartDate: formatDateOnly(updatedWorkOrder.plannedStartDate),
+        plannedFinishDate: formatDateOnly(updatedWorkOrder.plannedFinishDate),
+      },
       changes,
     });
   } catch (error) {

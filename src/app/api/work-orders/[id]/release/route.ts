@@ -1,24 +1,31 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/server/db/client'
-import { getUserFromRequest } from '../../../../../lib/auth'
-import { WOStatus, Role, RoutingVersionStatus } from '@prisma/client'
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/server/db/client";
+import { getUserFromRequest } from "../../../../../lib/auth";
+import { WOStatus, Role, RoutingVersionStatus } from "@prisma/client";
+import {
+  formatDateOnly,
+  parseDateOnlyToUTC,
+} from "@/server/work-orders/date-utils";
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { id: string } },
 ) {
   try {
-    const user = getUserFromRequest(request)
+    const user = getUserFromRequest(request);
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Check if user is supervisor or admin
     if (user.role !== Role.SUPERVISOR && user.role !== Role.ADMIN) {
-      return NextResponse.json({ error: 'Forbidden - Supervisor or Admin only' }, { status: 403 })
+      return NextResponse.json(
+        { error: "Forbidden - Supervisor or Admin only" },
+        { status: 403 },
+      );
     }
 
-    const workOrderId = params.id
+    const workOrderId = params.id;
 
     // Get work order with routing version
     const workOrder = await prisma.workOrder.findUnique({
@@ -28,56 +35,76 @@ export async function POST(
           include: {
             stages: {
               where: { enabled: true },
-              orderBy: { sequence: 'asc' },
+              orderBy: { sequence: "asc" },
               include: {
                 workCenter: {
-                  include: { department: true }
-                }
-              }
-            }
-          }
-        }
-      }
-    })
+                  include: { department: true },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
 
     if (!workOrder) {
-      return NextResponse.json({ error: 'Work order not found' }, { status: 404 })
+      return NextResponse.json(
+        { error: "Work order not found" },
+        { status: 404 },
+      );
     }
 
     // Check if work order is in PLANNED status
     if (workOrder.status !== WOStatus.PLANNED) {
-      return NextResponse.json({ error: 'Work order must be in PLANNED status to release' }, { status: 400 })
+      return NextResponse.json(
+        { error: "Work order must be in PLANNED status to release" },
+        { status: 400 },
+      );
     }
 
     // Validate that planned dates are set
-    const plannedStartDate = (workOrder as any).plannedStartDate
-    const plannedFinishDate = (workOrder as any).plannedFinishDate
+    const plannedStartDate = formatDateOnly(workOrder.plannedStartDate);
+    const plannedFinishDate = formatDateOnly(workOrder.plannedFinishDate);
 
     if (!plannedStartDate || !plannedFinishDate) {
-      return NextResponse.json({
-        error: 'Cannot release work order without planned start and finish dates'
-      }, { status: 400 })
+      return NextResponse.json(
+        {
+          error:
+            "Cannot release work order without planned start and finish dates",
+        },
+        { status: 400 },
+      );
     }
 
     // Validate dates are valid
-    const startDate = new Date(plannedStartDate)
-    const finishDate = new Date(plannedFinishDate)
-    const now = new Date()
+    const startDate = parseDateOnlyToUTC(plannedStartDate);
+    const finishDate = parseDateOnlyToUTC(plannedFinishDate);
+    const startComparison = new Date(startDate.getTime());
+    const finishComparison = new Date(finishDate.getTime());
+    startComparison.setHours(0, 0, 0, 0);
+    finishComparison.setHours(0, 0, 0, 0);
 
-    if (startDate >= finishDate) {
-      return NextResponse.json({
-        error: 'Planned start date must be before planned finish date'
-      }, { status: 400 })
+    if (startComparison >= finishComparison) {
+      return NextResponse.json(
+        {
+          error: "Planned start date must be before planned finish date",
+        },
+        { status: 400 },
+      );
     }
 
     // Optional: Check if start date is too far in the past (allow some buffer for same-day releases)
-    const yesterday = new Date()
-    yesterday.setDate(yesterday.getDate() - 1)
-    
-    if (startDate < yesterday) {
-      return NextResponse.json({
-        error: 'Planned start date cannot be more than 1 day in the past'
-      }, { status: 400 })
+    const yesterday = new Date();
+    yesterday.setHours(0, 0, 0, 0);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    if (startComparison < yesterday) {
+      return NextResponse.json(
+        {
+          error: "Planned start date cannot be more than 1 day in the past",
+        },
+        { status: 400 },
+      );
     }
 
     // Create version snapshot before release
@@ -85,10 +112,10 @@ export async function POST(
       // Get latest version number
       const latestVersion = await tx.workOrderVersion.findFirst({
         where: { workOrderId: params.id },
-        orderBy: { versionNumber: 'desc' }
-      })
+        orderBy: { versionNumber: "desc" },
+      });
 
-      const newVersionNumber = (latestVersion?.versionNumber || 0) + 1
+      const newVersionNumber = (latestVersion?.versionNumber || 0) + 1;
 
       // Create snapshot for release
       const snapshot = {
@@ -96,10 +123,10 @@ export async function POST(
         hullId: workOrder.hullId,
         productSku: workOrder.productSku,
         qty: workOrder.qty,
-        status: 'RELEASED',
-        priority: (workOrder as any).priority || 'NORMAL',
-        plannedStartDate: plannedStartDate,
-        plannedFinishDate: plannedFinishDate,
+        status: "RELEASED",
+        priority: (workOrder as any).priority || "NORMAL",
+        plannedStartDate,
+        plannedFinishDate,
         routingVersionId: workOrder.routingVersionId,
         currentStageIndex: 0,
         specSnapshot: workOrder.specSnapshot,
@@ -107,16 +134,16 @@ export async function POST(
           model: workOrder.routingVersion.model,
           trim: workOrder.routingVersion.trim,
           version: workOrder.routingVersion.version,
-          stages: workOrder.routingVersion.stages.map(s => ({
+          stages: workOrder.routingVersion.stages.map((s) => ({
             sequence: s.sequence,
             code: s.code,
             name: s.name,
             enabled: s.enabled,
             workCenterId: s.workCenterId,
-            standardStageSeconds: s.standardStageSeconds
-          }))
-        }
-      }
+            standardStageSeconds: s.standardStageSeconds,
+          })),
+        },
+      };
 
       // Create version for release
       await tx.workOrderVersion.create({
@@ -124,11 +151,11 @@ export async function POST(
           workOrderId: params.id,
           versionNumber: newVersionNumber,
           snapshotData: snapshot,
-          reason: 'Work order released',
-          createdBy: user.email || user.userId || user.id
-        }
-      })
-    })
+          reason: "Work order released",
+          createdBy: user.email || user.userId || user.id,
+        },
+      });
+    });
 
     // Update routing version status to RELEASED if it's still DRAFT
     if (workOrder.routingVersion.status === RoutingVersionStatus.DRAFT) {
@@ -136,27 +163,27 @@ export async function POST(
         where: { id: workOrder.routingVersionId },
         data: {
           status: RoutingVersionStatus.RELEASED,
-          releasedAt: new Date()
-        }
-      })
+          releasedAt: new Date(),
+        },
+      });
     }
 
     // Get fresh spec snapshot with enabled stages only
     const specSnapshot = {
-      model: (workOrder.specSnapshot as any).model || '',
-      trim: (workOrder.specSnapshot as any).trim || '',
+      model: (workOrder.specSnapshot as any).model || "",
+      trim: (workOrder.specSnapshot as any).trim || "",
       features: (workOrder.specSnapshot as any).features || {},
       routingVersionId: workOrder.routingVersionId,
-      stages: workOrder.routingVersion.stages.map(s => ({
+      stages: workOrder.routingVersion.stages.map((s) => ({
         id: s.id,
         code: s.code,
         name: s.name,
         sequence: s.sequence,
         enabled: s.enabled,
         workCenterId: s.workCenterId,
-        standardStageSeconds: s.standardStageSeconds
-      }))
-    }
+        standardStageSeconds: s.standardStageSeconds,
+      })),
+    };
 
     // Update work order to RELEASED status
     const updatedWorkOrder = await prisma.workOrder.update({
@@ -164,21 +191,21 @@ export async function POST(
       data: {
         status: WOStatus.RELEASED,
         currentStageIndex: 0,
-        specSnapshot: specSnapshot
-      }
-    })
+        specSnapshot: specSnapshot,
+      },
+    });
 
     // Create audit log
     await prisma.auditLog.create({
       data: {
         actorId: user.userId,
-        model: 'WorkOrder',
+        model: "WorkOrder",
         modelId: workOrderId,
-        action: 'RELEASE',
+        action: "RELEASE",
         before: { status: WOStatus.PLANNED },
-        after: { status: WOStatus.RELEASED, specSnapshot }
-      }
-    })
+        after: { status: WOStatus.RELEASED, specSnapshot },
+      },
+    });
 
     return NextResponse.json({
       success: true,
@@ -187,11 +214,14 @@ export async function POST(
         id: updatedWorkOrder.id,
         number: updatedWorkOrder.number,
         status: updatedWorkOrder.status,
-        specSnapshot: updatedWorkOrder.specSnapshot
-      }
-    })
+        specSnapshot: updatedWorkOrder.specSnapshot,
+      },
+    });
   } catch (error) {
-    console.error('Release work order error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error("Release work order error:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }

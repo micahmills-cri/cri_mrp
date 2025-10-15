@@ -1,65 +1,75 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/server/db/client'
-import { getUserFromRequest } from '../../../../../lib/auth'
-import { Role } from '@prisma/client'
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/server/db/client";
+import { getUserFromRequest } from "../../../../../lib/auth";
+import { Role } from "@prisma/client";
+import { formatDateOnly } from "@/server/work-orders/date-utils";
 
 // GET all versions for a work order
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { id: string } },
 ) {
   try {
-    const user = getUserFromRequest(request)
+    const user = getUserFromRequest(request);
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const workOrderId = params.id
+    const workOrderId = params.id;
 
     // Get all versions for the work order
     const versions = await prisma.workOrderVersion.findMany({
       where: { workOrderId },
-      orderBy: { versionNumber: 'desc' }
-    })
+      orderBy: { versionNumber: "desc" },
+    });
 
     return NextResponse.json({
       success: true,
-      versions: versions.map(v => ({
+      versions: versions.map((v) => ({
         id: v.id,
         versionNumber: v.versionNumber,
         reason: v.reason,
         createdBy: v.createdBy,
         createdAt: v.createdAt,
-        snapshot: v.snapshotData
-      }))
-    })
+        snapshot: v.snapshotData,
+      })),
+    });
   } catch (error) {
-    console.error('Get work order versions error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error("Get work order versions error:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }
 
 // POST create a new version snapshot
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { id: string } },
 ) {
   try {
-    const user = getUserFromRequest(request)
+    const user = getUserFromRequest(request);
     if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Only supervisors and admins can create versions
     if (user.role === Role.OPERATOR) {
-      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
+      return NextResponse.json(
+        { error: "Insufficient permissions" },
+        { status: 403 },
+      );
     }
 
-    const workOrderId = params.id
-    const { reason } = await request.json()
+    const workOrderId = params.id;
+    const { reason } = await request.json();
 
     if (!reason) {
-      return NextResponse.json({ error: 'Reason is required' }, { status: 400 })
+      return NextResponse.json(
+        { error: "Reason is required" },
+        { status: 400 },
+      );
     }
 
     // Get current work order state
@@ -68,23 +78,26 @@ export async function POST(
       include: {
         routingVersion: {
           include: {
-            stages: true
-          }
-        }
-      }
-    })
+            stages: true,
+          },
+        },
+      },
+    });
 
     if (!workOrder) {
-      return NextResponse.json({ error: 'Work order not found' }, { status: 404 })
+      return NextResponse.json(
+        { error: "Work order not found" },
+        { status: 404 },
+      );
     }
 
     // Get the latest version number
     const latestVersion = await prisma.workOrderVersion.findFirst({
       where: { workOrderId },
-      orderBy: { versionNumber: 'desc' }
-    })
+      orderBy: { versionNumber: "desc" },
+    });
 
-    const newVersionNumber = (latestVersion?.versionNumber || 0) + 1
+    const newVersionNumber = (latestVersion?.versionNumber || 0) + 1;
 
     // Create snapshot of current state
     const snapshot = {
@@ -94,8 +107,8 @@ export async function POST(
       qty: workOrder.qty,
       status: workOrder.status,
       priority: workOrder.priority,
-      plannedStartDate: workOrder.plannedStartDate,
-      plannedFinishDate: workOrder.plannedFinishDate,
+      plannedStartDate: formatDateOnly(workOrder.plannedStartDate),
+      plannedFinishDate: formatDateOnly(workOrder.plannedFinishDate),
       routingVersionId: workOrder.routingVersionId,
       currentStageIndex: workOrder.currentStageIndex,
       specSnapshot: workOrder.specSnapshot,
@@ -103,16 +116,16 @@ export async function POST(
         model: workOrder.routingVersion.model,
         trim: workOrder.routingVersion.trim,
         version: workOrder.routingVersion.version,
-        stages: workOrder.routingVersion.stages.map(s => ({
+        stages: workOrder.routingVersion.stages.map((s) => ({
           sequence: s.sequence,
           code: s.code,
           name: s.name,
           enabled: s.enabled,
           workCenterId: s.workCenterId,
-          standardStageSeconds: s.standardStageSeconds
-        }))
-      }
-    }
+          standardStageSeconds: s.standardStageSeconds,
+        })),
+      },
+    };
 
     // Create version with audit log
     const newVersion = await prisma.$transaction(async (tx) => {
@@ -122,24 +135,24 @@ export async function POST(
           versionNumber: newVersionNumber,
           snapshotData: snapshot,
           reason,
-          createdBy: user.email
-        }
-      })
+          createdBy: user.email,
+        },
+      });
 
       // Create audit log
       await tx.auditLog.create({
         data: {
           actorId: user.id,
-          action: 'CREATE',
-          modelType: 'WorkOrderVersion',
+          action: "CREATE",
+          modelType: "WorkOrderVersion",
           modelId: version.id,
           changes: { reason, versionNumber: newVersionNumber },
-          metadata: { workOrderNumber: workOrder.number }
-        }
-      })
+          metadata: { workOrderNumber: workOrder.number },
+        },
+      });
 
-      return version
-    })
+      return version;
+    });
 
     return NextResponse.json({
       success: true,
@@ -148,11 +161,14 @@ export async function POST(
         versionNumber: newVersion.versionNumber,
         reason: newVersion.reason,
         createdBy: newVersion.createdBy,
-        createdAt: newVersion.createdAt
-      }
-    })
+        createdAt: newVersion.createdAt,
+      },
+    });
   } catch (error) {
-    console.error('Create work order version error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error("Create work order version error:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
   }
 }

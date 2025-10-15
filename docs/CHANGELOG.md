@@ -2,6 +2,12 @@
 
 > Record every pull request chronologically with the newest entry at the top. Use UTC timestamps in ISO 8601 format.
 
+## 2025-10-15T20:11:23Z — Agent: gpt-5-codex
+
+- **Summary:** Standardized supervisor planning dates to use YYYY-MM-DD strings across the UI and APIs, enforced date-only validation, normalized persistence to midnight UTC, and aligned release/restore flows with date-only comparisons for consistent scheduling data.
+- **Reasoning:** Removing timezone drift from planned start/finish dates keeps release gating predictable and ensures dashboards, audits, and downstream consumers receive uniform schedule metadata.
+- **Hats:** role-ui, api-contract, qa-gate.
+
 ## 2025-10-15T16:14:46Z — Agent: gpt-5-codex
 
 - **Summary:** Added an explicit edit workflow for supervisor planning details, including an unlock button and cancel/save controls that preserve the existing read-only view. Enabled editing across active statuses and updated the API to validate changes, record version snapshots, and allow supervisors to adjust planning dates without future-date restrictions.
