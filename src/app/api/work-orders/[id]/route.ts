@@ -3,9 +3,7 @@ import { prisma } from "@/server/db/client";
 import { getUserFromRequest } from "../../../../lib/auth";
 import { Role } from "@prisma/client";
 import { z } from "zod";
-
-const WORK_ORDER_SNAPSHOT_SCHEMA_HASH =
-  "sha256:9432e0852b36e8977fa28b81779c5366c58005fab189cd16ebe38bb644145d9d";
+import { WORK_ORDER_SNAPSHOT_SCHEMA_HASH } from "@/server/work-orders/snapshot-metadata";
 
 export async function GET(
   request: NextRequest,
