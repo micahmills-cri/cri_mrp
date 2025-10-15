@@ -1020,6 +1020,78 @@ export default function SupervisorView() {
   const renderKanbanView = () => {
     const columns = buildKanbanColumns(workOrders, kanbanWorkCenters);
 
+    const getColumnAccent = (col: KanbanColumn, workCenterIndex?: number) => {
+      const paletteCycle = [
+        {
+          surface: "var(--status-maintenance-surface)",
+          border: "var(--status-maintenance-border)",
+          text: "var(--status-maintenance-foreground)",
+        },
+        {
+          surface: "var(--status-info-surface)",
+          border: "var(--status-info-border)",
+          text: "var(--status-info-foreground)",
+        },
+        {
+          surface: "var(--status-success-surface)",
+          border: "var(--status-success-border)",
+          text: "var(--status-success-foreground)",
+        },
+        {
+          surface: "var(--status-warning-surface)",
+          border: "var(--status-warning-border)",
+          text: "var(--status-warning-foreground)",
+        },
+        {
+          surface: "var(--status-danger-surface)",
+          border: "var(--status-danger-border)",
+          text: "var(--status-danger-foreground)",
+        },
+      ];
+
+      if (col.key === "backlog") {
+        return {
+          surface: "var(--status-info-surface)",
+          border: "var(--status-info-border)",
+          text: "var(--status-info-foreground)",
+        };
+      }
+
+      if (col.key === "completed") {
+        return {
+          surface: "var(--status-success-surface)",
+          border: "var(--status-success-border)",
+          text: "var(--status-success-foreground)",
+        };
+      }
+
+      if (col.key === "unassigned") {
+        return {
+          surface: "var(--status-warning-surface)",
+          border: "var(--status-warning-border)",
+          text: "var(--status-warning-foreground)",
+        };
+      }
+
+      if (col.key.startsWith("work-center-")) {
+        return (
+          paletteCycle[(workCenterIndex ?? 0) % paletteCycle.length] ?? {
+            surface: "var(--surface-muted)",
+            border: "var(--border)",
+            text: "var(--foreground)",
+          }
+        );
+      }
+
+      return {
+        surface: "var(--surface-muted)",
+        border: "var(--border)",
+        text: "var(--foreground)",
+      };
+    };
+
+    let workCenterPaletteIndex = -1;
+
     return (
       <div
         style={{
@@ -1073,6 +1145,12 @@ export default function SupervisorView() {
           >
             {columns.map((column) => {
               const columnWOs = column.workOrders;
+              const accent = getColumnAccent(
+                column,
+                column.key.startsWith("work-center-")
+                  ? ++workCenterPaletteIndex
+                  : undefined,
+              );
 
               return (
                 <div
@@ -1092,12 +1170,24 @@ export default function SupervisorView() {
                     scrollMarginInline: "0.25rem",
                   }}
                 >
-                  <div>
+                  <div
+                    style={{
+                      backgroundColor: accent.surface,
+                      borderRadius: "6px",
+                      padding: "0.75rem 0.85rem",
+                      borderTop: `4px solid ${accent.border}`,
+                      color: accent.text,
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: column.description ? "0.25rem" : 0,
+                    }}
+                  >
                     <h3
                       style={{
-                        margin: "0 0 0.25rem 0",
-                        fontSize: "1.1rem",
-                        fontWeight: "600",
+                        margin: 0,
+                        fontSize: "1.05rem",
+                        fontWeight: 600,
+                        color: accent.text,
                       }}
                     >
                       {column.label} ({columnWOs.length})
@@ -1107,7 +1197,8 @@ export default function SupervisorView() {
                         style={{
                           margin: 0,
                           fontSize: "0.8rem",
-                          color: "var(--muted)",
+                          color: accent.text,
+                          opacity: 0.8,
                         }}
                       >
                         {column.description}
@@ -1126,199 +1217,200 @@ export default function SupervisorView() {
                     </div>
                   ) : (
                     columnWOs.map((wo) => {
-                    const priorityColors: Record<
-                      string,
-                      { bg: string; text: string }
-                    > = {
-                      LOW: {
-                        bg: "var(--status-success-surface)",
-                        text: "var(--status-success-foreground)",
-                      },
-                      NORMAL: {
-                        bg: "var(--status-info-surface)",
-                        text: "var(--status-info-foreground)",
-                      },
-                      HIGH: {
-                        bg: "var(--status-warning-surface)",
-                        text: "var(--status-warning-foreground)",
-                      },
-                      CRITICAL: {
-                        bg: "var(--status-danger-surface)",
-                        text: "var(--status-danger-foreground)",
-                      },
-                    };
-                    const priorityColor =
-                      priorityColors[wo.priority || "NORMAL"] ||
-                      priorityColors.NORMAL;
-                    const stageName =
-                      wo.currentStage?.name || "Stage not assigned";
-                    const workCenterLabel =
-                      wo.currentWorkCenterName || "No work center";
-                    const departmentLabel = wo.currentDepartmentName;
+                      const priorityColors: Record<
+                        string,
+                        { bg: string; text: string }
+                      > = {
+                        LOW: {
+                          bg: "var(--status-success-surface)",
+                          text: "var(--status-success-foreground)",
+                        },
+                        NORMAL: {
+                          bg: "var(--status-info-surface)",
+                          text: "var(--status-info-foreground)",
+                        },
+                        HIGH: {
+                          bg: "var(--status-warning-surface)",
+                          text: "var(--status-warning-foreground)",
+                        },
+                        CRITICAL: {
+                          bg: "var(--status-danger-surface)",
+                          text: "var(--status-danger-foreground)",
+                        },
+                      };
+                      const priorityColor =
+                        priorityColors[wo.priority || "NORMAL"] ||
+                        priorityColors.NORMAL;
+                      const stageName =
+                        wo.currentStage?.name || "Stage not assigned";
+                      const workCenterLabel =
+                        wo.currentWorkCenterName || "No work center";
+                      const departmentLabel = wo.currentDepartmentName;
 
-                    return (
-                      <div
-                        key={wo.id}
-                        style={{
-                          padding: "0.75rem",
-                          backgroundColor: "var(--table-header-surface)",
-                          borderRadius: "4px",
-                          border: "1px solid var(--border)",
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: "0.35rem",
-                        }}
-                      >
+                      return (
                         <div
+                          key={wo.id}
                           style={{
+                            padding: "0.75rem",
+                            backgroundColor: "var(--table-header-surface)",
+                            borderRadius: "4px",
+                            border: "1px solid var(--border)",
                             display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
+                            flexDirection: "column",
+                            gap: "0.35rem",
                           }}
                         >
-                          <div style={{ fontWeight: "500" }}>{wo.number}</div>
-                          <div style={{ display: "flex", gap: "0.25rem" }}>
-                            {wo._count && wo._count.attachments > 0 && (
-                              <span
-                                style={{
-                                  fontSize: "0.75rem",
-                                  backgroundColor: "var(--status-info-surface)",
-                                  color: "var(--status-info-foreground)",
-                                  padding: "0.125rem 0.25rem",
-                                  borderRadius: "10px",
-                                  fontWeight: "500",
-                                }}
-                              >
-                                📎 {wo._count.attachments}
-                              </span>
-                            )}
-                            {wo._count && wo._count.notes > 0 && (
-                              <span
-                                style={{
-                                  fontSize: "0.75rem",
-                                  backgroundColor:
-                                    "var(--status-success-surface)",
-                                  color: "var(--status-success-foreground)",
-                                  padding: "0.125rem 0.25rem",
-                                  borderRadius: "10px",
-                                  fontWeight: "500",
-                                }}
-                              >
-                                💬 {wo._count.notes}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Priority Badge */}
-                        <div>
-                          <span
-                            style={{
-                              fontSize: "0.75rem",
-                              backgroundColor: priorityColor.bg,
-                              color: priorityColor.text,
-                              padding: "0.125rem 0.375rem",
-                              borderRadius: "3px",
-                              fontWeight: "600",
-                            }}
-                          >
-                            {wo.priority || "NORMAL"}
-                          </span>
-                        </div>
-
-                        <div
-                          style={{
-                            fontSize: "0.875rem",
-                            color: "var(--muted)",
-                          }}
-                        >
-                          {wo.hullId} •{" "}
-                          {wo.routingVersion
-                            ? `${wo.routingVersion.model}${
-                                wo.routingVersion.trim
-                                  ? `-${wo.routingVersion.trim}`
-                                  : ""
-                              }`
-                            : wo.productSku}
-                        </div>
-
-                        {wo.plannedStartDate || wo.plannedFinishDate ? (
                           <div
                             style={{
-                              fontSize: "0.75rem",
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "center",
+                            }}
+                          >
+                            <div style={{ fontWeight: "500" }}>{wo.number}</div>
+                            <div style={{ display: "flex", gap: "0.25rem" }}>
+                              {wo._count && wo._count.attachments > 0 && (
+                                <span
+                                  style={{
+                                    fontSize: "0.75rem",
+                                    backgroundColor:
+                                      "var(--status-info-surface)",
+                                    color: "var(--status-info-foreground)",
+                                    padding: "0.125rem 0.25rem",
+                                    borderRadius: "10px",
+                                    fontWeight: "500",
+                                  }}
+                                >
+                                  📎 {wo._count.attachments}
+                                </span>
+                              )}
+                              {wo._count && wo._count.notes > 0 && (
+                                <span
+                                  style={{
+                                    fontSize: "0.75rem",
+                                    backgroundColor:
+                                      "var(--status-success-surface)",
+                                    color: "var(--status-success-foreground)",
+                                    padding: "0.125rem 0.25rem",
+                                    borderRadius: "10px",
+                                    fontWeight: "500",
+                                  }}
+                                >
+                                  💬 {wo._count.notes}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Priority Badge */}
+                          <div>
+                            <span
+                              style={{
+                                fontSize: "0.75rem",
+                                backgroundColor: priorityColor.bg,
+                                color: priorityColor.text,
+                                padding: "0.125rem 0.375rem",
+                                borderRadius: "3px",
+                                fontWeight: "600",
+                              }}
+                            >
+                              {wo.priority || "NORMAL"}
+                            </span>
+                          </div>
+
+                          <div
+                            style={{
+                              fontSize: "0.875rem",
                               color: "var(--muted)",
                             }}
                           >
-                            {wo.plannedStartDate && (
-                              <div>
-                                Start:{" "}
-                                {new Date(
-                                  wo.plannedStartDate,
-                                ).toLocaleDateString()}
-                              </div>
-                            )}
-                            {wo.plannedFinishDate && (
-                              <div>
-                                Finish:{" "}
-                                {new Date(
-                                  wo.plannedFinishDate,
-                                ).toLocaleDateString()}
-                              </div>
-                            )}
+                            {wo.hullId} •{" "}
+                            {wo.routingVersion
+                              ? `${wo.routingVersion.model}${
+                                  wo.routingVersion.trim
+                                    ? `-${wo.routingVersion.trim}`
+                                    : ""
+                                }`
+                              : wo.productSku}
                           </div>
-                        ) : null}
 
-                        <div style={{ fontSize: "0.85rem" }}>
-                          <strong>Stage:</strong> {stageName}
-                        </div>
-                        <div style={{ fontSize: "0.85rem" }}>
-                          <strong>Work Center:</strong> {workCenterLabel}
-                          {departmentLabel ? ` • ${departmentLabel}` : ""}
-                        </div>
+                          {wo.plannedStartDate || wo.plannedFinishDate ? (
+                            <div
+                              style={{
+                                fontSize: "0.75rem",
+                                color: "var(--muted)",
+                              }}
+                            >
+                              {wo.plannedStartDate && (
+                                <div>
+                                  Start:{" "}
+                                  {new Date(
+                                    wo.plannedStartDate,
+                                  ).toLocaleDateString()}
+                                </div>
+                              )}
+                              {wo.plannedFinishDate && (
+                                <div>
+                                  Finish:{" "}
+                                  {new Date(
+                                    wo.plannedFinishDate,
+                                  ).toLocaleDateString()}
+                                </div>
+                              )}
+                            </div>
+                          ) : null}
 
-                        <div
-                          style={{
-                            marginTop: "0.25rem",
-                            display: "flex",
-                            gap: "0.25rem",
-                          }}
-                        >
-                          <Button
-                            size="sm"
-                            onClick={() => loadWorkOrderDetails(wo.id)}
+                          <div style={{ fontSize: "0.85rem" }}>
+                            <strong>Stage:</strong> {stageName}
+                          </div>
+                          <div style={{ fontSize: "0.85rem" }}>
+                            <strong>Work Center:</strong> {workCenterLabel}
+                            {departmentLabel ? ` • ${departmentLabel}` : ""}
+                          </div>
+
+                          <div
+                            style={{
+                              marginTop: "0.25rem",
+                              display: "flex",
+                              gap: "0.25rem",
+                            }}
                           >
-                            Open
-                          </Button>
-                          {wo.status !== "HOLD" &&
-                            wo.status !== "COMPLETED" && (
-                              <Button
-                                size="sm"
-                                variant="warning"
-                                onClick={() => holdWorkOrder(wo.id)}
-                              >
-                                Hold
-                              </Button>
-                            )}
-                          {wo.status === "HOLD" && (
                             <Button
                               size="sm"
-                              variant="success"
-                              onClick={() => unholdWorkOrder(wo.id)}
+                              onClick={() => loadWorkOrderDetails(wo.id)}
                             >
-                              Unhold
+                              Open
                             </Button>
-                          )}
+                            {wo.status !== "HOLD" &&
+                              wo.status !== "COMPLETED" && (
+                                <Button
+                                  size="sm"
+                                  variant="warning"
+                                  onClick={() => holdWorkOrder(wo.id)}
+                                >
+                                  Hold
+                                </Button>
+                              )}
+                            {wo.status === "HOLD" && (
+                              <Button
+                                size="sm"
+                                variant="success"
+                                onClick={() => unholdWorkOrder(wo.id)}
+                              >
+                                Unhold
+                              </Button>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            );
-          })}
+                      );
+                    })
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
-    </div>
     );
   };
 
