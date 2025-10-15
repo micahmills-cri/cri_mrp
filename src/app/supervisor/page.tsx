@@ -16,7 +16,14 @@ type WorkOrder = {
   number: string;
   hullId: string;
   productSku: string;
-  status: "PLANNED" | "RELEASED" | "IN_PROGRESS" | "HOLD" | "COMPLETED";
+  status:
+    | "PLANNED"
+    | "RELEASED"
+    | "IN_PROGRESS"
+    | "HOLD"
+    | "COMPLETED"
+    | "CLOSED"
+    | "CANCELLED";
   qty: number;
   currentStageIndex: number;
   specSnapshot: any;
@@ -218,6 +225,8 @@ export default function SupervisorView() {
   const [isDetailDrawerOpen, setIsDetailDrawerOpen] = useState(false);
   const [editedWorkOrder, setEditedWorkOrder] = useState<any>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [isEditingPlanningDetails, setIsEditingPlanningDetails] =
+    useState(false);
   const [versionHistory, setVersionHistory] = useState<any[]>([]);
   const router = useRouter();
 
@@ -795,6 +804,7 @@ export default function SupervisorView() {
         : "",
     });
     setHasUnsavedChanges(false);
+    setIsEditingPlanningDetails(false);
     setIsDetailDrawerOpen(true);
     setActiveDetailTab("details");
     loadVersionHistory(wo.id);
@@ -825,6 +835,7 @@ export default function SupervisorView() {
       if (response.ok && data.success) {
         setMessage("Changes saved successfully");
         setHasUnsavedChanges(false);
+        setIsEditingPlanningDetails(false);
 
         // Refresh the work order details to get the latest server state
         const refreshResponse = await fetch(
@@ -881,6 +892,7 @@ export default function SupervisorView() {
           : "",
       });
       setHasUnsavedChanges(false);
+      setIsEditingPlanningDetails(false);
     }
   };
 
@@ -900,6 +912,10 @@ export default function SupervisorView() {
         setMessage("Work order cancelled successfully");
         setIsDetailDrawerOpen(false);
         setSelectedWorkOrder(null);
+        setEditedWorkOrder(null);
+        setHasUnsavedChanges(false);
+        setIsEditingPlanningDetails(false);
+        setActiveDetailTab("details");
         await loadBoardData({ trigger: "manual" });
         setTimeout(() => setMessage(""), 3000);
       } else {
@@ -1126,199 +1142,200 @@ export default function SupervisorView() {
                     </div>
                   ) : (
                     columnWOs.map((wo) => {
-                    const priorityColors: Record<
-                      string,
-                      { bg: string; text: string }
-                    > = {
-                      LOW: {
-                        bg: "var(--status-success-surface)",
-                        text: "var(--status-success-foreground)",
-                      },
-                      NORMAL: {
-                        bg: "var(--status-info-surface)",
-                        text: "var(--status-info-foreground)",
-                      },
-                      HIGH: {
-                        bg: "var(--status-warning-surface)",
-                        text: "var(--status-warning-foreground)",
-                      },
-                      CRITICAL: {
-                        bg: "var(--status-danger-surface)",
-                        text: "var(--status-danger-foreground)",
-                      },
-                    };
-                    const priorityColor =
-                      priorityColors[wo.priority || "NORMAL"] ||
-                      priorityColors.NORMAL;
-                    const stageName =
-                      wo.currentStage?.name || "Stage not assigned";
-                    const workCenterLabel =
-                      wo.currentWorkCenterName || "No work center";
-                    const departmentLabel = wo.currentDepartmentName;
+                      const priorityColors: Record<
+                        string,
+                        { bg: string; text: string }
+                      > = {
+                        LOW: {
+                          bg: "var(--status-success-surface)",
+                          text: "var(--status-success-foreground)",
+                        },
+                        NORMAL: {
+                          bg: "var(--status-info-surface)",
+                          text: "var(--status-info-foreground)",
+                        },
+                        HIGH: {
+                          bg: "var(--status-warning-surface)",
+                          text: "var(--status-warning-foreground)",
+                        },
+                        CRITICAL: {
+                          bg: "var(--status-danger-surface)",
+                          text: "var(--status-danger-foreground)",
+                        },
+                      };
+                      const priorityColor =
+                        priorityColors[wo.priority || "NORMAL"] ||
+                        priorityColors.NORMAL;
+                      const stageName =
+                        wo.currentStage?.name || "Stage not assigned";
+                      const workCenterLabel =
+                        wo.currentWorkCenterName || "No work center";
+                      const departmentLabel = wo.currentDepartmentName;
 
-                    return (
-                      <div
-                        key={wo.id}
-                        style={{
-                          padding: "0.75rem",
-                          backgroundColor: "var(--table-header-surface)",
-                          borderRadius: "4px",
-                          border: "1px solid var(--border)",
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: "0.35rem",
-                        }}
-                      >
+                      return (
                         <div
+                          key={wo.id}
                           style={{
+                            padding: "0.75rem",
+                            backgroundColor: "var(--table-header-surface)",
+                            borderRadius: "4px",
+                            border: "1px solid var(--border)",
                             display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
+                            flexDirection: "column",
+                            gap: "0.35rem",
                           }}
                         >
-                          <div style={{ fontWeight: "500" }}>{wo.number}</div>
-                          <div style={{ display: "flex", gap: "0.25rem" }}>
-                            {wo._count && wo._count.attachments > 0 && (
-                              <span
-                                style={{
-                                  fontSize: "0.75rem",
-                                  backgroundColor: "var(--status-info-surface)",
-                                  color: "var(--status-info-foreground)",
-                                  padding: "0.125rem 0.25rem",
-                                  borderRadius: "10px",
-                                  fontWeight: "500",
-                                }}
-                              >
-                                📎 {wo._count.attachments}
-                              </span>
-                            )}
-                            {wo._count && wo._count.notes > 0 && (
-                              <span
-                                style={{
-                                  fontSize: "0.75rem",
-                                  backgroundColor:
-                                    "var(--status-success-surface)",
-                                  color: "var(--status-success-foreground)",
-                                  padding: "0.125rem 0.25rem",
-                                  borderRadius: "10px",
-                                  fontWeight: "500",
-                                }}
-                              >
-                                💬 {wo._count.notes}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Priority Badge */}
-                        <div>
-                          <span
-                            style={{
-                              fontSize: "0.75rem",
-                              backgroundColor: priorityColor.bg,
-                              color: priorityColor.text,
-                              padding: "0.125rem 0.375rem",
-                              borderRadius: "3px",
-                              fontWeight: "600",
-                            }}
-                          >
-                            {wo.priority || "NORMAL"}
-                          </span>
-                        </div>
-
-                        <div
-                          style={{
-                            fontSize: "0.875rem",
-                            color: "var(--muted)",
-                          }}
-                        >
-                          {wo.hullId} •{" "}
-                          {wo.routingVersion
-                            ? `${wo.routingVersion.model}${
-                                wo.routingVersion.trim
-                                  ? `-${wo.routingVersion.trim}`
-                                  : ""
-                              }`
-                            : wo.productSku}
-                        </div>
-
-                        {wo.plannedStartDate || wo.plannedFinishDate ? (
                           <div
                             style={{
-                              fontSize: "0.75rem",
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "center",
+                            }}
+                          >
+                            <div style={{ fontWeight: "500" }}>{wo.number}</div>
+                            <div style={{ display: "flex", gap: "0.25rem" }}>
+                              {wo._count && wo._count.attachments > 0 && (
+                                <span
+                                  style={{
+                                    fontSize: "0.75rem",
+                                    backgroundColor:
+                                      "var(--status-info-surface)",
+                                    color: "var(--status-info-foreground)",
+                                    padding: "0.125rem 0.25rem",
+                                    borderRadius: "10px",
+                                    fontWeight: "500",
+                                  }}
+                                >
+                                  📎 {wo._count.attachments}
+                                </span>
+                              )}
+                              {wo._count && wo._count.notes > 0 && (
+                                <span
+                                  style={{
+                                    fontSize: "0.75rem",
+                                    backgroundColor:
+                                      "var(--status-success-surface)",
+                                    color: "var(--status-success-foreground)",
+                                    padding: "0.125rem 0.25rem",
+                                    borderRadius: "10px",
+                                    fontWeight: "500",
+                                  }}
+                                >
+                                  💬 {wo._count.notes}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Priority Badge */}
+                          <div>
+                            <span
+                              style={{
+                                fontSize: "0.75rem",
+                                backgroundColor: priorityColor.bg,
+                                color: priorityColor.text,
+                                padding: "0.125rem 0.375rem",
+                                borderRadius: "3px",
+                                fontWeight: "600",
+                              }}
+                            >
+                              {wo.priority || "NORMAL"}
+                            </span>
+                          </div>
+
+                          <div
+                            style={{
+                              fontSize: "0.875rem",
                               color: "var(--muted)",
                             }}
                           >
-                            {wo.plannedStartDate && (
-                              <div>
-                                Start:{" "}
-                                {new Date(
-                                  wo.plannedStartDate,
-                                ).toLocaleDateString()}
-                              </div>
-                            )}
-                            {wo.plannedFinishDate && (
-                              <div>
-                                Finish:{" "}
-                                {new Date(
-                                  wo.plannedFinishDate,
-                                ).toLocaleDateString()}
-                              </div>
-                            )}
+                            {wo.hullId} •{" "}
+                            {wo.routingVersion
+                              ? `${wo.routingVersion.model}${
+                                  wo.routingVersion.trim
+                                    ? `-${wo.routingVersion.trim}`
+                                    : ""
+                                }`
+                              : wo.productSku}
                           </div>
-                        ) : null}
 
-                        <div style={{ fontSize: "0.85rem" }}>
-                          <strong>Stage:</strong> {stageName}
-                        </div>
-                        <div style={{ fontSize: "0.85rem" }}>
-                          <strong>Work Center:</strong> {workCenterLabel}
-                          {departmentLabel ? ` • ${departmentLabel}` : ""}
-                        </div>
+                          {wo.plannedStartDate || wo.plannedFinishDate ? (
+                            <div
+                              style={{
+                                fontSize: "0.75rem",
+                                color: "var(--muted)",
+                              }}
+                            >
+                              {wo.plannedStartDate && (
+                                <div>
+                                  Start:{" "}
+                                  {new Date(
+                                    wo.plannedStartDate,
+                                  ).toLocaleDateString()}
+                                </div>
+                              )}
+                              {wo.plannedFinishDate && (
+                                <div>
+                                  Finish:{" "}
+                                  {new Date(
+                                    wo.plannedFinishDate,
+                                  ).toLocaleDateString()}
+                                </div>
+                              )}
+                            </div>
+                          ) : null}
 
-                        <div
-                          style={{
-                            marginTop: "0.25rem",
-                            display: "flex",
-                            gap: "0.25rem",
-                          }}
-                        >
-                          <Button
-                            size="sm"
-                            onClick={() => loadWorkOrderDetails(wo.id)}
+                          <div style={{ fontSize: "0.85rem" }}>
+                            <strong>Stage:</strong> {stageName}
+                          </div>
+                          <div style={{ fontSize: "0.85rem" }}>
+                            <strong>Work Center:</strong> {workCenterLabel}
+                            {departmentLabel ? ` • ${departmentLabel}` : ""}
+                          </div>
+
+                          <div
+                            style={{
+                              marginTop: "0.25rem",
+                              display: "flex",
+                              gap: "0.25rem",
+                            }}
                           >
-                            Open
-                          </Button>
-                          {wo.status !== "HOLD" &&
-                            wo.status !== "COMPLETED" && (
-                              <Button
-                                size="sm"
-                                variant="warning"
-                                onClick={() => holdWorkOrder(wo.id)}
-                              >
-                                Hold
-                              </Button>
-                            )}
-                          {wo.status === "HOLD" && (
                             <Button
                               size="sm"
-                              variant="success"
-                              onClick={() => unholdWorkOrder(wo.id)}
+                              onClick={() => loadWorkOrderDetails(wo.id)}
                             >
-                              Unhold
+                              Open
                             </Button>
-                          )}
+                            {wo.status !== "HOLD" &&
+                              wo.status !== "COMPLETED" && (
+                                <Button
+                                  size="sm"
+                                  variant="warning"
+                                  onClick={() => holdWorkOrder(wo.id)}
+                                >
+                                  Hold
+                                </Button>
+                              )}
+                            {wo.status === "HOLD" && (
+                              <Button
+                                size="sm"
+                                variant="success"
+                                onClick={() => unholdWorkOrder(wo.id)}
+                              >
+                                Unhold
+                              </Button>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            );
-          })}
+                      );
+                    })
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
-    </div>
     );
   };
 
@@ -2021,6 +2038,10 @@ export default function SupervisorView() {
               onClick={() => {
                 setIsDetailDrawerOpen(false);
                 setSelectedWorkOrder(null);
+                setEditedWorkOrder(null);
+                setHasUnsavedChanges(false);
+                setIsEditingPlanningDetails(false);
+                setActiveDetailTab("details");
               }}
               style={{
                 padding: "0.25rem 0.5rem",
@@ -2186,198 +2207,193 @@ export default function SupervisorView() {
                   </div>
                 </div>
 
-                {/* Editable Fields (PLANNED status only) */}
-                {selectedWorkOrder.status === "PLANNED" && (
-                  <div style={{ marginBottom: "1.5rem" }}>
+                <div style={{ marginBottom: "1.5rem" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      gap: "0.75rem",
+                      marginBottom: "1rem",
+                    }}
+                  >
                     <h3
                       style={{
-                        margin: "0 0 1rem 0",
+                        margin: 0,
                         fontSize: "1.1rem",
                         fontWeight: "600",
                       }}
                     >
                       Planning Details
                     </h3>
-
-                    <div style={{ display: "grid", gap: "1rem" }}>
-                      <div>
-                        <label
+                    {selectedWorkOrder &&
+                      (userRole === "SUPERVISOR" || userRole === "ADMIN") &&
+                      !isEditingPlanningDetails &&
+                      !["COMPLETED", "CLOSED"].includes(
+                        selectedWorkOrder.status,
+                      ) && (
+                        <button
+                          onClick={() => {
+                            discardWorkOrderChanges();
+                            setIsEditingPlanningDetails(true);
+                          }}
                           style={{
-                            display: "block",
-                            marginBottom: "0.25rem",
+                            padding: "0.4rem 0.9rem",
+                            backgroundColor: "var(--table-header-surface)",
+                            color: "var(--foreground)",
+                            border: "1px solid var(--border)",
+                            borderRadius: "4px",
+                            cursor: "pointer",
                             fontWeight: "500",
                           }}
                         >
-                          Priority
-                        </label>
-                        <select
-                          value={editedWorkOrder.priority}
-                          onChange={(e) => {
-                            setEditedWorkOrder({
-                              ...editedWorkOrder,
-                              priority: e.target.value,
-                            });
-                            setHasUnsavedChanges(true);
-                          }}
-                          style={{
-                            width: "100%",
-                            padding: "0.5rem",
-                            border: "1px solid var(--border)",
-                            borderRadius: "4px",
-                          }}
-                        >
-                          <option value="LOW">Low</option>
-                          <option value="NORMAL">Normal</option>
-                          <option value="HIGH">High</option>
-                          <option value="CRITICAL">Critical</option>
-                        </select>
+                          Edit
+                        </button>
+                      )}
+                  </div>
+
+                  {isEditingPlanningDetails ? (
+                    <>
+                      <div style={{ display: "grid", gap: "1rem" }}>
+                        <div>
+                          <label
+                            style={{
+                              display: "block",
+                              marginBottom: "0.25rem",
+                              fontWeight: "500",
+                            }}
+                          >
+                            Priority
+                          </label>
+                          <select
+                            value={editedWorkOrder.priority}
+                            onChange={(e) => {
+                              setEditedWorkOrder({
+                                ...editedWorkOrder,
+                                priority: e.target.value,
+                              });
+                              setHasUnsavedChanges(true);
+                            }}
+                            style={{
+                              width: "100%",
+                              padding: "0.5rem",
+                              border: "1px solid var(--border)",
+                              borderRadius: "4px",
+                            }}
+                          >
+                            <option value="LOW">Low</option>
+                            <option value="NORMAL">Normal</option>
+                            <option value="HIGH">High</option>
+                            <option value="CRITICAL">Critical</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label
+                            style={{
+                              display: "block",
+                              marginBottom: "0.25rem",
+                              fontWeight: "500",
+                            }}
+                          >
+                            Planned Start Date
+                          </label>
+                          <input
+                            type="datetime-local"
+                            value={editedWorkOrder.plannedStartDate}
+                            onChange={(e) => {
+                              setEditedWorkOrder({
+                                ...editedWorkOrder,
+                                plannedStartDate: e.target.value,
+                              });
+                              setHasUnsavedChanges(true);
+                            }}
+                            style={{
+                              width: "100%",
+                              padding: "0.5rem",
+                              border: "1px solid var(--border)",
+                              borderRadius: "4px",
+                            }}
+                          />
+                        </div>
+
+                        <div>
+                          <label
+                            style={{
+                              display: "block",
+                              marginBottom: "0.25rem",
+                              fontWeight: "500",
+                            }}
+                          >
+                            Planned Finish Date
+                          </label>
+                          <input
+                            type="datetime-local"
+                            value={editedWorkOrder.plannedFinishDate}
+                            onChange={(e) => {
+                              setEditedWorkOrder({
+                                ...editedWorkOrder,
+                                plannedFinishDate: e.target.value,
+                              });
+                              setHasUnsavedChanges(true);
+                            }}
+                            style={{
+                              width: "100%",
+                              padding: "0.5rem",
+                              border: "1px solid var(--border)",
+                              borderRadius: "4px",
+                            }}
+                          />
+                        </div>
                       </div>
 
-                      <div>
-                        <label
-                          style={{
-                            display: "block",
-                            marginBottom: "0.25rem",
-                            fontWeight: "500",
-                          }}
-                        >
-                          Planned Start Date
-                        </label>
-                        <input
-                          type="datetime-local"
-                          value={editedWorkOrder.plannedStartDate}
-                          onChange={(e) => {
-                            setEditedWorkOrder({
-                              ...editedWorkOrder,
-                              plannedStartDate: e.target.value,
-                            });
-                            setHasUnsavedChanges(true);
-                          }}
-                          style={{
-                            width: "100%",
-                            padding: "0.5rem",
-                            border: "1px solid var(--border)",
-                            borderRadius: "4px",
-                          }}
-                        />
-                      </div>
-
-                      <div>
-                        <label
-                          style={{
-                            display: "block",
-                            marginBottom: "0.25rem",
-                            fontWeight: "500",
-                          }}
-                        >
-                          Planned Finish Date
-                        </label>
-                        <input
-                          type="datetime-local"
-                          value={editedWorkOrder.plannedFinishDate}
-                          onChange={(e) => {
-                            setEditedWorkOrder({
-                              ...editedWorkOrder,
-                              plannedFinishDate: e.target.value,
-                            });
-                            setHasUnsavedChanges(true);
-                          }}
-                          style={{
-                            width: "100%",
-                            padding: "0.5rem",
-                            border: "1px solid var(--border)",
-                            borderRadius: "4px",
-                          }}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Action Buttons */}
-                    {hasUnsavedChanges && (
                       <div
                         style={{
                           display: "flex",
-                          gap: "0.5rem",
+                          gap: "0.75rem",
                           marginTop: "1rem",
                         }}
                       >
                         <button
                           onClick={saveWorkOrderChanges}
+                          disabled={!hasUnsavedChanges}
                           style={{
                             padding: "0.5rem 1rem",
-                            backgroundColor: "var(--color-success-600)",
+                            backgroundColor: hasUnsavedChanges
+                              ? "var(--color-primary-600)"
+                              : "var(--muted)",
                             color: "var(--color-primary-foreground)",
                             border: "none",
                             borderRadius: "4px",
-                            cursor: "pointer",
+                            cursor: hasUnsavedChanges
+                              ? "pointer"
+                              : "not-allowed",
                             fontWeight: "500",
+                            opacity: hasUnsavedChanges ? 1 : 0.7,
                           }}
                         >
                           Save Changes
                         </button>
                         <button
-                          onClick={discardWorkOrderChanges}
+                          onClick={() => {
+                            discardWorkOrderChanges();
+                            setIsEditingPlanningDetails(false);
+                          }}
                           style={{
                             padding: "0.5rem 1rem",
-                            backgroundColor: "var(--muted)",
-                            color: "var(--color-primary-foreground)",
-                            border: "none",
+                            backgroundColor: "var(--table-header-surface)",
+                            color: "var(--foreground)",
+                            border: "1px solid var(--border)",
                             borderRadius: "4px",
                             cursor: "pointer",
                             fontWeight: "500",
                           }}
                         >
-                          Discard
+                          Cancel
                         </button>
                       </div>
-                    )}
-
-                    {/* Cancel Button */}
-                    <div
-                      style={{
-                        marginTop: "1rem",
-                        paddingTop: "1rem",
-                        borderTop: "1px solid var(--border)",
-                      }}
-                    >
-                      <button
-                        onClick={() => {
-                          if (
-                            confirm(
-                              "Are you sure you want to cancel this work order? This action creates a version snapshot.",
-                            )
-                          ) {
-                            cancelWorkOrder(selectedWorkOrder.id);
-                          }
-                        }}
-                        style={{
-                          padding: "0.5rem 1rem",
-                          backgroundColor: "var(--color-danger-600)",
-                          color: "var(--color-primary-foreground)",
-                          border: "none",
-                          borderRadius: "4px",
-                          cursor: "pointer",
-                          fontWeight: "500",
-                        }}
-                      >
-                        Cancel Work Order
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Show priority and dates for non-PLANNED statuses (read-only) */}
-                {selectedWorkOrder.status !== "PLANNED" && (
-                  <div style={{ marginBottom: "1.5rem" }}>
-                    <h3
-                      style={{
-                        margin: "0 0 1rem 0",
-                        fontSize: "1.1rem",
-                        fontWeight: "600",
-                      }}
-                    >
-                      Planning Details
-                    </h3>
+                    </>
+                  ) : (
                     <div style={{ display: "grid", gap: "0.5rem" }}>
                       <div>
                         <strong>Priority:</strong>{" "}
@@ -2400,6 +2416,39 @@ export default function SupervisorView() {
                           : "Not set"}
                       </div>
                     </div>
+                  )}
+                </div>
+
+                {selectedWorkOrder.status !== "CANCELLED" && (
+                  <div
+                    style={{
+                      marginTop: "1rem",
+                      paddingTop: "1rem",
+                      borderTop: "1px solid var(--border)",
+                    }}
+                  >
+                    <button
+                      onClick={() => {
+                        if (
+                          confirm(
+                            "Are you sure you want to cancel this work order? This action creates a version snapshot.",
+                          )
+                        ) {
+                          cancelWorkOrder(selectedWorkOrder.id);
+                        }
+                      }}
+                      style={{
+                        padding: "0.5rem 1rem",
+                        backgroundColor: "var(--color-danger-600)",
+                        color: "var(--color-primary-foreground)",
+                        border: "none",
+                        borderRadius: "4px",
+                        cursor: "pointer",
+                        fontWeight: "500",
+                      }}
+                    >
+                      Cancel Work Order
+                    </button>
                   </div>
                 )}
               </div>

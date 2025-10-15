@@ -2,6 +2,12 @@
 
 > Record every pull request chronologically with the newest entry at the top. Use UTC timestamps in ISO 8601 format.
 
+## 2025-10-15T16:14:46Z — Agent: gpt-5-codex
+
+- **Summary:** Added an explicit edit workflow for supervisor planning details, including an unlock button and cancel/save controls that preserve the existing read-only view. Enabled editing across active statuses and updated the API to validate changes, record version snapshots, and allow supervisors to adjust planning dates without future-date restrictions.
+- **Reasoning:** Supervisors need to adjust planning data on in-flight work orders while maintaining the audit trail and snapshot history so downstream teams see accurate priorities and schedule expectations.
+- **Hats:** role-ui, api-contract, docs.
+
 ## 2025-10-15T15:40:02Z — Agent: gpt-5-codex
 
 - **Summary:** Refined the supervisor Kanban into an accessible horizontal gallery with snap scrolling, stable gutters, and responsive column sizing while anchoring the theme toggle to the safe-area inset on touch devices.
