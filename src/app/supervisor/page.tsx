@@ -1068,7 +1068,7 @@ export default function SupervisorView() {
               scrollPaddingInline: "0.25rem",
               alignItems: "stretch",
               scrollbarGutter: "stable both-edges",
-              touchAction: "pan-x",
+              touchAction: "pan-x pan-y",
             }}
           >
             {columns.map((column) => {
