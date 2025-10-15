@@ -413,7 +413,9 @@ export async function PATCH(
         include: {
           routingVersion: {
             include: {
-              stages: true,
+              stages: {
+                orderBy: { sequence: "asc" },
+              },
             },
           },
         },
@@ -456,12 +458,14 @@ export async function PATCH(
                 model: updated.routingVersion.model,
                 trim: updated.routingVersion.trim,
                 version: updated.routingVersion.version,
-                stages: updated.routingVersion.stages.map((stage) => ({
-                  sequence: stage.sequence,
-                  code: stage.code,
-                  name: stage.name,
-                  enabled: stage.enabled,
-                  workCenterId: stage.workCenterId,
+                stages: [...updated.routingVersion.stages]
+                  .sort((a, b) => a.sequence - b.sequence)
+                  .map((stage) => ({
+                    sequence: stage.sequence,
+                    code: stage.code,
+                    name: stage.name,
+                    enabled: stage.enabled,
+                    workCenterId: stage.workCenterId,
                   standardStageSeconds: stage.standardStageSeconds,
                 })),
               }
