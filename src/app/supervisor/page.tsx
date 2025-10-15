@@ -1051,65 +1051,81 @@ export default function SupervisorView() {
 
         <div
           style={{
-            display: "grid",
-            gridTemplateColumns: `repeat(${Math.max(
-              columns.length,
-              1,
-            )}, minmax(220px, 1fr))`,
-            gap: "1rem",
+            position: "relative",
           }}
         >
-          {columns.map((column) => {
-            const columnWOs = column.workOrders;
+          <div
+            role="list"
+            aria-label="Active work orders grouped by stage"
+            style={{
+              display: "flex",
+              gap: "1rem",
+              overflowX: "auto",
+              padding: "0 0.25rem 0.75rem",
+              margin: "0 -0.25rem",
+              WebkitOverflowScrolling: "touch",
+              scrollSnapType: "x mandatory",
+              scrollPaddingInline: "0.25rem",
+              alignItems: "stretch",
+              scrollbarGutter: "stable both-edges",
+              touchAction: "pan-x pan-y",
+            }}
+          >
+            {columns.map((column) => {
+              const columnWOs = column.workOrders;
 
-            return (
-              <div
-                key={column.key}
-                style={{
-                  backgroundColor: "var(--surface)",
-                  borderRadius: "8px",
-                  padding: "1rem",
-                  boxShadow: "var(--shadow-card)",
-                  minHeight: "400px",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "0.75rem",
-                }}
-              >
-                <div>
-                  <h3
-                    style={{
-                      margin: "0 0 0.25rem 0",
-                      fontSize: "1.1rem",
-                      fontWeight: "600",
-                    }}
-                  >
-                    {column.label} ({columnWOs.length})
-                  </h3>
-                  {column.description && (
-                    <p
+              return (
+                <div
+                  key={column.key}
+                  role="listitem"
+                  style={{
+                    backgroundColor: "var(--surface)",
+                    borderRadius: "8px",
+                    padding: "1rem",
+                    boxShadow: "var(--shadow-card)",
+                    minHeight: "400px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "0.75rem",
+                    flex: "0 0 clamp(260px, 60vw, 340px)",
+                    scrollSnapAlign: "start",
+                    scrollMarginInline: "0.25rem",
+                  }}
+                >
+                  <div>
+                    <h3
                       style={{
-                        margin: 0,
-                        fontSize: "0.8rem",
+                        margin: "0 0 0.25rem 0",
+                        fontSize: "1.1rem",
+                        fontWeight: "600",
+                      }}
+                    >
+                      {column.label} ({columnWOs.length})
+                    </h3>
+                    {column.description && (
+                      <p
+                        style={{
+                          margin: 0,
+                          fontSize: "0.8rem",
+                          color: "var(--muted)",
+                        }}
+                      >
+                        {column.description}
+                      </p>
+                    )}
+                  </div>
+
+                  {columnWOs.length === 0 ? (
+                    <div
+                      style={{
+                        fontSize: "0.85rem",
                         color: "var(--muted)",
                       }}
                     >
-                      {column.description}
-                    </p>
-                  )}
-                </div>
-
-                {columnWOs.length === 0 ? (
-                  <div
-                    style={{
-                      fontSize: "0.85rem",
-                      color: "var(--muted)",
-                    }}
-                  >
-                    No work orders
-                  </div>
-                ) : (
-                  columnWOs.map((wo) => {
+                      No work orders
+                    </div>
+                  ) : (
+                    columnWOs.map((wo) => {
                     const priorityColors: Record<
                       string,
                       { bg: string; text: string }
@@ -1302,6 +1318,7 @@ export default function SupervisorView() {
           })}
         </div>
       </div>
+    </div>
     );
   };
 
