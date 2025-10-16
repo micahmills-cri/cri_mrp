@@ -17,6 +17,7 @@
 - File uploads leverage a storage service wrapper that signs upload URLs, normalizes stored paths, and enforces ACL policies via metadata, providing the backbone for the supervisor file manager UI.【F:src/server/storage/objectStorage.ts†L13-L177】【F:src/server/storage/objectAcl.ts†L1-L162】
 
 ## Development workflow
+- **Action Items Tracking**: Before starting work, check `docs/ActionItems.md` for prioritized tasks, current work in progress, and technical debt. Update item statuses as you work (`[ ]` → `[WIP]` → `[x]`). **CRITICAL**: You MUST add ALL discovered issues (test failures, build errors, bugs, warnings, technical debt) to ActionItems.md immediately when found—this is non-negotiable and required for work to be considered complete. This helps coordinate work across agents and prevent duplicate efforts.【F:docs/ActionItems.md†L1-L50】
 - Package scripts cover dev server boot, production builds, Vitest suites, Prisma generation/migrations, and database seeding, which should be run in that order the first time you set up the repo.【F:package.json†L6-L16】
 - Environment variables are validated on startup: ensure `DATABASE_URL`, a 32-character `JWT_SECRET`, and `STORAGE_BUCKET_ID` are present before running the app.【F:src/lib/env.ts†L1-L14】
 - Tests currently focus on unit coverage for auth and RBAC helpers. Expand these suites (e.g., API contract tests) as you stabilize key flows.【F:src/lib/__tests__/auth.test.ts†L1-L56】【F:src/lib/rbac.ts†L1-L26】
@@ -44,6 +45,7 @@ Welcome aboard—use this guide as a map, then dive into the code paths aligned 
 | **Scripts & tooling** | `package.json` scripts, `prisma/` CLI, `vitest.config.ts` | Use npm scripts for dev, build, tests; Vitest for unit suites.【F:package.json†L6-L16】【F:vitest.config.ts†L1-L37】 |
 | **Styling** | `tailwind.config.js`, `src/app/globals.css`, component-level modules | Tailwind utility-first styling plus global CSS reset.【F:tailwind.config.js†L1-L28】【F:src/app/globals.css†L1-L200】 |
 | **Testing** | `src/lib/__tests__/*.test.ts`, `src/app/api/__tests__/*.test.ts`, `vitest.setup.ts` | Unit coverage for helpers plus contract tests for API routes; configure global mocks here.【F:src/lib/__tests__/auth.test.ts†L1-L56】【F:src/lib/__tests__/rbac.test.ts†L1-L48】【F:src/app/api/__tests__/queues.my-department.test.ts†L1-L120】【F:vitest.setup.ts†L1-L34】 |
+| **Action Items** | `docs/ActionItems.md` | Prioritized task list with status tracking; check before starting work and update as you progress.【F:docs/ActionItems.md†L1-L500】 |
 
 ## Repository structure recommendations
 

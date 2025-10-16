@@ -1,0 +1,23 @@
+# Dependencies
+node_modules
+package-lock.json
+
+# Build outputs
+.next
+out
+dist
+build
+
+# Database
+prisma/migrations
+
+# Environment
+.env
+.env.*
+
+# Logs
+*.log
+
+# Cache
+.cache
+.eslintcache

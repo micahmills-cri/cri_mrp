@@ -1,11 +1,13 @@
 # Agent Playbook
 
 ## Executive Summary — Follow These First
-1. **Respect the architecture.** This is a Next.js 14 App Router app on Node 20+/TypeScript 5.9 with Prisma 6.16 + Postgres. Keep server-only code under `src/server/**`, rely on the `@/` alias, and never create ad-hoc Prisma clients.
-2. **Preserve domain invariants.** Work Orders move sequentially from `PLANNED` → … → `CLOSED`, `CANCELLED` remains available, and every mutation must write both a `WorkOrderVersion` snapshot and an `AuditLog` entry.
-3. **Keep data deterministic.** Treat `backup-data.ts` as the source of truth: reseeding wipes runtime additions. Align `prisma/schema.prisma`, migrations, `src/db/seed.ts`, and `backup-data.ts` before shipping.
-4. **Validate and test.** Use `zod` for all API payloads and run `npm run test` (Vitest) before requesting review. Add contract/unit/E2E coverage when you touch corresponding layers.
-5. **Document the change.** Update `docs/ONBOARDING.md` if flows/setup shift and append a UTC entry to `docs/CHANGELOG.md` with agent, timestamp, summary, and reasoning.
+1. **Check action items first.** Review `docs/ActionItems.md` before starting work to understand priorities, avoid duplicate efforts, and claim items you're working on. Update pertinent items and statuses as you progress.
+2. **Respect the architecture.** This is a Next.js 14 App Router app on Node 20+/TypeScript 5.9 with Prisma 6.16 + Postgres. Keep server-only code under `src/server/**`, rely on the `@/` alias, and never create ad-hoc Prisma clients.
+3. **Preserve domain invariants.** Work Orders move sequentially from `PLANNED` → … → `CLOSED`, `CANCELLED` remains available, and every mutation must write both a `WorkOrderVersion` snapshot and an `AuditLog` entry.
+4. **Keep data deterministic.** Treat `backup-data.ts` as the source of truth: reseeding wipes runtime additions. Align `prisma/schema.prisma`, migrations, `src/db/seed.ts`, and `backup-data.ts` before shipping.
+5. **Validate and test.** Use `zod` for all API payloads and run `npm run test` (Vitest) before requesting review. Add contract/unit/E2E coverage when you touch corresponding layers.
+6. **Document the change.** Update `docs/ONBOARDING.md` if flows/setup shift, update pertinent items and statuses in `docs/ActionItems.md`, and append a UTC entry to `docs/CHANGELOG.md` with agent, timestamp, summary, and reasoning.
+7. **Document ALL discoveries.** When you discover bugs, test failures, build errors, security issues, technical debt, or improvement opportunities during ANY work—testing, building, analyzing, or implementing—you MUST immediately add them to `docs/ActionItems.md` with priority, context, and "Discovered: YYYY-MM-DD" tag. This is non-negotiable.
 
 ## Purpose & Context
 One file that tells agents (and humans) how this MVP works, who owns what, how handoffs occur, and what “done” means—aligned to this repo.
@@ -60,8 +62,26 @@ One file that tells agents (and humans) how this MVP works, who owns what, how h
 - **Unit tests:** Cover validators, snapshot writers, routing logic, etc.
 - **E2E (when present):** Exercise happy paths for supervisor routing flows, operator dashboards, file management, and cancellation handling.
 - **Performance checks:** Spot-check that critical endpoints remain within the performance targets above.
+- **Document test failures:** If tests fail during your work, you MUST add each failure as a separate action item in `docs/ActionItems.md` with root cause analysis, affected files, and reproduction steps. Mark test failures as High Priority if they block development.
 
 ## Documentation & Change Management
+- **Action Items Workflow:**
+  - **Before starting**: Consult `docs/ActionItems.md` to check for related tasks, understand priorities, and avoid duplicate efforts.
+  - **During work**: Update item status to `[WIP]` with your agent role.
+  - **Upon completion**: Mark as `[x]` with completion date and move to "Completed Items" section.
+  - **CRITICAL - Document discoveries**: You MUST add ALL discovered issues to ActionItems.md immediately when found, including:
+    - Test failures (unit, integration, E2E)
+    - Build errors or warnings
+    - Linting/formatting issues
+    - Security vulnerabilities
+    - Performance bottlenecks
+    - Bugs in existing code
+    - Technical debt
+    - Missing documentation
+    - Configuration issues
+    - Dependency problems
+  - Each discovered item MUST include: description, priority (🔴/🟡/🟢), estimated effort, agent role, and "Discovered: YYYY-MM-DD" tag.
+  - If you complete work without adding discovered issues to ActionItems.md, the work is INCOMPLETE.
 - Update `docs/ONBOARDING.md` whenever setup steps, env variables, or major flows change.
 - Maintain `docs/CHANGELOG.md` with newest entry first, including agent name, ISO 8601 UTC timestamp, summary, and reasoning per PR.
 - Keep ADRs under `docs/adr/` current; add new ones when architecture decisions shift.
@@ -100,6 +120,8 @@ One file that tells agents (and humans) how this MVP works, who owns what, how h
 ## Role Playbook & Ownership Labels
 For multi-agent efforts, align work with the primary owner. Solo agents should still follow the expectations for each area they touch.
 
+**IMPORTANT**: ALL agents, regardless of role, MUST document discovered issues in ActionItems.md. When you find bugs, failures, warnings, or technical debt in your domain, add them immediately with priority, context, and discovery date.
+
 1. **Product Architect** (`domain`)
    - Owns domain model, invariants, ADRs. Outputs include ADRs in `docs/adr/`, schema diffs, migration plans. Done when ADR merged and migrations unblock others.
 2. **DB Migration & Versioning** (`schema-change`)
@@ -118,17 +140,24 @@ For multi-agent efforts, align work with the primary owner. Solo agents should s
    - Produces deterministic dev/E2E data aligned with `backup-data.ts`. Done when environment bootstraps from zero via one command.
 9. **QA & Release Gate** (`qa-gate`)
    - Enforces Definition of Done: `tsc` clean, Prettier applied, tests green, migrations up/down, perf sanity, E2E (if configured).
+   - **MUST document in ActionItems.md**: All test failures, build errors, linting issues, formatting problems, type errors, or quality issues discovered during validation. Each issue must include priority, reproduction steps, and discovery date.
 10. **Security & Permissions** (`security`)
     - Oversees JWT/cookie, RBAC, department scoping. Ensures only Supervisors edit routing while WO is `PLANNED`, operators restricted appropriately, every write audited, and denial cases tested.
 11. **Docs & Runbooks** (`docs`)
-    - Keeps documentation in sync: `AGENTS.md`, `API_CONTRACT.md`, `MIGRATIONS.md`, `docs/ONBOARDING.md`, `docs/CHANGELOG.md`. Done when docs updated alongside code.
+    - Keeps documentation in sync: `AGENTS.md`, `API_CONTRACT.md`, `MIGRATIONS.md`, `docs/ONBOARDING.md`, `docs/CHANGELOG.md`, `docs/ActionItems.md`. Maintains ActionItems.md by updating statuses, moving completed items to the "Completed Items" section, and adding new items discovered during work. Done when docs updated alongside code.
 
 ## PR Checklist
 - ☐ Prettier 3 run on touched files.
 - ☐ `npm run prisma:migrate` (if schema changed) and `npm run prisma:generate` succeed.
 - ☐ Seeds updated (`src/db/seed.ts`) and `backup-data.ts` adjusted if reference data changed.
 - ☐ Contract/unit/E2E tests updated or added for affected areas.
-- ☐ Docs refreshed (including ONBOARDING/CHANGELOG) and changelog entry added with UTC timestamp.
+- ☐ Docs refreshed (including ONBOARDING/CHANGELOG/ActionItems) and changelog entry added with UTC timestamp.
+- ☐ ActionItems.md updated:
+  - Completed items moved to "Completed Items" section
+  - **ALL discovered issues added (test failures, build errors, bugs, warnings, technical debt)**
+  - Statuses updated for in-progress items
+  - Each new item includes priority, estimated effort, agent role, and discovery date
+  - If ZERO issues were discovered, explicitly note "No issues discovered during this work" in PR description
 - ☐ Performance/accessibility baselines still met; call out deviations in the PR.
 
 ## Core Flows to Validate Before Shipping
@@ -149,5 +178,6 @@ For multi-agent efforts, align work with the primary owner. Solo agents should s
 - Code, migrations, and seeds merged without regressions.
 - API contracts verified with Vitest suites and remain backwards compatible.
 - Seeds and `backup-data.ts` updated to reflect new truths.
+- All discovered issues, bugs, test failures, and technical debt documented in ActionItems.md.
 - Documentation updated (`AGENTS.md`, onboarding, ADRs, changelog, etc.).
 - Changelog entry appended with reasoning and timestamp.

@@ -2,6 +2,26 @@
 
 > Record every pull request chronologically with the newest entry at the top. Use UTC timestamps in ISO 8601 format.
 
+## 2025-10-16T15:49:00Z — Agent: Docs & Runbooks
+
+- **Summary:** Strengthened agent workflow to MANDATE documenting all discovered issues in ActionItems.md. Updated AGENTS.md Executive Summary (#7 requirement), Documentation & Change Management (CRITICAL section), Testing Expectations, PR Checklist, Definition of Done, and all agent role descriptions. Updated ActionItems.md "How to Use" section and ONBOARDING.md development workflow with non-negotiable discovery documentation requirement.
+- **Reasoning:** Previous language was permissive ("as you discover") not imperative ("MUST add"). Agents were not consistently documenting discovered issues (test failures, build errors, bugs, warnings) in ActionItems.md, leading to lost technical debt tracking. This change makes discovery documentation mandatory across all roles and embedded in every critical workflow checkpoint (Executive Summary, PR Checklist, Definition of Done). Language is now imperative ("MUST", "CRITICAL", "non-negotiable") to eliminate ambiguity.
+- **Changes Made**: (1) Added #7 to Executive Summary: "Document ALL discoveries", (2) Expanded Documentation & Change Management with 10-item discovery checklist, (3) Added test failure documentation to Testing Expectations, (4) Made PR Checklist explicit with discovery requirements, (5) Added discovery requirement to Definition of Done, (6) Added universal discovery clause to all 10 agent roles, (7) Added mandatory step #6 to ActionItems.md, (8) Emphasized requirement in ONBOARDING.md.
+- **Hats:** docs, qa-gate.
+
+## 2025-10-16T15:30:00Z — Agent: QA & Release Gate
+
+- **Summary:** Configured ESLint (v8.57) and Prettier (v3.6.2) for consistent code quality and formatting. Created `.eslintrc.json` with Next.js defaults, no-console warnings, and Prettier integration. Created `.prettierrc` with project standards (no semicolons, single quotes, 2-space indent, trailing commas) and `.prettierignore` for build outputs. Added `lint`, `lint:fix`, `format`, and `format:check` scripts to package.json. Updated `docs/ActionItems.md` to mark ESLint and Prettier items complete and documented 6 newly discovered issues.
+- **Reasoning:** Enforce consistent code style across the codebase (currently 93 files need formatting), catch potential issues early (17+ console.log warnings detected), and establish foundation for pre-commit hooks. ESLint v8 chosen for compatibility with Next.js 14 config system. Prettier config matches majority of existing code conventions.
+- **Issues Discovered:** (1) 93 files need formatting with CRLF line ending issues, (2) 17 console.log warnings across codebase, (3) 4 test files failing due to Prisma enum import issues, (4) `buildKanbanColumns` export in supervisor page blocking builds, (5) Duplicate Card component border classes causing Vite warnings. All issues added to ActionItems.md for tracking.
+- **Hats:** qa-gate.
+
+## 2025-01-16T19:30:00Z — Agent: Docs & Runbooks
+
+- **Summary:** Created `docs/ActionItems.md` to track prioritized technical debt and improvement tasks. Updated `AGENTS.md` to require checking action items before starting work and updating statuses during development. Added ActionItems reference to `docs/ONBOARDING.md` development workflow section.
+- **Reasoning:** Provide a centralized, prioritized task list based on best practices analysis to coordinate work across agents, prevent duplicate efforts, and ensure important improvements don't get lost. Establishes clear workflow for claiming, tracking, and completing action items.
+- **Hats:** docs, qa-gate.
+
 ## 2025-10-16T13:55:39Z — Agent: gpt-5-codex
 
 - **Summary:** Hid the manual credential form in development, added quick-launch demo account buttons that share the login fetch helper, and kept the production form unchanged for manual sign-in flows.
