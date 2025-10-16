@@ -10,7 +10,7 @@ import { DataCard, DataGrid } from "../../components/ui/DataCard";
 import { StatusCard, StatusGrid } from "../../components/ui/StatusCard";
 import { Button } from "../../components/ui/Button";
 import { Select } from "../../components/ui/Select";
-import { PaperClipIcon } from "@heroicons/react/24/solid";
+import { PaperClipIcon, ChatBubbleLeftIcon } from "@heroicons/react/24/solid";
 
 type WorkOrder = {
   id: string;
@@ -1249,9 +1249,36 @@ export default function SupervisorView() {
                                     padding: "0.125rem 0.25rem",
                                     borderRadius: "10px",
                                     fontWeight: "500",
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: "0.25rem",
                                   }}
                                 >
-                                  💬 {wo._count.notes}
+                                  <span
+                                    className="sr-only"
+                                    style={{
+                                      position: "absolute",
+                                      width: "1px",
+                                      height: "1px",
+                                      padding: "0",
+                                      margin: "-1px",
+                                      overflow: "hidden",
+                                      clip: "rect(0, 0, 0, 0)",
+                                      whiteSpace: "nowrap",
+                                      borderWidth: "0",
+                                    }}
+                                  >
+                                    {`${wo._count.notes} note${
+                                      wo._count.notes === 1 ? "" : "s"
+                                    }`}
+                                  </span>
+                                  <ChatBubbleLeftIcon
+                                    aria-hidden="true"
+                                    style={{ height: "0.75rem", width: "0.75rem" }}
+                                  />
+                                  <span aria-hidden="true">
+                                    {wo._count.notes}
+                                  </span>
                                 </span>
                               )}
                             </div>
@@ -1926,10 +1953,36 @@ export default function SupervisorView() {
                                     padding: "0.25rem 0.5rem",
                                     borderRadius: "12px",
                                     fontWeight: "500",
-                                    display: "inline-block",
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: "0.25rem",
+                                    position: "relative",
                                   }}
                                 >
-                                  💬 {wo._count.notes}
+                                  <span
+                                    style={{
+                                      border: 0,
+                                      clip: "rect(0, 0, 0, 0)",
+                                      height: "1px",
+                                      margin: "-1px",
+                                      overflow: "hidden",
+                                      padding: 0,
+                                      position: "absolute",
+                                      width: "1px",
+                                      whiteSpace: "nowrap",
+                                    }}
+                                  >
+                                    {`${wo._count.notes} note${
+                                      wo._count.notes === 1 ? "" : "s"
+                                    }`}
+                                  </span>
+                                  <ChatBubbleLeftIcon
+                                    aria-hidden="true"
+                                    style={{ height: "0.75rem", width: "0.75rem" }}
+                                  />
+                                  <span aria-hidden="true">
+                                    {wo._count.notes}
+                                  </span>
                                 </span>
                               ) : (
                                 <span
