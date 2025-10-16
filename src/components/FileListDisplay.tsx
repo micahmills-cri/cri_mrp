@@ -208,10 +208,10 @@ export default function FileListDisplay({
     if (mimeType.startsWith('audio/')) return <MusicalNoteIcon className={iconClass} />
     if (mimeType.includes('pdf')) return <DocumentTextIcon className={iconClass} />
     if (mimeType.includes('zip') || mimeType.includes('rar')) return <ArchiveBoxIcon className={iconClass} />
-    if (mimeType.includes('text/')) return <DocumentTextIcon className={iconClass} />
-    if (mimeType.includes('spreadsheet') || mimeType.includes('excel')) return <TableCellsIcon className={iconClass} />
+    if (mimeType.includes('spreadsheet') || mimeType.includes('excel') || mimeType.includes('csv')) return <TableCellsIcon className={iconClass} />
     if (mimeType.includes('presentation') || mimeType.includes('powerpoint')) return <PresentationChartBarIcon className={iconClass} />
     if (mimeType.includes('document') || mimeType.includes('word')) return <DocumentIcon className={iconClass} />
+    if (mimeType.includes('text/')) return <DocumentTextIcon className={iconClass} />
     return <DocumentIcon className={iconClass} />
   }
 
