@@ -2,6 +2,12 @@
 
 > Record every pull request chronologically with the newest entry at the top. Use UTC timestamps in ISO 8601 format.
 
+## 2025-10-16T13:55:39Z — Agent: gpt-5-codex
+
+- **Summary:** Hid the manual credential form in development, added quick-launch demo account buttons that share the login fetch helper, and kept the production form unchanged for manual sign-in flows.
+- **Reasoning:** Streamline local testing by allowing one-click role switching without disrupting the production login behavior or its error handling.
+- **Hats:** role-ui, qa-gate.
+
 ## 2025-10-15T16:14:46Z — Agent: gpt-5-codex
 
 - **Summary:** Added an explicit edit workflow for supervisor planning details, including an unlock button and cancel/save controls that preserve the existing read-only view. Enabled editing across active statuses and updated the API to validate changes, record version snapshots, and allow supervisors to adjust planning dates without future-date restrictions.
