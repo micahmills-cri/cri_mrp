@@ -1,6 +1,16 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import {
+  DocumentIcon,
+  PhotoIcon,
+  VideoCameraIcon,
+  MusicalNoteIcon,
+  DocumentTextIcon,
+  ArchiveBoxIcon,
+  TableCellsIcon,
+  PresentationChartBarIcon
+} from '@heroicons/react/24/solid'
 
 type FileAttachment = {
   id: string
@@ -190,17 +200,19 @@ export default function FileListDisplay({
 
   // Get file icon
   const getFileIcon = (mimeType?: string) => {
-    if (!mimeType) return '📄'
-    if (mimeType.startsWith('image/')) return '🖼️'
-    if (mimeType.startsWith('video/')) return '🎥'
-    if (mimeType.startsWith('audio/')) return '🎵'
-    if (mimeType.includes('pdf')) return '📑'
-    if (mimeType.includes('zip') || mimeType.includes('rar')) return '📦'
-    if (mimeType.includes('text/')) return '📝'
-    if (mimeType.includes('spreadsheet') || mimeType.includes('excel')) return '📊'
-    if (mimeType.includes('presentation') || mimeType.includes('powerpoint')) return '📈'
-    if (mimeType.includes('document') || mimeType.includes('word')) return '📋'
-    return '📄'
+    const iconClass = "h-6 w-6"
+    
+    if (!mimeType) return <DocumentIcon className={iconClass} />
+    if (mimeType.startsWith('image/')) return <PhotoIcon className={iconClass} />
+    if (mimeType.startsWith('video/')) return <VideoCameraIcon className={iconClass} />
+    if (mimeType.startsWith('audio/')) return <MusicalNoteIcon className={iconClass} />
+    if (mimeType.includes('pdf')) return <DocumentTextIcon className={iconClass} />
+    if (mimeType.includes('zip') || mimeType.includes('rar')) return <ArchiveBoxIcon className={iconClass} />
+    if (mimeType.includes('text/')) return <DocumentTextIcon className={iconClass} />
+    if (mimeType.includes('spreadsheet') || mimeType.includes('excel')) return <TableCellsIcon className={iconClass} />
+    if (mimeType.includes('presentation') || mimeType.includes('powerpoint')) return <PresentationChartBarIcon className={iconClass} />
+    if (mimeType.includes('document') || mimeType.includes('word')) return <DocumentIcon className={iconClass} />
+    return <DocumentIcon className={iconClass} />
   }
 
   // Filter attachments
@@ -373,7 +385,11 @@ export default function FileListDisplay({
               />
               
               {/* File Icon */}
-              <div style={{ fontSize: '1.5rem' }}>
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center',
+                color: 'var(--muted)'
+              }}>
                 {getFileIcon(attachment.mimeType)}
               </div>
               
