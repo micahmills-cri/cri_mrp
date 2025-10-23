@@ -160,6 +160,16 @@ This document tracks outstanding tasks, improvements, and technical debt for the
   - **Estimated effort**: 45 minutes
   - **Agent role**: Docs & Runbooks
 
+### Developer Experience
+
+- [ ] **Provide default env vars for local dev API flows**
+  - Local QA attempts fail with 500 errors because `DATABASE_URL`, `JWT_SECRET`, and `STORAGE_BUCKET_ID` are undefined during `next dev`
+  - Document setup or supply `.env.example` values that allow non-persistent QA
+  - Consider adding mock/stub mode for modal verification without Postgres
+  - **Estimated effort**: 45 minutes
+  - **Agent role**: Docs & Runbooks
+  - **Discovered**: 2025-10-23 while QAing supervisor modal defaults
+
 ### Error Handling & Observability
 
 - [ ] **Centralize API error handling**
