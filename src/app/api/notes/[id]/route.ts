@@ -63,7 +63,7 @@ export async function PUT(
     // Permission check: operators can only edit their own notes, admin and supervisor have broader permissions
     if (user.role === 'OPERATOR') {
       // First check: Can only edit own notes
-      if (existingNote.userId !== user.id) {
+      if (existingNote.userId !== user.userId) {
         return NextResponse.json({ 
           message: 'You can only edit your own notes' 
         }, { status: 403 });
@@ -165,7 +165,7 @@ export async function DELETE(
     // For department-scoped notes, also check department membership
     if (user.role === 'OPERATOR') {
       // Operators can only delete their own notes
-      if (existingNote.userId !== user.id) {
+      if (existingNote.userId !== user.userId) {
         return NextResponse.json({ 
           message: 'You can only delete your own notes' 
         }, { status: 403 });
@@ -179,7 +179,7 @@ export async function DELETE(
       }
     } else if (user.role === 'SUPERVISOR') {
       // Supervisors can delete their own notes or any notes from their department
-      const isOwnNote = existingNote.userId === user.id;
+      const isOwnNote = existingNote.userId === user.userId;
       const isDeptNote = existingNote.scope === 'DEPARTMENT' && existingNote.departmentId === user.departmentId;
       const isGeneralNote = existingNote.scope === 'GENERAL';
       

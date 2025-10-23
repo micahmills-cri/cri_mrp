@@ -424,7 +424,7 @@ export async function PATCH(
       if (changes.length > 0) {
         await tx.auditLog.createMany({
           data: changes.map((change) => ({
-            actorId: user.id,
+            actorId: user.userId,
             action: "UPDATE",
             modelType: "WorkOrder",
             modelId: workOrderId,

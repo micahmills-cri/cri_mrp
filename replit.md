@@ -10,6 +10,19 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Updates - All Four Phases Completed
 
+### Comprehensive JWT Payload Bug Fix (October 23, 2025)
+- **Root Cause**: Systematic bug across multiple API endpoints using `user.id` instead of `user.userId` from JWT payload
+- **Files Fixed** (8 instances across 5 files):
+  - `src/app/api/work-orders/[id]/route.ts` - Work order update audit logs (line 430)
+  - `src/app/api/work-orders/[id]/versions/route.ts` - Version creation audit logs (line 135)
+  - `src/app/api/work-orders/[id]/restore/route.ts` - Restore operation audit logs (line 96)
+  - `src/app/api/attachments/[id]/route.ts` - File access permissions (line 70) and deletion permissions (line 162)
+  - `src/app/api/notes/[id]/route.ts` - Note edit permissions (line 69), delete permissions (lines 171, 185)
+- **JWT Structure**: The JWT payload created at login uses `userId`, `role`, and `departmentId` - NOT `id`
+- **Error Symptoms**: "Internal server error" when editing work orders, potential permission bypasses for file/note operations
+- **Database Impact**: Foreign key constraint violations on audit log creation, incorrect permission checks
+- **Testing Recommended**: Verify work order edits, file downloads/deletes, and note edits/deletes all work correctly
+
 ### File Icon Standardization (October 16, 2025)
 - **Heroicons Integration**: Replaced all emoji file type icons in FileListDisplay component with standard Heroicons for consistency
 - **Icon Mapping**: Complete file type icon system using @heroicons/react/24/solid:

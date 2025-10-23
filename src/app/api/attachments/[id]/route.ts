@@ -64,7 +64,7 @@ export async function GET(
       // Check object-level permissions
       const canAccess = await objectStorageService.canAccessObjectEntity({
         objectFile,
-        userId: user.id,
+        userId: user.userId,
         requestedPermission: ObjectPermission.READ,
       });
       
@@ -156,7 +156,7 @@ export async function DELETE(
 
     // Permission check: users can delete their own attachments, supervisors can delete any in their department
     if (user.role === 'OPERATOR') {
-      if (attachment.userId !== user.id) {
+      if (attachment.userId !== user.userId) {
         return NextResponse.json({ 
           message: 'You can only delete your own attachments' 
         }, { status: 403 });

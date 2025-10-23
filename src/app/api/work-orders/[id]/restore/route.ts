@@ -90,7 +90,7 @@ export async function POST(
       // Create audit log
       await tx.auditLog.create({
         data: {
-          actorId: user.id,
+          actorId: user.userId,
           action: 'RESTORE',
           modelType: 'WorkOrder',
           modelId: workOrderId,
