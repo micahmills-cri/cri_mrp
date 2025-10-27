@@ -12,6 +12,7 @@ This document tracks outstanding tasks, improvements, and technical debt for the
 6. **MANDATORY for ALL agents**: When you discover ANY issue during work (testing, building, analyzing, implementing), you MUST add it to this file immediately with appropriate priority, context, estimated effort, agent role, and "Discovered: YYYY-MM-DD" tag. Failure to document discoveries means incomplete work.
 
 **Status Indicators:**
+
 - `[ ]` - Not started
 - `[WIP]` - Work in progress (include agent role/name if applicable)
 - `[x]` - Completed (include completion date)
@@ -58,7 +59,6 @@ This document tracks outstanding tasks, improvements, and technical debt for the
   - **Estimated effort**: 30 minutes
   - **Agent role**: Security & Permissions
 
-
 - [ ] **Implement rate limiting for auth endpoints**
   - Add Upstash Redis integration or use `@upstash/ratelimit`
   - Protect `/api/auth/login` (5 attempts per 15 minutes)
@@ -86,16 +86,6 @@ This document tracks outstanding tasks, improvements, and technical debt for the
   - **Agent role**: QA & Release Gate
 
 ### Testing
-
-- [ ] **Fix Prisma enum imports in test files**
-  - 4 test files failing due to undefined Prisma enum imports
-  - Files: `auth.test.ts`, `rbac.test.ts`, `queues.my-department.test.ts`, `supervisor.dashboard.test.ts`
-  - Issue: `Cannot read properties of undefined (reading 'OPERATOR'/'ADMIN'/'RELEASED'/etc.)`
-  - Root cause: Vitest setup not properly importing Prisma client enums
-  - Fix: Update vitest.setup.ts or test imports to properly access Prisma enums
-  - **Estimated effort**: 30 minutes
-  - **Agent role**: QA & Release Gate
-  - **Discovered**: 2025-01-16 during ESLint/Prettier testing
 
 - [ ] **Expand API route test coverage**
   - Current: 2 routes tested, 31 total routes
@@ -350,9 +340,14 @@ This document tracks outstanding tasks, improvements, and technical debt for the
 
 ## ✅ Completed Items
 
-*(Items move here when marked complete with `[x]` status)*
+_(Items move here when marked complete with `[x]` status)_
+
+### 2025-10-27
+
+- [x] **Fix Prisma enum imports in test files** (Agent: QA & Release Gate — gpt-5-codex, Completed: 2025-10-27) - Added Vitest setup mock for `@prisma/client` to ensure `Role`, `WOStatus`, and `WOPriority` enums are always defined in tests even when the Prisma client is unavailable.
 
 ### 2025-01-16
+
 - [x] **Repository best practices analysis** (Agent: QA & Release Gate, Completed: 2025-01-16) - Completed comprehensive analysis of codebase identifying security, testing, and code quality improvements. Created this ActionItems tracking file and updated AGENTS.md workflow.
 - [x] **Add ESLint configuration** (Agent: QA & Release Gate, Completed: 2025-01-16) - Installed eslint@8.57 and eslint-config-next. Created `.eslintrc.json` with Next.js defaults, Prettier integration, and no-console warning rule. Added `lint` and `lint:fix` scripts. ESLint now catches 17+ console.log warnings and formatting issues.
 - [x] **Add Prettier configuration** (Agent: QA & Release Gate, Completed: 2025-01-16) - Installed prettier@3.6.2 with ESLint plugin. Created `.prettierrc` with project standards (no semicolons, single quotes, 2-space indent, trailing commas). Created `.prettierignore` for build outputs and migrations. Added `format` and `format:check` scripts. Prettier identifies 93 files needing formatting.
@@ -363,24 +358,29 @@ This document tracks outstanding tasks, improvements, and technical debt for the
 ## Notes & Context
 
 ### Related Documents
+
 - **AGENTS.md**: Agent role descriptions and workflow
 - **CHANGELOG.md**: Record of all changes with timestamps
 - **ONBOARDING.md**: Developer setup guide
 - **docs/diagnosis.md**: Troubleshooting guide
 
 ### Conventions
+
 - **High Priority**: Items affecting security, code quality, or blocking other work
 - **Medium Priority**: Important improvements that enhance maintainability
 - **Low Priority**: Nice-to-have features that add polish
 - **Backlog**: Ideas for future consideration, not currently scheduled
 
 ### Agent Assignment
+
 When picking up an action item, assign yourself by adding your role/name to the item:
+
 ```markdown
 - [WIP] **Task name** (Agent: QA & Release Gate)
 ```
 
 When completing an item:
+
 ```markdown
 - [x] **Task name** (Agent: QA & Release Gate, Completed: 2025-01-16)
 ```
