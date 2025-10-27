@@ -106,7 +106,7 @@ export default function StationsPage() {
       key: 'defaultPayRate',
       label: 'Default Pay Rate',
       render: (row) =>
-        row.defaultPayRate ? `$${row.defaultPayRate.toFixed(2)}/hr` : '-',
+        row.defaultPayRate ? `$${Number(row.defaultPayRate).toFixed(2)}/hr` : '-',
     },
     {
       key: 'capacity',

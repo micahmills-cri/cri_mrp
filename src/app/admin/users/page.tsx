@@ -238,7 +238,7 @@ export default function UsersPage() {
     {
       key: 'hourlyRate',
       label: 'Pay Rate',
-      render: (row) => (row.hourlyRate ? `$${row.hourlyRate.toFixed(2)}/hr` : '-'),
+      render: (row) => (row.hourlyRate ? `$${Number(row.hourlyRate).toFixed(2)}/hr` : '-'),
     },
     {
       key: 'stationMembers',

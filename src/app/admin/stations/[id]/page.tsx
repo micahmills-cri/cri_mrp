@@ -522,7 +522,7 @@ export default function StationDetailPage() {
                           <div className="text-sm text-[color:var(--muted-strong)]">
                             Role: {member.user.role}
                             {member.user.hourlyRate && (
-                              <> • Pay Rate: ${member.user.hourlyRate.toFixed(2)}/hr</>
+                              <> • Pay Rate: ${Number(member.user.hourlyRate).toFixed(2)}/hr</>
                             )}
                           </div>
                         </div>
