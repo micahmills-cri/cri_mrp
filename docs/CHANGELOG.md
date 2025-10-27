@@ -2,6 +2,13 @@
 
 > Record every pull request chronologically with the newest entry at the top. Use UTC timestamps in ISO 8601 format.
 
+## 2025-10-27T20:30:26Z - Agent: Codex (role-ui, qa-gate, docs)
+
+- **Summary:** Removed the duplicate class key warning in `src/components/ui/Card.tsx` by centralizing variant styling and giving the elevated card a distinct shadow while preserving interactive/disabled behavior. Updated ActionItems.md to mark the bug fix complete and recorded this changelog entry.
+- **Reasoning:** Vite surfaced a warning because both the default and elevated variants used identical keys in the conditional `clsx` map. Introducing an explicit variant lookup keeps the component maintainable and prevents future build noise.
+- **Validation:** `npm run test`
+- **Files Modified:** `src/components/ui/Card.tsx`, `docs/ActionItems.md`, `docs/CHANGELOG.md`
+
 ## 2025-10-27T21:00:00Z — Agent: QA & Release Gate
 
 - **Summary:** Verified complete implementation of Departments and Work Centers CRUD UI pages. Both pages were already fully implemented at src/app/admin/departments/page.tsx and src/app/admin/work-centers/page.tsx with DataTable integration, create/edit modals, delete confirmation dialogs, CSV export support, and proper form validation. Updated ActionItems.md to move both tasks from Medium Priority to Completed Items section.

@@ -121,15 +121,6 @@ _(All medium priority admin panel UI tasks are complete - moved to Completed Ite
   - **Discovered**: 2025-01-16 during build verification
   - **Blocks**: Production builds
 
-- [ ] **Fix duplicate Card component border classes**
-  - File: `src/components/ui/Card.tsx:37`
-  - Issue: Duplicate object key `"border border-[var(--border)] shadow-card"` for both "default" and "elevated" variants
-  - Warning from Vite during build
-  - Fix: Use different classes or remove duplicate
-  - **Estimated effort**: 10 minutes
-  - **Agent role**: UI/UX Implementer
-  - **Discovered**: 2025-01-16 during test run
-
 ### Documentation
 
 - [ ] **Add LICENSE file**
@@ -376,6 +367,7 @@ _(Items move here when marked complete with `[x]` status)_
 
 ### 2025-10-27
 
+- [x] **Fix duplicate Card component border classes** (Agent: Codex - UI/UX Implementer, Completed: 2025-10-27) - Updated `src/components/ui/Card.tsx` to centralize variant styling so the elevated variant uses a distinct shadow, removing duplicate object keys flagged during builds.
 - [x] **Departments CRUD UI Implementation** (Agent: UI/UX Implementer, Completed: 2025-10-27) - Verified complete implementation at src/app/admin/departments/page.tsx with DataTable, create/edit modals, dependency checks for deletion (users/work centers), CSV export integration, and form validation. Backend APIs already complete with full CRUD operations.
 
 - [x] **Work Centers CRUD UI Implementation** (Agent: UI/UX Implementer, Completed: 2025-10-27) - Verified complete implementation at src/app/admin/work-centers/page.tsx with DataTable, create/edit modals showing department assignment, station counts display, soft delete support, and status badges (Active/Inactive). Backend APIs already complete with full CRUD operations.
