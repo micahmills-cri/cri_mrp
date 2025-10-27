@@ -2,6 +2,12 @@
 
 > Record every pull request chronologically with the newest entry at the top. Use UTC timestamps in ISO 8601 format.
 
+## 2025-10-27T17:34:30Z — Agent: QA & Release Gate
+
+- **Summary:** Added a Vitest setup mock for `@prisma/client` that preserves the real module when generated and provides enum fallbacks for `Role`, `WOStatus`, and `WOPriority` so unit tests always receive defined constants.
+- **Reasoning:** Several suites import Prisma enums directly, and prior runs failed whenever the generated client was missing; stabilizing the enums in setup keeps tests deterministic across fresh installs.
+- **Hats:** qa-gate.
+
 ## 2025-10-23T17:15:00Z — Agent: Docs & Runbooks
 
 - **Summary:** Documented the supervisor planned-window helper and development login shortcuts in `replit.md`, corrected stack references to Tailwind + React 18, and logged the helper in the changelog.
