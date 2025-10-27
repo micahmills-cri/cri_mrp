@@ -23,6 +23,7 @@ Preferred communication style: Simple, everyday language.
 - **Database Impact**: Foreign key constraint violations on audit log creation, incorrect permission checks
 - **Testing Recommended**: Verify work order edits, file downloads/deletes, and note edits/deletes all work correctly
 
+
 ### File Icon Standardization (October 16, 2025)
 - **Heroicons Integration**: Replaced all emoji file type icons in FileListDisplay component with standard Heroicons for consistency
 - **Icon Mapping**: Complete file type icon system using @heroicons/react/24/solid:
@@ -95,7 +96,7 @@ Preferred communication style: Simple, everyday language.
 
 ### Frontend Architecture
 - **Framework**: Next.js 14 with App Router and TypeScript
-- **Styling**: CSS with utility classes and custom CSS modules
+- **Styling**: Tailwind CSS with shared theme tokens defined in `tailwind.config.js`
 - **State Management**: React hooks (useState, useEffect) for client-side state
 - **Routing**: File-based routing with protected route middleware
 - **Authentication Flow**: JWT-based authentication with HTTP-only cookies
@@ -124,7 +125,7 @@ Preferred communication style: Simple, everyday language.
 
 ### Core Framework Dependencies
 - **Next.js 14**: Full-stack React framework with App Router
-- **React 19**: Frontend UI library with latest features
+- **React 18.3**: Frontend UI library aligned with the versions pinned in `package.json`
 - **TypeScript 5.9**: Type safety and development experience
 
 ### Database and ORM
@@ -142,6 +143,8 @@ Preferred communication style: Simple, everyday language.
 
 ### Development Tools
 - **TypeScript types**: @types packages for Node.js, React, bcryptjs, and jsonwebtoken
+- **Linting**: `npm run lint` and `npm run lint:fix` leverage the Next.js + ESLint configuration introduced on October 16, 2025.
+- **Formatting**: `npm run format` and `npm run format:check` apply the shared Prettier 3 rules—run them after edits to keep the repo consistent.
 
 ### Environment Configuration
 - **DATABASE_URL**: PostgreSQL connection string

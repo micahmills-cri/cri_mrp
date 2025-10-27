@@ -15,26 +15,33 @@ async function main() {
   try { await prisma.workOrderAttachment.deleteMany() } catch {}
   try { await prisma.workOrderVersion.deleteMany() } catch {}
   await prisma.wOStageLog.deleteMany()
-  
+
   // Now delete work orders (children removed)
   await prisma.workOrder.deleteMany()
-  
+
   // Delete routing-related tables
   try { await prisma.workInstructionVersion.deleteMany() } catch {}
   await prisma.routingStage.deleteMany()
   await prisma.routingVersion.deleteMany()
-  
+
   // Delete product-related tables (trims before models)
   try { await prisma.productTrim.deleteMany() } catch {}
   try { await prisma.productModel.deleteMany() } catch {}
-  
+
+  // Delete station-related tables (new admin features)
+  try { await prisma.stationMetrics.deleteMany() } catch {}
+  try { await prisma.stationEquipment.deleteMany() } catch {}
+  try { await prisma.stationMember.deleteMany() } catch {}
+  try { await prisma.payRateHistory.deleteMany() } catch {}
+  try { await prisma.equipment.deleteMany() } catch {}
+
   // Delete station and work center data
   await prisma.station.deleteMany()
   await prisma.workCenter.deleteMany()
-  
+
   // Delete audit logs before users (audit logs reference users)
   try { await prisma.auditLog.deleteMany() } catch {}
-  
+
   // Finally delete users and departments
   await prisma.user.deleteMany()
   await prisma.department.deleteMany()
@@ -57,7 +64,9 @@ async function main() {
         email: user.email,
         passwordHash: user.passwordHash,
         role: user.role as any,
-        departmentId: user.departmentId
+        departmentId: user.departmentId,
+        hourlyRate: user.hourlyRate,
+        shiftSchedule: user.shiftSchedule
       }
     })
   }
@@ -81,7 +90,11 @@ async function main() {
         id: station.id,
         code: station.code,
         name: station.name,
+        description: station.description,
         workCenterId: station.workCenterId,
+        defaultPayRate: station.defaultPayRate,
+        capacity: station.capacity,
+        targetCycleTimeSeconds: station.targetCycleTimeSeconds,
         isActive: station.isActive
       }
     })
@@ -239,6 +252,59 @@ async function main() {
         contentMd: instruction.contentMd,
         isActive: instruction.isActive,
         createdAt: new Date(instruction.createdAt)
+      }
+    })
+  }
+
+  console.log('Creating equipment from backup...')
+  for (const equip of backupData.equipment) {
+    await prisma.equipment.create({
+      data: {
+        id: equip.id,
+        name: equip.name,
+        description: equip.description,
+        isActive: equip.isActive,
+        createdAt: new Date(equip.createdAt)
+      }
+    })
+  }
+
+  console.log('Creating station equipment assignments from backup...')
+  for (const se of backupData.stationEquipment) {
+    await prisma.stationEquipment.create({
+      data: {
+        id: se.id,
+        stationId: se.stationId,
+        equipmentId: se.equipmentId,
+        createdAt: new Date(se.createdAt)
+      }
+    })
+  }
+
+  console.log('Creating station members from backup...')
+  for (const sm of backupData.stationMembers) {
+    await prisma.stationMember.create({
+      data: {
+        id: sm.id,
+        stationId: sm.stationId,
+        userId: sm.userId,
+        isActive: sm.isActive,
+        createdAt: new Date(sm.createdAt)
+      }
+    })
+  }
+
+  console.log('Creating pay rate history from backup...')
+  for (const prh of backupData.payRateHistory) {
+    await prisma.payRateHistory.create({
+      data: {
+        id: prh.id,
+        userId: prh.userId,
+        oldRate: prh.oldRate,
+        newRate: prh.newRate,
+        changedBy: prh.changedBy,
+        reason: prh.reason,
+        createdAt: new Date(prh.createdAt)
       }
     })
   }
