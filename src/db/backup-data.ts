@@ -55,7 +55,7 @@ export const backupData = {
       email: "dave.jones@cri.local",
       passwordHash: "$2b$12$NL98avVAWBajkgLuavY2AOnHplC.ws6tUaYaU/noj09coe5fbOOR6",
       role: "OPERATOR",
-      departmentId: "cmfwr6r94000hmv56qwegzllh",
+      departmentId: "cmfwr6r5y0008mv56um3jo3ez",
       hourlyRate: 25.00,
       shiftSchedule: { "days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"], "startTime": "06:00", "endTime": "15:00" }
     }
