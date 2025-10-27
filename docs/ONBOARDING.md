@@ -22,6 +22,61 @@
 - Environment variables are validated on startup: ensure `DATABASE_URL`, a 32-character `JWT_SECRET`, and `STORAGE_BUCKET_ID` are present before running the app.【F:src/lib/env.ts†L1-L14】
 - Tests currently focus on unit coverage for auth and RBAC helpers. Expand these suites (e.g., API contract tests) as you stabilize key flows.【F:src/lib/__tests__/auth.test.ts†L1-L56】【F:src/lib/rbac.ts†L1-L26】
 
+## Admin Panel Setup
+
+The admin panel provides comprehensive workstation configuration management for administrators. For detailed documentation, see [docs/ADMIN_PANEL_IMPLEMENTATION.md](./ADMIN_PANEL_IMPLEMENTATION.md).
+
+### Initial Setup
+
+1. **Apply the admin panel database migration:**
+   ```bash
+   npx prisma migrate dev --name add_admin_workstation_features
+   npx prisma generate
+   ```
+
+2. **Seed the database with admin panel data:**
+   ```bash
+   npm run seed
+   ```
+   This creates the necessary stations, users, equipment, and relationships.
+
+3. **Access the admin panel:**
+   - Login as admin: `admin@cri.local` / `password`
+   - Click the "Admin Panel" button in the supervisor dashboard header
+   - Use sidebar navigation to access: Departments, Work Centers, Stations, Users, Equipment
+
+### Admin Panel Features
+
+- **Departments & Work Centers**: Organizational hierarchy management (APIs complete, UI optional)
+- **Stations**: Full CRUD with member/equipment assignments, pay rates, capacity, and cycle times
+- **Users**: User management with roles, departments, pay rates, and automatic pay rate history tracking
+- **Equipment**: Equipment catalog with station assignments
+- **Advanced Features**:
+  - Work order cost estimation based on routing and labor rates
+  - CSV export for all entity types
+  - Station metrics calculation (infrastructure in place)
+  - Soft delete pattern for data preservation
+
+### Common Admin Workflows
+
+**Configure a Station:**
+1. Admin Panel > Stations > Click edit on a station
+2. Details tab: Set pay rate, capacity, cycle time
+3. Members tab: Assign operators to the station
+4. Equipment tab: Assign equipment
+
+**Add a New User:**
+1. Admin Panel > Users > Click "Create"
+2. Enter email, password, role, department, hourly rate
+3. User can now be assigned to stations
+
+**Update Pay Rate:**
+1. Admin Panel > Users > Click edit on a user
+2. Change hourly rate (automatically creates history entry)
+3. Pay rate history is viewable for auditing
+
+For complete API reference, technical details, and troubleshooting, see [docs/ADMIN_PANEL_IMPLEMENTATION.md](./ADMIN_PANEL_IMPLEMENTATION.md).
+
 ## What to learn next
 1. **Walk through the UI flows** – Start at `/login`, then follow the operator queue polling logic and supervisor planning tools to see how front-end state ties to API responses.【F:src/app/login/page.tsx†L14-L118】【F:src/app/operator/page.tsx†L59-L118】【F:src/app/supervisor/page.tsx†L145-L200】
 2. **Trace API ↔ database interactions** – Use the Prisma schema alongside representative routes like `/api/queues/my-department` and supervisor endpoints to understand how domain relationships materialize at runtime.【F:prisma/schema.prisma†L10-L226】【F:src/app/api/queues/my-department/route.ts†L21-L121】

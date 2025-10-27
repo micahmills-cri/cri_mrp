@@ -105,6 +105,10 @@ This document tracks outstanding tasks, improvements, and technical debt for the
 
 ## 🟡 Medium Priority (Do Soon)
 
+### Admin Panel Enhancements
+
+_(All medium priority admin panel UI tasks are complete - moved to Completed Items)_
+
 ### Bug Fixes
 
 - [ ] **Fix exported function in supervisor page component**
@@ -232,6 +236,34 @@ This document tracks outstanding tasks, improvements, and technical debt for the
 
 ## 🟢 Low Priority (Nice to Have)
 
+### Admin Panel Optional Features
+
+- [ ] **Implement Station Metrics Calculation System**
+  - Calculate weighted average pay rates from WOStageLog data
+  - Formula: `SUM(userRate * hoursWorked) / SUM(hoursWorked)` over last 30 days
+  - Cache results in StationMetrics table
+  - Add manual recalculation trigger UI
+  - **Estimated effort**: 4-6 hours
+  - **Agent role**: API & Contracts, UI/UX Implementer
+  - **Note**: Infrastructure exists, needs calculation logic
+
+- [ ] **Implement CSV Import System**
+  - Parse CSV files for bulk operations
+  - Validate data and preview changes before import
+  - Bulk create/update with rollback on failure
+  - Create import utilities for each entity type
+  - **Estimated effort**: 8-12 hours
+  - **Agent role**: API & Contracts
+  - **Note**: Export already complete
+
+- [ ] **Implement Shift Scheduling UI Component**
+  - Visual schedule builder with day selector
+  - Time range picker for start/end times
+  - JSON storage format in User.shiftSchedule field
+  - **Estimated effort**: 3-4 hours
+  - **Agent role**: UI/UX Implementer
+  - **Note**: Backend support already exists
+
 ### Testing & Quality
 
 - [ ] **Add E2E tests with Playwright**
@@ -341,6 +373,28 @@ This document tracks outstanding tasks, improvements, and technical debt for the
 ## ✅ Completed Items
 
 _(Items move here when marked complete with `[x]` status)_
+
+### 2025-10-27
+
+- [x] **Departments CRUD UI Implementation** (Agent: UI/UX Implementer, Completed: 2025-10-27) - Verified complete implementation at src/app/admin/departments/page.tsx with DataTable, create/edit modals, dependency checks for deletion (users/work centers), CSV export integration, and form validation. Backend APIs already complete with full CRUD operations.
+
+- [x] **Work Centers CRUD UI Implementation** (Agent: UI/UX Implementer, Completed: 2025-10-27) - Verified complete implementation at src/app/admin/work-centers/page.tsx with DataTable, create/edit modals showing department assignment, station counts display, soft delete support, and status badges (Active/Inactive). Backend APIs already complete with full CRUD operations.
+
+- [x] **Admin Panel Infrastructure** (Agent: UI/UX Implementer, Completed: 2025-10-27) - Created admin layout with sidebar navigation, admin dashboard landing page, and "Admin Panel" button in supervisor dashboard. Protected routes via middleware. All pages use consistent UI patterns with DataTable and ConfirmDialog components.
+
+- [x] **Stations CRUD Implementation** (Agent: UI/UX Implementer, API & Contracts, Completed: 2025-10-27) - Implemented full CRUD for stations with list view, detail page with tabs (Details, Members, Equipment), member assignment/unassignment, equipment assignment/unassignment, and soft delete support. Created 8+ API endpoints for stations management.
+
+- [x] **Users CRUD Implementation** (Agent: UI/UX Implementer, API & Contracts, Completed: 2025-10-27) - Implemented full CRUD for users with list view, create/edit modals, automatic pay rate history tracking, self-deletion prevention, and password management. Created 4 API endpoints for user management.
+
+- [x] **Equipment CRUD Implementation** (Agent: UI/UX Implementer, API & Contracts, Completed: 2025-10-27) - Implemented full CRUD for equipment with list view, create/edit modals, name uniqueness validation, and soft delete support. Created 4 API endpoints for equipment management.
+
+- [x] **Departments & Work Centers CRUD APIs** (Agent: API & Contracts, Completed: 2025-10-27) - Implemented complete API layer for departments and work centers with full CRUD operations, validation, dependency checks, and CSV export. Created 12 API endpoints total.
+
+- [x] **Admin Panel Database Schema** (Agent: DB Migration & Versioning, Completed: 2025-10-27) - Extended Prisma schema with 5 new models (StationMember, Equipment, StationEquipment, PayRateHistory, StationMetrics) and extended User and Station models with admin-related fields. Updated seed data with comprehensive test data.
+
+- [x] **Work Order Cost Estimation API** (Agent: API & Contracts, Completed: 2025-10-27) - Implemented cost estimation API that calculates labor costs based on routing stages and station rates. Returns total hours, total cost, average rate, and per-stage breakdown.
+
+- [x] **CSV Export System** (Agent: API & Contracts, Completed: 2025-10-27) - Implemented CSV export functionality for all admin entities (departments, work centers, stations, users, equipment). Created centralized CSV utility with proper escaping and download headers.
 
 ### 2025-10-27
 

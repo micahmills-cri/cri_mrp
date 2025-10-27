@@ -2,7 +2,7 @@
 
 ## Overview
 
-This is a Next.js 14 Operations MVP designed for a high-mix, low-volume boat factory. The system manages work orders through multiple manufacturing stages, providing role-based interfaces for operators and supervisors. It features a complete manufacturing workflow with stage progression, work-in-progress tracking, comprehensive audit logging, file attachments, notes management, and advanced UI features for real-time collaboration. The project aims to provide a robust and scalable solution for managing boat manufacturing operations, from initial planning to final shipping, with a focus on efficiency, transparency, and real-time data access.
+This is a Next.js 14 Operations MVP designed for a high-mix, low-volume boat factory. The system manages work orders through multiple manufacturing stages, providing role-based interfaces for operators, supervisors, and administrators. It features a complete manufacturing workflow with stage progression, work-in-progress tracking, comprehensive audit logging, file attachments, notes management, and advanced UI features for real-time collaboration. The admin panel provides comprehensive workstation configuration management. The project aims to provide a robust and scalable solution for managing boat manufacturing operations, from initial planning to final shipping, with a focus on efficiency, transparency, and real-time data access.
 
 ## User Preferences
 
