@@ -16,17 +16,21 @@ model Department {
 }
 
 model User {
-  id           String                @id @default(cuid())
-  email        String                @unique
-  passwordHash String
-  role         Role                  @default(OPERATOR)
-  departmentId String?
-  createdAt    DateTime              @default(now())
-  auditLogs    AuditLog[]
-  department   Department?           @relation(fields: [departmentId], references: [id])
-  woStageLogs  WOStageLog[]
-  notes        WorkOrderNote[]
-  attachments  WorkOrderAttachment[]
+  id              String                @id @default(cuid())
+  email           String                @unique
+  passwordHash    String
+  role            Role                  @default(OPERATOR)
+  departmentId    String?
+  hourlyRate      Decimal?              @db.Decimal(10, 2)
+  shiftSchedule   Json?
+  createdAt       DateTime              @default(now())
+  auditLogs       AuditLog[]
+  department      Department?           @relation(fields: [departmentId], references: [id])
+  woStageLogs     WOStageLog[]
+  notes           WorkOrderNote[]
+  attachments     WorkOrderAttachment[]
+  stationMembers  StationMember[]
+  payRateHistory  PayRateHistory[]
 }
 
 model WorkCenter {
@@ -40,13 +44,20 @@ model WorkCenter {
 }
 
 model Station {
-  id           String       @id @default(cuid())
-  code         String       @unique
-  name         String
-  workCenterId String
-  isActive     Boolean      @default(true)
-  workCenter   WorkCenter   @relation(fields: [workCenterId], references: [id])
-  woStageLogs  WOStageLog[]
+  id                     String              @id @default(cuid())
+  code                   String              @unique
+  name                   String
+  description            String?
+  workCenterId           String
+  defaultPayRate         Decimal?            @db.Decimal(10, 2)
+  capacity               Int?
+  targetCycleTimeSeconds Int?
+  isActive               Boolean             @default(true)
+  workCenter             WorkCenter          @relation(fields: [workCenterId], references: [id])
+  woStageLogs            WOStageLog[]
+  members                StationMember[]
+  equipment              StationEquipment[]
+  metrics                StationMetrics[]
 }
 
 model RoutingVersion {
@@ -244,4 +255,73 @@ model ProductTrim {
   isActive       Boolean      @default(true)
   createdAt      DateTime     @default(now())
   productModel   ProductModel @relation(fields: [productModelId], references: [id])
+}
+
+// Station member assignments
+model StationMember {
+  id        String   @id @default(cuid())
+  stationId String
+  userId    String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  station   Station  @relation(fields: [stationId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([stationId, userId])
+  @@index([userId])
+  @@index([stationId])
+}
+
+// Equipment tracking
+model Equipment {
+  id          String             @id @default(cuid())
+  name        String             @unique
+  description String?
+  isActive    Boolean            @default(true)
+  createdAt   DateTime           @default(now())
+  stations    StationEquipment[]
+}
+
+// Station-Equipment many-to-many
+model StationEquipment {
+  id          String    @id @default(cuid())
+  stationId   String
+  equipmentId String
+  createdAt   DateTime  @default(now())
+  station     Station   @relation(fields: [stationId], references: [id], onDelete: Cascade)
+  equipment   Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+
+  @@unique([stationId, equipmentId])
+  @@index([equipmentId])
+}
+
+// Pay rate history tracking
+model PayRateHistory {
+  id          String   @id @default(cuid())
+  userId      String
+  oldRate     Decimal? @db.Decimal(10, 2)
+  newRate     Decimal  @db.Decimal(10, 2)
+  changedBy   String
+  reason      String?
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+// Cached station metrics (updated monthly)
+model StationMetrics {
+  id                    String   @id @default(cuid())
+  stationId             String
+  periodStart           DateTime
+  periodEnd             DateTime
+  weightedAverageRate   Decimal  @db.Decimal(10, 2)
+  totalHoursWorked      Decimal  @db.Decimal(10, 2)
+  totalLaborCost        Decimal  @db.Decimal(10, 2)
+  uniqueOperatorCount   Int
+  calculatedAt          DateTime @default(now())
+  station               Station  @relation(fields: [stationId], references: [id], onDelete: Cascade)
+
+  @@unique([stationId, periodStart])
+  @@index([stationId, periodStart])
 }

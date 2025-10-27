@@ -1410,6 +1410,22 @@ export default function SupervisorView() {
                   className="min-w-[12rem]"
                 />
               )}
+              {userRole === 'ADMIN' && (
+                <a
+                  href="/admin"
+                  style={{
+                    padding: '0.5rem 1rem',
+                    backgroundColor: 'var(--color-primary-600)',
+                    color: 'white',
+                    borderRadius: '4px',
+                    textDecoration: 'none',
+                    fontSize: '0.875rem',
+                    fontWeight: '500',
+                  }}
+                >
+                  Admin Panel
+                </a>
+              )}
               <span style={{ fontSize: '0.875rem', color: 'var(--muted)' }}>Role: {userRole}</span>
             </div>
           </div>

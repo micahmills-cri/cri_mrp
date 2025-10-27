@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 
 // Define which paths need authentication
 export const config = {
-  matcher: ["/operator/:path*", "/supervisor/:path*", "/api/work-orders/:path*", "/api/supervisor/:path*"],
+  matcher: ["/operator/:path*", "/supervisor/:path*", "/admin/:path*", "/api/work-orders/:path*", "/api/supervisor/:path*", "/api/admin/:path*"],
 };
 
 export function middleware(req: NextRequest) {

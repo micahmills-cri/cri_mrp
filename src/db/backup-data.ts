@@ -19,21 +19,45 @@ export const backupData = {
       email: "admin@cri.local",
       passwordHash: "$2b$12$4cvQAnsDxPW8eZ.DLoF.he/tKys3jzCjz4rIwhEznEFA/YdH2mxLa",
       role: "ADMIN",
-      departmentId: null
+      departmentId: null,
+      hourlyRate: 45.00,
+      shiftSchedule: { "days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"], "startTime": "08:00", "endTime": "17:00" }
     },
     {
       id: "cmfwr6s9e001kmv5660mr74fo",
       email: "supervisor@cri.local",
       passwordHash: "$2b$12$Om0qEF9ScNotcaDnoqY4h.FTfxf5TkPOiM.nMPEFKOYLosf.Q0V2e",
       role: "SUPERVISOR",
-      departmentId: "cmfwr6r660009mv56j89zqwqk"
+      departmentId: "cmfwr6r660009mv56j89zqwqk",
+      hourlyRate: 35.00,
+      shiftSchedule: { "days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"], "startTime": "07:00", "endTime": "16:00" }
     },
     {
       id: "cmfwr6s9e001lmv567pcikcpy",
       email: "operator@cri.local",
       passwordHash: "$2b$12$NL98avVAWBajkgLuavY2AOnHplC.ws6tUaYaU/noj09coe5fbOOR6",
       role: "OPERATOR",
-      departmentId: "cmfwr6r660009mv56j89zqwqk"
+      departmentId: "cmfwr6r660009mv56j89zqwqk",
+      hourlyRate: 22.50,
+      shiftSchedule: { "days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"], "startTime": "08:00", "endTime": "17:00" }
+    },
+    {
+      id: "cmfwr6s9e001mmv56newuser01",
+      email: "joe.smith@cri.local",
+      passwordHash: "$2b$12$NL98avVAWBajkgLuavY2AOnHplC.ws6tUaYaU/noj09coe5fbOOR6",
+      role: "OPERATOR",
+      departmentId: "cmfwr6qy20000mv56yi2ho6g5",
+      hourlyRate: 20.00,
+      shiftSchedule: { "days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"], "startTime": "08:00", "endTime": "17:00" }
+    },
+    {
+      id: "cmfwr6s9e001nmv56newuser02",
+      email: "dave.jones@cri.local",
+      passwordHash: "$2b$12$NL98avVAWBajkgLuavY2AOnHplC.ws6tUaYaU/noj09coe5fbOOR6",
+      role: "OPERATOR",
+      departmentId: "cmfwr6r94000hmv56qwegzllh",
+      hourlyRate: 25.00,
+      shiftSchedule: { "days": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"], "startTime": "06:00", "endTime": "15:00" }
     }
   ],
   workCenters: [
@@ -50,17 +74,17 @@ export const backupData = {
     { id: "cmfwr6rbi000wmv567v5jr36o", name: "Water Test", departmentId: "cmfwr6r5r0007mv56rezc2jv9", isActive: true }
   ],
   stations: [
-    { id: "cmfwr6rco000ymv56m8bynk1b", code: "DRIG-1", name: "Deck Rigging Station 1", workCenterId: "cmfwr6r94000hmv56qwegzllh", isActive: true },
-    { id: "cmfwr6rco0011mv56n62uc0sj", code: "LAM-1", name: "Lamination Station 1", workCenterId: "cmfwr6r94000cmv56sa1ryiql", isActive: true },
-    { id: "cmfwr6rcp001emv569rfhss65", code: "ENG-1", name: "Engine Hang Station 1", workCenterId: "cmfwr6r94000kmv56iidjxbj4", isActive: true },
-    { id: "cmfwr6rcp0018mv56qark6z6q", code: "HRIG-1", name: "Hull Rigging Station 1", workCenterId: "cmfwr6r95000rmv56pz1n5v4x", isActive: true },
-    { id: "cmfwr6rco0014mv56nhkbfzxf", code: "FRIG-1", name: "Final Rigging Station 1", workCenterId: "cmfwr6r94000mmv56mpq7cdnh", isActive: true },
-    { id: "cmfwr6rcp001amv56scc3phfl", code: "CAP-1", name: "Capping Station 1", workCenterId: "cmfwr6r94000imv56khmieqcr", isActive: true },
-    { id: "cmfwr6rcp001cmv56ybyjly1h", code: "CLEAN-1", name: "Cleaning Station 1", workCenterId: "cmfwr6rbh000umv561qu7ur41", isActive: true },
-    { id: "cmfwr6rcp0016mv56la2yxlr6", code: "WTEST-1", name: "Water Test Station 1", workCenterId: "cmfwr6rbi000wmv567v5jr36o", isActive: true },
-    { id: "cmfwr6rco0012mv5674ynuavm", code: "QA-1", name: "QA Station 1", workCenterId: "cmfwr6r95000omv56qcz8jid7", isActive: true },
-    { id: "cmfwr6rez001gmv56h7f2kn9n", code: "KIT-1", name: "Kitting Station 1", workCenterId: "cmfwr6r94000emv56qvlppsw9", isActive: true },
-    { id: "cmfwr6rez001imv56al1dursc", code: "SHIP-1", name: "Shipping Station 1", workCenterId: "cmfwr6r95000smv562kq5d6ur", isActive: true }
+    { id: "cmfwr6rco000ymv56m8bynk1b", code: "DRIG-1", name: "Deck Rigging Station 1", description: "Primary deck rigging workstation", workCenterId: "cmfwr6r94000hmv56qwegzllh", defaultPayRate: 24.00, capacity: 2, targetCycleTimeSeconds: 9000, isActive: true },
+    { id: "cmfwr6rco0011mv56n62uc0sj", code: "LAM-1", name: "Lamination Station 1", description: "Main lamination work area", workCenterId: "cmfwr6r94000cmv56sa1ryiql", defaultPayRate: 22.00, capacity: 3, targetCycleTimeSeconds: 14400, isActive: true },
+    { id: "cmfwr6rcp001emv569rfhss65", code: "ENG-1", name: "Engine Hang Station 1", description: "Engine installation and rigging", workCenterId: "cmfwr6r94000kmv56iidjxbj4", defaultPayRate: 28.00, capacity: 2, targetCycleTimeSeconds: 7200, isActive: true },
+    { id: "cmfwr6rcp0018mv56qark6z6q", code: "HRIG-1", name: "Hull Rigging Station 1", description: "Hull assembly and rigging", workCenterId: "cmfwr6r95000rmv56pz1n5v4x", defaultPayRate: 23.00, capacity: 2, targetCycleTimeSeconds: 10800, isActive: true },
+    { id: "cmfwr6rco0014mv56nhkbfzxf", code: "FRIG-1", name: "Final Rigging Station 1", description: "Final rigging and assembly", workCenterId: "cmfwr6r94000mmv56mpq7cdnh", defaultPayRate: 26.00, capacity: 2, targetCycleTimeSeconds: 10800, isActive: true },
+    { id: "cmfwr6rcp001amv56scc3phfl", code: "CAP-1", name: "Capping Station 1", description: "Capping and sealing operations", workCenterId: "cmfwr6r94000imv56khmieqcr", defaultPayRate: 21.00, capacity: 2, targetCycleTimeSeconds: 5400, isActive: true },
+    { id: "cmfwr6rcp001cmv56ybyjly1h", code: "CLEAN-1", name: "Cleaning Station 1", description: "Final cleaning and detailing", workCenterId: "cmfwr6rbh000umv561qu7ur41", defaultPayRate: 18.00, capacity: 2, targetCycleTimeSeconds: 3600, isActive: true },
+    { id: "cmfwr6rcp0016mv56la2yxlr6", code: "WTEST-1", name: "Water Test Station 1", description: "Water testing and leak detection", workCenterId: "cmfwr6rbi000wmv567v5jr36o", defaultPayRate: 24.00, capacity: 1, targetCycleTimeSeconds: 3600, isActive: true },
+    { id: "cmfwr6rco0012mv5674ynuavm", code: "QA-1", name: "QA Station 1", description: "Quality assurance and inspection", workCenterId: "cmfwr6r95000omv56qcz8jid7", defaultPayRate: 27.00, capacity: 1, targetCycleTimeSeconds: 5400, isActive: true },
+    { id: "cmfwr6rez001gmv56h7f2kn9n", code: "KIT-1", name: "Kitting Station 1", description: "Parts kitting and preparation", workCenterId: "cmfwr6r94000emv56qvlppsw9", defaultPayRate: 19.00, capacity: 3, targetCycleTimeSeconds: 7200, isActive: true },
+    { id: "cmfwr6rez001imv56al1dursc", code: "SHIP-1", name: "Shipping Station 1", description: "Final packaging and shipping prep", workCenterId: "cmfwr6r95000smv562kq5d6ur", defaultPayRate: 20.00, capacity: 2, targetCycleTimeSeconds: 1800, isActive: true }
   ],
   routingVersions: [
     {
@@ -230,6 +254,37 @@ export const backupData = {
       createdAt: "2025-09-30T14:41:13.816Z"
     }
   ],
+  equipment: [
+    { id: "cmeq001", name: "Rivet Gun", description: "Pneumatic rivet gun for hull assembly", isActive: true, createdAt: "2025-09-23T16:12:09.145Z" },
+    { id: "cmeq002", name: "Spray Booth", description: "Paint and coating spray booth", isActive: true, createdAt: "2025-09-23T16:12:09.145Z" },
+    { id: "cmeq003", name: "Engine Hoist", description: "2-ton engine hoist for installation", isActive: true, createdAt: "2025-09-23T16:12:09.145Z" },
+    { id: "cmeq004", name: "Lamination Table", description: "Large work table for lamination", isActive: true, createdAt: "2025-09-23T16:12:09.145Z" },
+    { id: "cmeq005", name: "Pressure Washer", description: "Industrial pressure washer", isActive: true, createdAt: "2025-09-23T16:12:09.145Z" },
+    { id: "cmeq006", name: "Leak Detector", description: "Electronic leak detection system", isActive: true, createdAt: "2025-09-23T16:12:09.145Z" }
+  ],
+  stationEquipment: [
+    { id: "cmsteq001", stationId: "cmfwr6rcp0018mv56qark6z6q", equipmentId: "cmeq001", createdAt: "2025-09-23T16:12:09.145Z" },
+    { id: "cmsteq002", stationId: "cmfwr6rco0011mv56n62uc0sj", equipmentId: "cmeq004", createdAt: "2025-09-23T16:12:09.145Z" },
+    { id: "cmsteq003", stationId: "cmfwr6rcp001emv569rfhss65", equipmentId: "cmeq003", createdAt: "2025-09-23T16:12:09.145Z" },
+    { id: "cmsteq004", stationId: "cmfwr6rcp001cmv56ybyjly1h", equipmentId: "cmeq005", createdAt: "2025-09-23T16:12:09.145Z" },
+    { id: "cmsteq005", stationId: "cmfwr6rcp0016mv56la2yxlr6", equipmentId: "cmeq006", createdAt: "2025-09-23T16:12:09.145Z" },
+    { id: "cmsteq006", stationId: "cmfwr6rco000ymv56m8bynk1b", equipmentId: "cmeq002", createdAt: "2025-09-23T16:12:09.145Z" }
+  ],
+  stationMembers: [
+    { id: "cmstmem001", stationId: "cmfwr6rcp0018mv56qark6z6q", userId: "cmfwr6s9e001lmv567pcikcpy", isActive: true, createdAt: "2025-09-23T16:12:09.145Z" },
+    { id: "cmstmem002", stationId: "cmfwr6rez001gmv56h7f2kn9n", userId: "cmfwr6s9e001lmv567pcikcpy", isActive: true, createdAt: "2025-09-23T16:12:09.145Z" },
+    { id: "cmstmem003", stationId: "cmfwr6rco0011mv56n62uc0sj", userId: "cmfwr6s9e001mmv56newuser01", isActive: true, createdAt: "2025-09-23T16:12:09.145Z" },
+    { id: "cmstmem004", stationId: "cmfwr6rco000ymv56m8bynk1b", userId: "cmfwr6s9e001nmv56newuser02", isActive: true, createdAt: "2025-09-23T16:12:09.145Z" },
+    { id: "cmstmem005", stationId: "cmfwr6rcp0018mv56qark6z6q", userId: "cmfwr6s9e001kmv5660mr74fo", isActive: true, createdAt: "2025-09-23T16:12:09.145Z" }
+  ],
+  payRateHistory: [
+    { id: "cmprh001", userId: "cmfwr6s9e001lmv567pcikcpy", oldRate: null, newRate: 22.50, changedBy: "cmfwr6s9e001jmv5659vvhrqm", reason: "Initial rate", createdAt: "2025-09-23T16:12:09.145Z" },
+    { id: "cmprh002", userId: "cmfwr6s9e001kmv5660mr74fo", oldRate: null, newRate: 35.00, changedBy: "cmfwr6s9e001jmv5659vvhrqm", reason: "Initial rate", createdAt: "2025-09-23T16:12:09.145Z" },
+    { id: "cmprh003", userId: "cmfwr6s9e001jmv5659vvhrqm", oldRate: null, newRate: 45.00, changedBy: "cmfwr6s9e001jmv5659vvhrqm", reason: "Initial rate", createdAt: "2025-09-23T16:12:09.145Z" },
+    { id: "cmprh004", userId: "cmfwr6s9e001mmv56newuser01", oldRate: null, newRate: 20.00, changedBy: "cmfwr6s9e001jmv5659vvhrqm", reason: "Initial rate", createdAt: "2025-09-23T16:12:09.145Z" },
+    { id: "cmprh005", userId: "cmfwr6s9e001nmv56newuser02", oldRate: null, newRate: 25.00, changedBy: "cmfwr6s9e001jmv5659vvhrqm", reason: "Initial rate", createdAt: "2025-09-23T16:12:09.145Z" }
+  ],
+  stationMetrics: [],
   workOrderNotes: [],
   workOrderAttachments: [],
   workOrderVersions: [],
