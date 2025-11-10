@@ -13,12 +13,14 @@ This document provides comprehensive documentation for the admin workstation con
 ### ✅ Completed Features (Production-Ready)
 
 #### 1. Database Schema & Seed Data
+
 - **5 new models**: StationMember, Equipment, StationEquipment, PayRateHistory, StationMetrics
 - **Extended models**: User (hourlyRate, shiftSchedule), Station (description, defaultPayRate, capacity, targetCycleTimeSeconds)
 - **Comprehensive seed data**: 5 users with pay rates, 11 stations with full config, 6 equipment items, assignments
 - **Migration**: Ready to apply with `npx prisma migrate dev --name add_admin_workstation_features`
 
 #### 2. Admin Panel Infrastructure
+
 - Admin layout with sidebar navigation
 - Admin dashboard landing page
 - "Admin Panel" button in supervisor dashboard (ADMIN role only)
@@ -27,6 +29,7 @@ This document provides comprehensive documentation for the admin workstation con
 - **Files**: [src/app/admin/layout.tsx](../src/app/admin/layout.tsx), [src/app/admin/page.tsx](../src/app/admin/page.tsx)
 
 #### 3. Stations Management (Full CRUD)
+
 - List view with work centers, departments, member/equipment counts
 - Detail page with tabs: Details, Members, Equipment
 - Member assignment/unassignment with pay rate visibility
@@ -36,6 +39,7 @@ This document provides comprehensive documentation for the admin workstation con
 - **APIs**: Full CRUD + member/equipment management endpoints
 
 #### 4. Users Management (Full CRUD)
+
 - List view with roles, departments, pay rates, station counts
 - Create/edit modals with comprehensive fields
 - Automatic pay rate history tracking
@@ -45,6 +49,7 @@ This document provides comprehensive documentation for the admin workstation con
 - **APIs**: Full CRUD with validation
 
 #### 5. Equipment Management (Full CRUD)
+
 - List view with station usage counts
 - Create/edit modals for equipment catalog
 - Name uniqueness validation
@@ -53,6 +58,7 @@ This document provides comprehensive documentation for the admin workstation con
 - **APIs**: Full CRUD endpoints
 
 #### 6. Advanced Features
+
 - **Pay Rate History**: Automatic tracking when user hourly rates change
 - **Station Metrics**: Weighted average calculation from WOStageLog data
 - **Work Order Cost Estimation**: Labor cost estimation based on routing and station rates
@@ -60,6 +66,7 @@ This document provides comprehensive documentation for the admin workstation con
 - **Soft Deletes**: Data preservation pattern across all entities
 
 #### 7. Shared UI Components
+
 - **DataTable**: Reusable table with CRUD actions and export
 - **ConfirmDialog**: Confirmation modal for delete operations
 - **Files**: [src/components/admin/DataTable.tsx](../src/components/admin/DataTable.tsx), [src/components/admin/ConfirmDialog.tsx](../src/components/admin/ConfirmDialog.tsx)
@@ -67,21 +74,27 @@ This document provides comprehensive documentation for the admin workstation con
 ### ⏳ Remaining Work (Optional Enhancements)
 
 #### 1. Departments CRUD
+
 **Priority**: Medium | **Estimated Time**: 2 hours
+
 - Create basic CRUD for departments (name only)
 - APIs: GET, POST, PATCH, DELETE with dependency checks
 - Page: List view with user/work center counts
 - **Blocker**: None - can be implemented anytime
 
 #### 2. Work Centers CRUD
+
 **Priority**: Medium | **Estimated Time**: 2-3 hours
+
 - Create CRUD for work centers (name, department assignment)
 - APIs: GET, POST, PATCH, DELETE with validation
 - Page: List view with department and station counts
 - **Blocker**: None - can be implemented anytime
 
 #### 3. Station Metrics Calculation
+
 **Priority**: Low | **Estimated Time**: 4-6 hours
+
 - Calculate weighted average pay rates from historical work data
 - Formula: `SUM(userRate * hoursWorked) / SUM(hoursWorked)` over last 30 days
 - Cache results in StationMetrics table
@@ -89,7 +102,9 @@ This document provides comprehensive documentation for the admin workstation con
 - **Note**: Core infrastructure exists, needs calculation logic implementation
 
 #### 4. CSV Import System
+
 **Priority**: Low | **Estimated Time**: 8-12 hours
+
 - Parse CSV files for bulk operations
 - Validate data and preview changes
 - Bulk create/update with rollback on failure
@@ -97,7 +112,9 @@ This document provides comprehensive documentation for the admin workstation con
 - **Note**: Export already implemented
 
 #### 5. Shift Scheduling UI
+
 **Priority**: Low | **Estimated Time**: 3-4 hours
+
 - Visual schedule builder component
 - Day selector and time range picker
 - JSON storage format in User.shiftSchedule field
@@ -108,6 +125,7 @@ This document provides comprehensive documentation for the admin workstation con
 ## Complete API Reference
 
 ### Departments APIs
+
 - `GET /api/admin/departments` - List all departments
 - `POST /api/admin/departments` - Create new department
 - `GET /api/admin/departments/[id]` - Get department details
@@ -118,6 +136,7 @@ This document provides comprehensive documentation for the admin workstation con
 **Status**: ✅ Fully implemented
 
 ### Work Centers APIs
+
 - `GET /api/admin/work-centers` - List all work centers
 - `POST /api/admin/work-centers` - Create new work center
 - `GET /api/admin/work-centers/[id]` - Get work center details
@@ -128,6 +147,7 @@ This document provides comprehensive documentation for the admin workstation con
 **Status**: ✅ Fully implemented
 
 ### Stations APIs
+
 - `GET /api/admin/stations` - List all stations with relations
 - `POST /api/admin/stations` - Create new station with validation
 - `GET /api/admin/stations/[id]` - Get station details with members/equipment
@@ -145,6 +165,7 @@ This document provides comprehensive documentation for the admin workstation con
 **Status**: ✅ Fully implemented
 
 ### Users APIs
+
 - `GET /api/admin/users` - List all users with departments/stations
 - `POST /api/admin/users` - Create user (with pay rate history)
 - `GET /api/admin/users/[id]` - Get user details with history
@@ -155,6 +176,7 @@ This document provides comprehensive documentation for the admin workstation con
 **Status**: ✅ Fully implemented
 
 ### Equipment APIs
+
 - `GET /api/admin/equipment` - List all equipment with station counts
 - `POST /api/admin/equipment` - Create equipment with validation
 - `GET /api/admin/equipment/[id]` - Get equipment details
@@ -165,6 +187,7 @@ This document provides comprehensive documentation for the admin workstation con
 **Status**: ✅ Fully implemented
 
 ### Metrics & Cost Estimation APIs
+
 - `POST /api/admin/metrics/recalculate-all` - Recalculate all station metrics
 - `GET /api/work-orders/[id]/cost-estimate` - Estimate work order labor cost
 
@@ -177,7 +200,9 @@ This document provides comprehensive documentation for the admin workstation con
 ### New Models
 
 #### StationMember
+
 Many-to-many relationship between users and stations.
+
 ```prisma
 model StationMember {
   id        String   @id @default(cuid())
@@ -193,7 +218,9 @@ model StationMember {
 ```
 
 #### Equipment
+
 Equipment catalog for factory operations.
+
 ```prisma
 model Equipment {
   id          String    @id @default(cuid())
@@ -208,7 +235,9 @@ model Equipment {
 ```
 
 #### StationEquipment
+
 Many-to-many relationship between stations and equipment.
+
 ```prisma
 model StationEquipment {
   id          String   @id @default(cuid())
@@ -222,7 +251,9 @@ model StationEquipment {
 ```
 
 #### PayRateHistory
+
 Audit log for user pay rate changes.
+
 ```prisma
 model PayRateHistory {
   id        String   @id @default(cuid())
@@ -239,7 +270,9 @@ model PayRateHistory {
 ```
 
 #### StationMetrics
+
 Cached metrics for station performance.
+
 ```prisma
 model StationMetrics {
   id                    String   @id @default(cuid())
@@ -257,6 +290,7 @@ model StationMetrics {
 ### Extended Models
 
 #### User Extensions
+
 ```prisma
 model User {
   // ... existing fields ...
@@ -270,6 +304,7 @@ model User {
 ```
 
 #### Station Extensions
+
 ```prisma
 model Station {
   // ... existing fields ...
@@ -292,6 +327,7 @@ model Station {
 ### Quick Start
 
 #### 1. Run Database Migration
+
 ```bash
 npx prisma migrate dev --name add_admin_workstation_features
 npx prisma generate
@@ -299,19 +335,22 @@ npm run seed
 ```
 
 #### 2. Access Admin Panel
+
 1. Start dev server: `npm run dev`
-2. Login as admin: `admin@cri.local` / `password`
+2. Login as admin: `admin@cri.local` / `Admin123!`
 3. Click "Admin Panel" button in supervisor dashboard header
 4. Use sidebar navigation to access all admin features
 
 #### 3. Test Credentials
-- **Admin**: `admin@cri.local` / `password`
-- **Supervisor**: `supervisor@cri.local` / `password`
-- **Operators**: `operator@cri.local`, `joe.smith@cri.local`, `dave.jones@cri.local` / `password`
+
+- **Admin**: `admin@cri.local` / `Admin123!`
+- **Supervisor**: `supervisor@cri.local` / `Supervisor123!`
+- **Operators**: `operator@cri.local`, `joe.smith@cri.local`, `dave.jones@cri.local` / `Operator123!`
 
 ### Common Workflows
 
 #### Configure a Station
+
 1. Admin Panel > Stations > Click edit on a station
 2. **Details Tab**: Set pay rate, capacity, cycle time, description
 3. **Members Tab**: Assign operators to the station
@@ -319,6 +358,7 @@ npm run seed
 5. Click "Save Changes"
 
 #### Add a New User
+
 1. Admin Panel > Users > Click "Create"
 2. Enter email, password, role, department, hourly rate
 3. Optionally set shift schedule
@@ -326,6 +366,7 @@ npm run seed
 5. User can now be assigned to stations
 
 #### Assign User to Station
+
 1. Admin Panel > Stations > [Station Detail]
 2. Click "Members" tab
 3. Select user from dropdown
@@ -333,22 +374,26 @@ npm run seed
 5. User's hourly rate is displayed for reference
 
 #### Update User Pay Rate
+
 1. Admin Panel > Users > Click edit on a user
 2. Change the hourly rate field
 3. Click "Save"
 4. System automatically creates PayRateHistory entry
 
 #### Export Data
+
 1. Go to any admin page (Departments, Work Centers, Stations, Users, Equipment)
 2. Click "Export" button in the toolbar
 3. CSV file downloads automatically with all current data
 
 #### Estimate Work Order Cost
+
 ```bash
 curl http://localhost:5000/api/work-orders/[work-order-id]/cost-estimate
 ```
 
 Response includes:
+
 - Total standard hours
 - Total estimated labor cost
 - Average hourly rate
@@ -361,11 +406,13 @@ Response includes:
 ### Security & Authorization
 
 #### Route Protection
+
 - All `/admin/*` routes protected by middleware
 - All `/api/admin/*` endpoints check for ADMIN role
 - Middleware validates JWT token from HTTP-only cookies
 
 #### API Authorization Pattern
+
 ```typescript
 const user = getUserFromRequest(request)
 if (!user || user.role !== 'ADMIN') {
@@ -374,6 +421,7 @@ if (!user || user.role !== 'ADMIN') {
 ```
 
 #### Additional Security Features
+
 - Password hashing with bcrypt (12 rounds)
 - JWT tokens with 7-day expiration
 - Self-deletion prevention (users cannot delete themselves)
@@ -383,22 +431,27 @@ if (!user || user.role !== 'ADMIN') {
 ### Data Management Patterns
 
 #### Soft Delete Pattern
+
 All entities use `isActive` flag instead of hard deletes to preserve data integrity:
+
 ```typescript
 await prisma.station.update({
   where: { id },
-  data: { isActive: false }
+  data: { isActive: false },
 })
 ```
 
 Benefits:
+
 - Historical data preservation
 - Audit trail maintenance
 - Ability to restore deleted records
 - Foreign key integrity preserved
 
 #### Pay Rate History Tracking
+
 Automatic history creation when user rates change:
+
 ```typescript
 if (data.hourlyRate !== existing.hourlyRate) {
   await prisma.payRateHistory.create({
@@ -408,14 +461,16 @@ if (data.hourlyRate !== existing.hourlyRate) {
       newRate: data.hourlyRate,
       changedBy: adminUser.userId,
       reason: 'Admin update',
-      createdAt: new Date()
-    }
+      createdAt: new Date(),
+    },
   })
 }
 ```
 
 #### Validation Pattern
+
 Using Zod for all request validation:
+
 ```typescript
 const createStationSchema = z.object({
   name: z.string().min(1).max(255),
@@ -423,7 +478,7 @@ const createStationSchema = z.object({
   workCenterId: z.string().cuid(),
   defaultPayRate: z.number().positive().optional(),
   capacity: z.number().int().positive().optional(),
-  targetCycleTimeSeconds: z.number().int().positive().optional()
+  targetCycleTimeSeconds: z.number().int().positive().optional(),
 })
 
 const data = createStationSchema.parse(body)
@@ -432,42 +487,49 @@ const data = createStationSchema.parse(body)
 ### Performance Optimizations
 
 #### Cached Metrics
+
 Station metrics are pre-calculated and cached in StationMetrics table:
+
 - Reduces query load on WOStageLog table
 - Provides fast access to weighted averages
 - Updated on-demand or via scheduled job
 - Period-based calculations (default: last 30 days)
 
 #### Optimized Queries
+
 All list endpoints use Prisma includes to minimize N+1 queries:
+
 ```typescript
 const stations = await prisma.station.findMany({
   where: { isActive: true },
   include: {
     workCenter: {
-      include: { department: true }
+      include: { department: true },
     },
     members: {
       where: { isActive: true },
-      include: { user: true }
+      include: { user: true },
     },
     equipment: {
-      include: { equipment: true }
+      include: { equipment: true },
     },
     _count: {
-      select: { members: true, equipment: true }
-    }
-  }
+      select: { members: true, equipment: true },
+    },
+  },
 })
 ```
 
 #### Lazy Loading
+
 Data is fetched on-demand when navigating to detail pages, reducing initial page load times.
 
 ### CSV Export Implementation
 
 #### Export Utility
+
 Centralized CSV export function with proper escaping:
+
 ```typescript
 function escapeCsvValue(value: any): string {
   const str = String(value ?? '')
@@ -479,34 +541,39 @@ function escapeCsvValue(value: any): string {
 ```
 
 #### Download Pattern
+
 All export endpoints return CSV with proper content headers:
+
 ```typescript
 return new Response(csv, {
   headers: {
     'Content-Type': 'text/csv',
-    'Content-Disposition': `attachment; filename="${entityType}-export.csv"`
-  }
+    'Content-Disposition': `attachment; filename="${entityType}-export.csv"`,
+  },
 })
 ```
 
 ### Station Metrics Calculation
 
 #### Weighted Average Formula
+
 ```typescript
 // Formula: SUM(userRate * hoursWorked) / SUM(hoursWorked)
-const weightedAverageRate = totalWeightedHours > 0
-  ? totalWeightedCost / totalWeightedHours
-  : station.defaultPayRate || 0
+const weightedAverageRate =
+  totalWeightedHours > 0 ? totalWeightedCost / totalWeightedHours : station.defaultPayRate || 0
 ```
 
 #### Data Source
+
 Calculations use WOStageLog events:
+
 - START events mark beginning of work
 - PAUSE events mark interruptions
 - COMPLETE events mark end of work
 - Hours calculated from event timestamps
 
 #### Caching Strategy
+
 - Results stored in StationMetrics table
 - Includes period start/end dates
 - Calculation timestamp for freshness tracking
@@ -515,6 +582,7 @@ Calculations use WOStageLog events:
 ### Work Order Cost Estimation
 
 #### Estimation Logic
+
 ```typescript
 // For each routing stage:
 const stationRate = metrics?.weightedAverageRate || station.defaultPayRate || 0
@@ -525,6 +593,7 @@ const totalCost = stageEstimates.reduce((sum, stage) => sum + stage.estimatedCos
 ```
 
 #### Return Data Structure
+
 ```typescript
 {
   totalStandardHours: 45.5,
@@ -547,30 +616,35 @@ const totalCost = stageEstimates.reduce((sum, stage) => sum + stage.estimatedCos
 ## UI/UX Features
 
 ### Consistent Design Patterns
+
 - Follows existing app styling conventions
 - Tailwind CSS utility classes
 - Responsive layouts (mobile, tablet, desktop)
 - Dark mode support via theme provider
 
 ### User Feedback
+
 - Loading states with skeleton screens
 - Success/error toast notifications
 - Form validation with inline error messages
 - Confirmation dialogs for destructive actions
 
 ### Navigation
+
 - Sidebar navigation in admin layout
 - Breadcrumb trail on detail pages
 - "Back" buttons for easy navigation
 - Links to related entities
 
 ### Data Display
+
 - DataTable component with sorting
 - Badge components for roles and status
 - Count indicators for relationships
 - Empty states with helpful messages
 
 ### Forms
+
 - Client-side validation
 - Server-side validation with Zod
 - Optional fields clearly marked
@@ -578,6 +652,7 @@ const totalCost = stageEstimates.reduce((sum, stage) => sum + stage.estimatedCos
 - Modal forms for create/edit operations
 
 ### Tabs (Station Detail Page)
+
 - Details: Station properties
 - Members: User assignments
 - Equipment: Equipment assignments
@@ -588,6 +663,7 @@ const totalCost = stageEstimates.reduce((sum, stage) => sum + stage.estimatedCos
 ## Testing Recommendations
 
 ### Manual Testing Checklist
+
 - [ ] Create department, work center, station, user, equipment
 - [ ] Assign users to stations
 - [ ] Assign equipment to stations
@@ -601,6 +677,7 @@ const totalCost = stageEstimates.reduce((sum, stage) => sum + stage.estimatedCos
 - [ ] Verify ADMIN-only access (test with SUPERVISOR role)
 
 ### API Testing Examples
+
 ```bash
 # Test cost estimation
 curl http://localhost:5000/api/work-orders/[id]/cost-estimate \
@@ -616,6 +693,7 @@ curl http://localhost:5000/api/admin/departments/export \
 ```
 
 ### Integration Tests (Recommended)
+
 - Test full CRUD flows for each entity type
 - Test member assignment/unassignment
 - Test equipment assignment/unassignment
@@ -625,6 +703,7 @@ curl http://localhost:5000/api/admin/departments/export \
 - Test validation errors
 
 ### Unit Tests (Recommended)
+
 - Test CSV export utility functions
 - Test metric calculation formulas
 - Test cost estimation logic
@@ -717,6 +796,7 @@ User (1) ---> (N) PayRateHistory (audit log)
 ```
 
 **Key Design Decisions**:
+
 1. Many-to-many relationships for flexibility (users can work at multiple stations)
 2. Soft deletes preserve referential integrity
 3. Metrics cached separately for performance
@@ -773,16 +853,19 @@ NODE_ENV=development
 ## Future Enhancements
 
 ### High Priority
+
 1. **Pagination**: Add pagination to all list views for large datasets
 2. **Search & Filters**: Advanced filtering on list pages
 3. **Bulk Operations**: Multi-select and bulk edit/delete
 
 ### Medium Priority
+
 1. **Audit Logs**: Track all admin actions (who changed what when)
 2. **Advanced Metrics**: Efficiency, utilization, cost per unit analytics
 3. **Real-time Updates**: WebSocket for live data updates instead of polling
 
 ### Low Priority
+
 1. **CSV Import**: Parse uploaded CSVs and bulk create/update
 2. **Shift Scheduler UI**: Visual calendar for shift planning
 3. **Data Validation**: More complex business rules
@@ -805,6 +888,7 @@ NODE_ENV=development
 The admin panel implementation provides a comprehensive, production-ready solution for managing workstation configuration in the CRI MRP system. With 65+ files created or modified, full CRUD operations for all entities, advanced features like pay rate tracking and cost estimation, and a consistent, user-friendly interface, the admin panel significantly enhances the system's capability to manage factory operations data.
 
 **What's Working**:
+
 - ✅ Complete CRUD for Departments, Work Centers, Stations, Users, Equipment
 - ✅ Member and equipment assignment systems
 - ✅ Pay rate tracking with automatic history

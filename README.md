@@ -70,10 +70,10 @@ Follow `docs/ONBOARDING.md` for environment prerequisites and secrets management
 
 ## Reference Accounts
 
-- **Admin**: admin@cri.local / password (or Admin123!)
-- **Supervisor**: supervisor@cri.local / password (or Supervisor123!)
-- **Operator**: operator@cri.local / password (or Operator123!)
-- **Additional Operators**: joe.smith@cri.local, dave.jones@cri.local / password
+- **Admin**: admin@cri.local / Admin123!
+- **Supervisor**: supervisor@cri.local / Supervisor123!
+- **Operator**: operator@cri.local / Operator123!
+- **Additional Operators**: joe.smith@cri.local, dave.jones@cri.local / Operator123!
 
 ## Documentation & Change Tracking
 
