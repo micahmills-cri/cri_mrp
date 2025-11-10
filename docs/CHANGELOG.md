@@ -2,6 +2,13 @@
 
 > Record every pull request chronologically with the newest entry at the top. Use UTC timestamps in ISO 8601 format.
 
+## 2025-11-10T19:26:58Z — Agent: gpt-5-codex
+
+- **Summary:** Updated README reference accounts plus onboarding and admin panel guides to list the actual seeded credentials (`Admin123!`, `Supervisor123!`, `Operator123!`) and keep instructions aligned with the quick-login presets.
+- **Reasoning:** Prior documentation still referenced the placeholder `password`, leading to failed sign-in attempts against the seeded data. Synchronizing the guides prevents onboarding confusion and mirrors the app defaults.
+- **Files Modified:** README.md, docs/ONBOARDING.md, docs/ADMIN_PANEL_IMPLEMENTATION.md, docs/CHANGELOG.md.
+- **Hats:** docs.
+
 ## 2025-10-27T21:00:00Z — Agent: QA & Release Gate
 
 - **Summary:** Verified complete implementation of Departments and Work Centers CRUD UI pages. Both pages were already fully implemented at src/app/admin/departments/page.tsx and src/app/admin/work-centers/page.tsx with DataTable integration, create/edit modals, delete confirmation dialogs, CSV export support, and proper form validation. Updated ActionItems.md to move both tasks from Medium Priority to Completed Items section.
