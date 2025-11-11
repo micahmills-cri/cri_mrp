@@ -1,5 +1,4 @@
- import { PrismaClient, Role, RoutingVersionStatus } from '@prisma/client'
-import { hashPassword } from '../lib/auth'
+import { PrismaClient, ProductConfigurationDependencyType } from '@prisma/client'
 import { backupData } from './backup-data'
 
 const prisma = new PrismaClient()
@@ -9,38 +8,74 @@ async function main() {
 
   // Clear existing data in proper dependency order (children first, parents last)
   console.log('Clearing existing data...')
-  
+
   // Delete child records first (respecting foreign key constraints)
-  try { await prisma.workOrderNote.deleteMany() } catch {}
-  try { await prisma.workOrderAttachment.deleteMany() } catch {}
-  try { await prisma.workOrderVersion.deleteMany() } catch {}
+  try {
+    await prisma.workOrderNote.deleteMany()
+  } catch {}
+  try {
+    await prisma.workOrderAttachment.deleteMany()
+  } catch {}
+  try {
+    await prisma.workOrderVersion.deleteMany()
+  } catch {}
   await prisma.wOStageLog.deleteMany()
 
   // Now delete work orders (children removed)
   await prisma.workOrder.deleteMany()
 
   // Delete routing-related tables
-  try { await prisma.workInstructionVersion.deleteMany() } catch {}
+  try {
+    await prisma.workInstructionVersion.deleteMany()
+  } catch {}
+  try {
+    await prisma.productConfigurationDependency.deleteMany()
+  } catch {}
+  try {
+    await prisma.productConfigurationOption.deleteMany()
+  } catch {}
+  try {
+    await prisma.productConfigurationComponent.deleteMany()
+  } catch {}
+  try {
+    await prisma.productConfigurationSection.deleteMany()
+  } catch {}
   await prisma.routingStage.deleteMany()
   await prisma.routingVersion.deleteMany()
 
   // Delete product-related tables (trims before models)
-  try { await prisma.productTrim.deleteMany() } catch {}
-  try { await prisma.productModel.deleteMany() } catch {}
+  try {
+    await prisma.productTrim.deleteMany()
+  } catch {}
+  try {
+    await prisma.productModel.deleteMany()
+  } catch {}
 
   // Delete station-related tables (new admin features)
-  try { await prisma.stationMetrics.deleteMany() } catch {}
-  try { await prisma.stationEquipment.deleteMany() } catch {}
-  try { await prisma.stationMember.deleteMany() } catch {}
-  try { await prisma.payRateHistory.deleteMany() } catch {}
-  try { await prisma.equipment.deleteMany() } catch {}
+  try {
+    await prisma.stationMetrics.deleteMany()
+  } catch {}
+  try {
+    await prisma.stationEquipment.deleteMany()
+  } catch {}
+  try {
+    await prisma.stationMember.deleteMany()
+  } catch {}
+  try {
+    await prisma.payRateHistory.deleteMany()
+  } catch {}
+  try {
+    await prisma.equipment.deleteMany()
+  } catch {}
 
   // Delete station and work center data
   await prisma.station.deleteMany()
   await prisma.workCenter.deleteMany()
 
   // Delete audit logs before users (audit logs reference users)
-  try { await prisma.auditLog.deleteMany() } catch {}
+  try {
+    await prisma.auditLog.deleteMany()
+  } catch {}
 
   // Finally delete users and departments
   await prisma.user.deleteMany()
@@ -51,8 +86,8 @@ async function main() {
     await prisma.department.create({
       data: {
         id: dept.id,
-        name: dept.name
-      }
+        name: dept.name,
+      },
     })
   }
 
@@ -66,8 +101,8 @@ async function main() {
         role: user.role as any,
         departmentId: user.departmentId,
         hourlyRate: user.hourlyRate,
-        shiftSchedule: user.shiftSchedule
-      }
+        shiftSchedule: user.shiftSchedule,
+      },
     })
   }
 
@@ -78,8 +113,8 @@ async function main() {
         id: wc.id,
         name: wc.name,
         departmentId: wc.departmentId,
-        isActive: wc.isActive
-      }
+        isActive: wc.isActive,
+      },
     })
   }
 
@@ -95,8 +130,8 @@ async function main() {
         defaultPayRate: station.defaultPayRate,
         capacity: station.capacity,
         targetCycleTimeSeconds: station.targetCycleTimeSeconds,
-        isActive: station.isActive
-      }
+        isActive: station.isActive,
+      },
     })
   }
 
@@ -110,8 +145,8 @@ async function main() {
         featuresJson: rv.featuresJson,
         version: rv.version,
         status: rv.status as any,
-        releasedAt: new Date(rv.releasedAt)
-      }
+        releasedAt: new Date(rv.releasedAt),
+      },
     })
   }
 
@@ -126,8 +161,8 @@ async function main() {
         name: stage.name,
         enabled: stage.enabled,
         workCenterId: stage.workCenterId,
-        standardStageSeconds: stage.standardStageSeconds
-      }
+        standardStageSeconds: stage.standardStageSeconds,
+      },
     })
   }
 
@@ -144,8 +179,8 @@ async function main() {
         status: wo.status as any,
         routingVersionId: wo.routingVersionId,
         currentStageIndex: wo.currentStageIndex,
-        createdAt: new Date(wo.createdAt)
-      }
+        createdAt: new Date(wo.createdAt),
+      },
     })
   }
 
@@ -162,8 +197,8 @@ async function main() {
         goodQty: log.goodQty,
         scrapQty: log.scrapQty,
         note: log.note,
-        createdAt: new Date(log.createdAt)
-      }
+        createdAt: new Date(log.createdAt),
+      },
     })
   }
 
@@ -175,8 +210,8 @@ async function main() {
         name: model.name,
         description: model.description,
         isActive: model.isActive,
-        createdAt: new Date(model.createdAt)
-      }
+        createdAt: new Date(model.createdAt),
+      },
     })
   }
 
@@ -189,8 +224,86 @@ async function main() {
         name: trim.name,
         description: trim.description,
         isActive: trim.isActive,
-        createdAt: new Date(trim.createdAt)
-      }
+        createdAt: new Date(trim.createdAt),
+      },
+    })
+  }
+
+  console.log('Creating product configuration sections from backup...')
+  for (const section of backupData.productConfigurationSections) {
+    await prisma.productConfigurationSection.create({
+      data: {
+        id: section.id,
+        productModelId: section.productModelId,
+        productTrimId: section.productTrimId,
+        code: section.code,
+        name: section.name,
+        description: section.description,
+        sortOrder: section.sortOrder,
+        isRequired: section.isRequired,
+        createdAt: new Date(section.createdAt),
+      },
+    })
+  }
+
+  const componentDefaultOptionMap = new Map<string, string | null>()
+
+  console.log('Creating product configuration components from backup...')
+  for (const component of backupData.productConfigurationComponents) {
+    componentDefaultOptionMap.set(component.id, component.defaultOptionId ?? null)
+    await prisma.productConfigurationComponent.create({
+      data: {
+        id: component.id,
+        sectionId: component.sectionId,
+        code: component.code,
+        name: component.name,
+        description: component.description,
+        isRequired: component.isRequired,
+        allowMultiple: component.allowMultiple,
+        sortOrder: component.sortOrder,
+        createdAt: new Date(component.createdAt),
+      },
+    })
+  }
+
+  console.log('Creating product configuration options from backup...')
+  for (const option of backupData.productConfigurationOptions) {
+    await prisma.productConfigurationOption.create({
+      data: {
+        id: option.id,
+        componentId: option.componentId,
+        code: option.code,
+        partNumber: option.partNumber,
+        name: option.name,
+        description: option.description,
+        isActive: option.isActive,
+        isDefault: option.isDefault,
+        sortOrder: option.sortOrder,
+        createdAt: new Date(option.createdAt),
+      },
+    })
+  }
+
+  console.log('Linking default configuration options to components...')
+  for (const [componentId, optionId] of componentDefaultOptionMap.entries()) {
+    if (optionId) {
+      await prisma.productConfigurationComponent.update({
+        where: { id: componentId },
+        data: { defaultOptionId: optionId },
+      })
+    }
+  }
+
+  console.log('Creating product configuration dependencies from backup...')
+  for (const dependency of backupData.productConfigurationDependencies) {
+    await prisma.productConfigurationDependency.create({
+      data: {
+        id: dependency.id,
+        optionId: dependency.optionId,
+        dependsOnOptionId: dependency.dependsOnOptionId,
+        dependencyType: dependency.dependencyType as ProductConfigurationDependencyType,
+        createdAt: new Date(dependency.createdAt),
+      },
     })
   }
 
@@ -205,8 +318,8 @@ async function main() {
         scope: note.scope,
         content: note.content,
         createdAt: new Date(note.createdAt),
-        updatedAt: new Date(note.updatedAt)
-      }
+        updatedAt: new Date(note.updatedAt),
+      },
     })
   }
 
@@ -222,8 +335,8 @@ async function main() {
         fileSize: attachment.fileSize,
         mimeType: attachment.mimeType,
         filePath: attachment.filePath,
-        createdAt: new Date(attachment.createdAt)
-      }
+        createdAt: new Date(attachment.createdAt),
+      },
     })
   }
 
@@ -237,8 +350,8 @@ async function main() {
         snapshotData: version.snapshotData,
         reason: version.reason,
         createdBy: version.createdBy,
-        createdAt: new Date(version.createdAt)
-      }
+        createdAt: new Date(version.createdAt),
+      },
     })
   }
 
@@ -251,8 +364,8 @@ async function main() {
         version: instruction.version,
         contentMd: instruction.contentMd,
         isActive: instruction.isActive,
-        createdAt: new Date(instruction.createdAt)
-      }
+        createdAt: new Date(instruction.createdAt),
+      },
     })
   }
 
@@ -264,8 +377,8 @@ async function main() {
         name: equip.name,
         description: equip.description,
         isActive: equip.isActive,
-        createdAt: new Date(equip.createdAt)
-      }
+        createdAt: new Date(equip.createdAt),
+      },
     })
   }
 
@@ -276,8 +389,8 @@ async function main() {
         id: se.id,
         stationId: se.stationId,
         equipmentId: se.equipmentId,
-        createdAt: new Date(se.createdAt)
-      }
+        createdAt: new Date(se.createdAt),
+      },
     })
   }
 
@@ -289,8 +402,8 @@ async function main() {
         stationId: sm.stationId,
         userId: sm.userId,
         isActive: sm.isActive,
-        createdAt: new Date(sm.createdAt)
-      }
+        createdAt: new Date(sm.createdAt),
+      },
     })
   }
 
@@ -304,8 +417,8 @@ async function main() {
         newRate: prh.newRate,
         changedBy: prh.changedBy,
         reason: prh.reason,
-        createdAt: new Date(prh.createdAt)
-      }
+        createdAt: new Date(prh.createdAt),
+      },
     })
   }
 
