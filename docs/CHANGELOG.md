@@ -2,12 +2,34 @@
 
 > Record every pull request chronologically with the newest entry at the top. Use UTC timestamps in ISO 8601 format.
 
+
 ## 2025-10-27T20:30:26Z - Agent: Codex (role-ui, qa-gate, docs)
 
 - **Summary:** Removed the duplicate class key warning in `src/components/ui/Card.tsx` by centralizing variant styling and giving the elevated card a distinct shadow while preserving interactive/disabled behavior. Updated ActionItems.md to mark the bug fix complete and recorded this changelog entry.
 - **Reasoning:** Vite surfaced a warning because both the default and elevated variants used identical keys in the conditional `clsx` map. Introducing an explicit variant lookup keeps the component maintainable and prevents future build noise.
 - **Validation:** `npm run test`
 - **Files Modified:** `src/components/ui/Card.tsx`, `docs/ActionItems.md`, `docs/CHANGELOG.md`
+
+## 2025-10-31T15:15:00Z — Agent: gpt-5-codex
+
+- **Summary:** Added product-configuration API endpoints with RBAC, Prisma-backed helpers, and contract tests to validate success and failure paths.
+- **Reasoning:** Supervisors and admins need a secure way to review and manage model configuration data without bypassing server validation rules.
+- **Changes Made:**
+  - Introduced `src/server/product-config/productConfigurations.ts` with zod-validated list and upsert helpers for sections, components, options, and dependencies.
+  - Added REST handlers under `src/app/api/product-configurations/**` enforcing role checks and structured JSON responses for listing and mutating configuration records.
+  - Wrote Vitest contract tests covering successful requests and validation errors for listing and mutation endpoints.
+- **Hats:** api-contract, security, qa-gate.
+
+## 2025-10-30T12:30:00Z — Agent: gpt-5-codex
+
+- **Summary:** Extended the Prisma schema with a product configuration hierarchy, restored LX26/LX24/LX22/LX21 configuration data into the backup set, and exported strongly typed helpers for server-side configuration queries.
+- **Reasoning:** Work order planning depends on deterministic product configuration data; modeling sections, components, options, and dependencies ensures reseeds faithfully recreate manufacturing defaults.
+- **Changes Made:**
+  - Added ProductConfigurationSection/Component/Option/Dependency models and dependency enum tied to ProductModel and ProductTrim entities.
+  - Seeded LX-series configuration sections, components, options, and dependency links via `backup-data.ts` and `seed.ts` for deterministic reseeds.
+  - Introduced server typings for configuration payloads to keep API layers aligned with the expanded schema.
+- **Hats:** domain, schema-change, seed, docs.
+
 
 ## 2025-10-27T21:00:00Z — Agent: QA & Release Gate
 
