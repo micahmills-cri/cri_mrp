@@ -377,7 +377,7 @@ export default function FileListDisplay({
                 style={{
                   padding: '0.25rem 0.5rem',
                   backgroundColor: 'var(--status-danger-accent)',
-                  color: 'white',
+                  color: 'var(--status-danger-foreground)',
                   border: 'none',
                   borderRadius: '3px',
                   cursor: 'pointer',
@@ -461,7 +461,7 @@ export default function FileListDisplay({
                     style={{
                       padding: '0.25rem 0.5rem',
                       backgroundColor: 'var(--status-success-accent)',
-                      color: 'white',
+                      color: 'var(--status-success-foreground)',
                       border: 'none',
                       borderRadius: '3px',
                       cursor: 'pointer',
@@ -479,7 +479,7 @@ export default function FileListDisplay({
                   style={{
                     padding: '0.25rem 0.5rem',
                     backgroundColor: 'var(--status-info-accent)',
-                    color: 'white',
+                    color: 'var(--status-info-foreground)',
                     border: 'none',
                     borderRadius: '3px',
                     cursor: 'pointer',
@@ -496,7 +496,7 @@ export default function FileListDisplay({
                   style={{
                     padding: '0.25rem 0.5rem',
                     backgroundColor: 'var(--status-danger-accent)',
-                    color: 'white',
+                    color: 'var(--status-danger-foreground)',
                     border: 'none',
                     borderRadius: '3px',
                     cursor: 'pointer',

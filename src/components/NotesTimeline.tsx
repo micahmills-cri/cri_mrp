@@ -282,7 +282,7 @@ export default function NotesTimeline({ workOrderId, onError, onSuccess }: Notes
             style={{
               padding: '0.5rem 1rem',
               backgroundColor: 'var(--status-info-accent)',
-              color: 'white',
+              color: 'var(--status-info-foreground)',
               border: 'none',
               borderRadius: '4px',
               cursor: 'pointer',
@@ -409,7 +409,7 @@ export default function NotesTimeline({ workOrderId, onError, onSuccess }: Notes
               style={{
                 padding: '0.5rem 1rem',
                 backgroundColor: submitting ? 'var(--muted)' : 'var(--status-success-accent)',
-                color: 'white',
+                color: submitting ? 'var(--foreground)' : 'var(--status-success-foreground)',
                 border: 'none',
                 borderRadius: '4px',
                 cursor: submitting ? 'not-allowed' : 'pointer',
@@ -582,7 +582,7 @@ export default function NotesTimeline({ workOrderId, onError, onSuccess }: Notes
                         style={{
                           padding: '0.25rem 0.5rem',
                           backgroundColor: submitting ? 'var(--muted)' : 'var(--status-success-accent)',
-                          color: 'white',
+                          color: submitting ? 'var(--foreground)' : 'var(--status-success-foreground)',
                           border: 'none',
                           borderRadius: '3px',
                           cursor: submitting ? 'not-allowed' : 'pointer',

@@ -37,7 +37,7 @@ export default function FileManager({ workOrderId, onError, onSuccess }: FileMan
           style={{
             padding: '0.5rem 1rem',
             backgroundColor: showUpload ? 'var(--muted)' : 'var(--status-success-accent)',
-            color: 'white',
+            color: showUpload ? 'var(--foreground)' : 'var(--status-success-foreground)',
             border: 'none',
             borderRadius: '4px',
             cursor: 'pointer',
