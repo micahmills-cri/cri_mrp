@@ -683,22 +683,26 @@ export default function OperatorConsole() {
                   <p className="text-xs uppercase tracking-wide text-[color:var(--muted)]">SKU</p>
                   <p className="text-sm font-medium">{selectedWorkOrder.workOrder.productSku}</p>
                 </div>
-                {selectedWorkOrder.workOrder.specSnapshot && Object.keys(selectedWorkOrder.workOrder.specSnapshot).length > 0 && (
-                  <div className="space-y-1 md:col-span-2 lg:col-span-3">
-                    <p className="text-xs uppercase tracking-wide text-[color:var(--muted)]">Features</p>
-                    <div className="flex flex-wrap gap-2">
-                      {Object.entries(selectedWorkOrder.workOrder.specSnapshot).map(([key, value]) => (
-                        <span
-                          key={key}
-                          className="inline-flex items-center rounded-md border border-[var(--border)] bg-[var(--surface-muted)] px-2 py-1 text-xs"
-                        >
-                          <span className="font-medium">{key}:</span>
-                          <span className="ml-1 text-[color:var(--muted-strong)]">{String(value)}</span>
-                        </span>
-                      ))}
+                {selectedWorkOrder.workOrder.specSnapshot && (() => {
+                  const filteredFeatures = Object.entries(selectedWorkOrder.workOrder.specSnapshot)
+                    .filter(([key]) => !['routingVersionId', 'stages'].includes(key));
+                  return filteredFeatures.length > 0 ? (
+                    <div className="space-y-1 md:col-span-2 lg:col-span-3">
+                      <p className="text-xs uppercase tracking-wide text-[color:var(--muted)]">Features</p>
+                      <div className="flex flex-wrap gap-2">
+                        {filteredFeatures.map(([key, value]) => (
+                          <span
+                            key={key}
+                            className="inline-flex items-center rounded-md border border-[var(--border)] bg-[var(--surface-muted)] px-2 py-1 text-xs"
+                          >
+                            <span className="font-medium">{key}:</span>
+                            <span className="ml-1 text-[color:var(--muted-strong)]">{String(value)}</span>
+                          </span>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  ) : null;
+                })()}
                 <div className="space-y-1">
                   <p className="text-xs uppercase tracking-wide text-[color:var(--muted)]">Status</p>
                   <span
