@@ -36,7 +36,7 @@ export default function FileManager({ workOrderId, onError, onSuccess }: FileMan
           onClick={() => setShowUpload(!showUpload)}
           style={{
             padding: '0.5rem 1rem',
-            backgroundColor: showUpload ? '#6c757d' : '#28a745',
+            backgroundColor: showUpload ? 'var(--muted)' : 'var(--status-success-accent)',
             color: 'white',
             border: 'none',
             borderRadius: '4px',
@@ -53,9 +53,9 @@ export default function FileManager({ workOrderId, onError, onSuccess }: FileMan
         <div style={{
           marginBottom: '2rem',
           padding: '1rem',
-          backgroundColor: '#f8f9fa',
+          backgroundColor: 'var(--surface-muted)',
           borderRadius: '4px',
-          border: '1px solid #dee2e6'
+          border: '1px solid var(--border-strong)'
         }}>
           <FileUpload
             workOrderId={workOrderId}

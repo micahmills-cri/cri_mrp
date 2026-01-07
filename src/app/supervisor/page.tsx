@@ -2556,6 +2556,8 @@ export default function SupervisorView() {
                             style={{
                               width: '100%',
                               padding: '0.5rem',
+                              backgroundColor: 'var(--surface)',
+                              color: 'var(--foreground)',
                               border: '1px solid var(--border)',
                               borderRadius: '4px',
                             }}
@@ -2590,6 +2592,8 @@ export default function SupervisorView() {
                             style={{
                               width: '100%',
                               padding: '0.5rem',
+                              backgroundColor: 'var(--surface)',
+                              color: 'var(--foreground)',
                               border: '1px solid var(--border)',
                               borderRadius: '4px',
                             }}
@@ -2619,6 +2623,8 @@ export default function SupervisorView() {
                             style={{
                               width: '100%',
                               padding: '0.5rem',
+                              backgroundColor: 'var(--surface)',
+                              color: 'var(--foreground)',
                               border: '1px solid var(--border)',
                               borderRadius: '4px',
                             }}
@@ -3051,6 +3057,8 @@ export default function SupervisorView() {
                   style={{
                     width: '100%',
                     padding: '0.5rem',
+                    backgroundColor: 'var(--surface)',
+                    color: 'var(--foreground)',
                     border: '1px solid var(--border)',
                     borderRadius: '4px',
                   }}
@@ -3075,6 +3083,8 @@ export default function SupervisorView() {
                   style={{
                     width: '100%',
                     padding: '0.5rem',
+                    backgroundColor: 'var(--surface)',
+                    color: 'var(--foreground)',
                     border: '1px solid var(--border)',
                     borderRadius: '4px',
                   }}
@@ -3099,6 +3109,8 @@ export default function SupervisorView() {
                   style={{
                     width: '100%',
                     padding: '0.5rem',
+                    backgroundColor: 'var(--surface)',
+                    color: 'var(--foreground)',
                     border: '1px solid var(--border)',
                     borderRadius: '4px',
                   }}
@@ -3121,6 +3133,8 @@ export default function SupervisorView() {
                   style={{
                     width: '100%',
                     padding: '0.5rem',
+                    backgroundColor: 'var(--surface)',
+                    color: 'var(--foreground)',
                     border: '1px solid var(--border)',
                     borderRadius: '4px',
                   }}
@@ -3149,6 +3163,8 @@ export default function SupervisorView() {
                   style={{
                     width: '100%',
                     padding: '0.5rem',
+                    backgroundColor: 'var(--surface)',
+                    color: 'var(--foreground)',
                     border: '1px solid var(--border)',
                     borderRadius: '4px',
                   }}
@@ -3172,6 +3188,8 @@ export default function SupervisorView() {
                   style={{
                     width: '100%',
                     padding: '0.5rem',
+                    backgroundColor: 'var(--surface)',
+                    color: 'var(--foreground)',
                     border: '1px solid var(--border)',
                     borderRadius: '4px',
                   }}
@@ -3288,6 +3306,8 @@ export default function SupervisorView() {
                   style={{
                     width: '100%',
                     padding: '0.5rem',
+                    backgroundColor: 'var(--surface)',
+                    color: 'var(--foreground)',
                     border: '1px solid var(--border)',
                     borderRadius: '4px',
                     fontSize: '0.875rem',

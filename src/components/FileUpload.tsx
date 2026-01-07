@@ -218,8 +218,8 @@ export default function FileUpload({ workOrderId, onSuccess, onError, onFileUplo
               padding: '0.25rem 0.5rem',
               fontSize: '0.75rem',
               backgroundColor: 'transparent',
-              color: '#6c757d',
-              border: '1px solid #ced4da',
+              color: 'var(--muted)',
+              border: '1px solid var(--border-strong)',
               borderRadius: '3px',
               cursor: 'pointer'
             }}
@@ -239,11 +239,11 @@ export default function FileUpload({ workOrderId, onSuccess, onError, onFileUplo
         onDragLeave={handleDragOut}
         onDrop={handleDrop}
         style={{
-          border: `2px dashed ${isDragging ? '#007bff' : '#dee2e6'}`,
+          border: `2px dashed ${isDragging ? 'var(--status-info-accent)' : 'var(--border-strong)'}`,
           borderRadius: '4px',
           padding: '2rem',
           textAlign: 'center',
-          backgroundColor: isDragging ? '#e3f2fd' : '#f8f9fa',
+          backgroundColor: isDragging ? 'var(--status-info-surface)' : 'var(--surface-muted)',
           cursor: 'pointer',
           marginBottom: '1rem',
           transition: 'all 0.2s ease'
@@ -251,10 +251,10 @@ export default function FileUpload({ workOrderId, onSuccess, onError, onFileUplo
         onClick={() => fileInputRef.current?.click()}
       >
         <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📁</div>
-        <div style={{ fontSize: '1rem', fontWeight: '500', marginBottom: '0.25rem' }}>
+        <div style={{ fontSize: '1rem', fontWeight: '500', marginBottom: '0.25rem', color: 'var(--foreground)' }}>
           {isDragging ? 'Drop files here' : 'Drop files here or click to browse'}
         </div>
-        <div style={{ fontSize: '0.875rem', color: '#6c757d' }}>
+        <div style={{ fontSize: '0.875rem', color: 'var(--muted)' }}>
           Maximum file size: 10MB
         </div>
         
@@ -276,8 +276,8 @@ export default function FileUpload({ workOrderId, onSuccess, onError, onFileUplo
           
           {uploads.map((upload, index) => (
             <div key={index} style={{
-              backgroundColor: 'white',
-              border: '1px solid #dee2e6',
+              backgroundColor: 'var(--surface)',
+              border: '1px solid var(--border-strong)',
               borderRadius: '4px',
               padding: '0.75rem',
               marginBottom: '0.5rem'
@@ -289,27 +289,27 @@ export default function FileUpload({ workOrderId, onSuccess, onError, onFileUplo
                 marginBottom: '0.5rem'
               }}>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: '0.875rem', fontWeight: '500' }}>
+                  <div style={{ fontSize: '0.875rem', fontWeight: '500', color: 'var(--foreground)' }}>
                     {upload.file.name}
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: '#6c757d' }}>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>
                     {formatFileSize(upload.file.size)}
                   </div>
                 </div>
                 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   {upload.status === 'uploading' && (
-                    <span style={{ fontSize: '0.75rem', color: '#007bff' }}>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--status-info-accent)' }}>
                       {upload.progress}%
                     </span>
                   )}
                   {upload.status === 'completed' && (
-                    <span style={{ fontSize: '0.75rem', color: '#28a745' }}>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--status-success-accent)' }}>
                       ✓ Complete
                     </span>
                   )}
                   {upload.status === 'error' && (
-                    <span style={{ fontSize: '0.75rem', color: '#dc3545' }}>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--status-danger-accent)' }}>
                       ✗ Error
                     </span>
                   )}
@@ -319,7 +319,7 @@ export default function FileUpload({ workOrderId, onSuccess, onError, onFileUplo
                     style={{
                       padding: '0.125rem',
                       backgroundColor: 'transparent',
-                      color: '#6c757d',
+                      color: 'var(--muted)',
                       border: 'none',
                       cursor: 'pointer',
                       fontSize: '0.75rem'
@@ -334,14 +334,14 @@ export default function FileUpload({ workOrderId, onSuccess, onError, onFileUplo
                 <div style={{
                   width: '100%',
                   height: '4px',
-                  backgroundColor: '#e9ecef',
+                  backgroundColor: 'var(--border-strong)',
                   borderRadius: '2px',
                   overflow: 'hidden'
                 }}>
                   <div style={{
                     width: `${upload.progress}%`,
                     height: '100%',
-                    backgroundColor: '#007bff',
+                    backgroundColor: 'var(--status-info-accent)',
                     transition: 'width 0.3s ease'
                   }} />
                 </div>
@@ -350,7 +350,7 @@ export default function FileUpload({ workOrderId, onSuccess, onError, onFileUplo
               {upload.status === 'error' && upload.error && (
                 <div style={{
                   fontSize: '0.75rem',
-                  color: '#dc3545',
+                  color: 'var(--status-danger-accent)',
                   marginTop: '0.25rem'
                 }}>
                   {upload.error}

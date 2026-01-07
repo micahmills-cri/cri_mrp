@@ -291,8 +291,8 @@ export default function FileListDisplay({
           style={{
             padding: '0.5rem 1rem',
             backgroundColor: 'transparent',
-            color: '#007bff',
-            border: '1px solid #007bff',
+            color: 'var(--status-info-accent)',
+            border: '1px solid var(--status-info-accent)',
             borderRadius: '4px',
             cursor: loading ? 'not-allowed' : 'pointer',
             fontSize: '0.875rem'
@@ -318,7 +318,9 @@ export default function FileListDisplay({
             flex: 1,
             minWidth: '200px',
             padding: '0.5rem',
-            border: '1px solid #ced4da',
+            backgroundColor: 'var(--surface)',
+            color: 'var(--foreground)',
+            border: '1px solid var(--border-strong)',
             borderRadius: '4px',
             fontSize: '0.875rem'
           }}
@@ -328,7 +330,9 @@ export default function FileListDisplay({
           onChange={(e) => setFilterType(e.target.value)}
           style={{
             padding: '0.5rem',
-            border: '1px solid #ced4da',
+            backgroundColor: 'var(--surface)',
+            color: 'var(--foreground)',
+            border: '1px solid var(--border-strong)',
             borderRadius: '4px',
             fontSize: '0.875rem',
             cursor: 'pointer'
@@ -354,8 +358,8 @@ export default function FileListDisplay({
             style={{
               padding: '0.25rem 0.5rem',
               backgroundColor: 'transparent',
-              color: '#6c757d',
-              border: '1px solid #ced4da',
+              color: 'var(--muted)',
+              border: '1px solid var(--border-strong)',
               borderRadius: '3px',
               cursor: 'pointer',
               fontSize: '0.75rem'
@@ -365,14 +369,14 @@ export default function FileListDisplay({
           </button>
           {selectedFiles.size > 0 && (
             <>
-              <span style={{ fontSize: '0.75rem', color: '#6c757d' }}>
+              <span style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>
                 {selectedFiles.size} selected
               </span>
               <button
                 onClick={bulkDelete}
                 style={{
                   padding: '0.25rem 0.5rem',
-                  backgroundColor: '#dc3545',
+                  backgroundColor: 'var(--status-danger-accent)',
                   color: 'white',
                   border: 'none',
                   borderRadius: '3px',
@@ -389,11 +393,11 @@ export default function FileListDisplay({
 
       {/* File List */}
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '2rem', color: '#6c757d' }}>
+        <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--muted)' }}>
           Loading attachments...
         </div>
       ) : filteredAttachments.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '2rem', color: '#6c757d' }}>
+        <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--muted)' }}>
           {searchQuery || filterType !== 'all' 
             ? 'No files match your filters.' 
             : 'No files attached yet.'}
@@ -405,8 +409,8 @@ export default function FileListDisplay({
         }}>
           {filteredAttachments.map(attachment => (
             <div key={attachment.id} style={{
-              backgroundColor: 'white',
-              border: selectedFiles.has(attachment.id) ? '2px solid #007bff' : '1px solid #dee2e6',
+              backgroundColor: 'var(--surface)',
+              border: selectedFiles.has(attachment.id) ? '2px solid var(--status-info-accent)' : '1px solid var(--border-strong)',
               borderRadius: '4px',
               padding: '0.75rem',
               display: 'flex',
@@ -435,13 +439,13 @@ export default function FileListDisplay({
               
               {/* File Info */}
               <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: '500', fontSize: '0.875rem' }}>
+                <div style={{ fontWeight: '500', fontSize: '0.875rem', color: 'var(--foreground)' }}>
                   {attachment.originalName}
                 </div>
-                <div style={{ fontSize: '0.75rem', color: '#6c757d' }}>
+                <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>
                   {formatFileSize(attachment.fileSize)} • {formatDate(attachment.createdAt)}
                 </div>
-                <div style={{ fontSize: '0.75rem', color: '#6c757d' }}>
+                <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>
                   Uploaded by: {attachment.user.email}
                 </div>
               </div>
@@ -456,7 +460,7 @@ export default function FileListDisplay({
                     }}
                     style={{
                       padding: '0.25rem 0.5rem',
-                      backgroundColor: '#28a745',
+                      backgroundColor: 'var(--status-success-accent)',
                       color: 'white',
                       border: 'none',
                       borderRadius: '3px',
@@ -474,7 +478,7 @@ export default function FileListDisplay({
                   }}
                   style={{
                     padding: '0.25rem 0.5rem',
-                    backgroundColor: '#007bff',
+                    backgroundColor: 'var(--status-info-accent)',
                     color: 'white',
                     border: 'none',
                     borderRadius: '3px',
@@ -491,7 +495,7 @@ export default function FileListDisplay({
                   }}
                   style={{
                     padding: '0.25rem 0.5rem',
-                    backgroundColor: '#dc3545',
+                    backgroundColor: 'var(--status-danger-accent)',
                     color: 'white',
                     border: 'none',
                     borderRadius: '3px',
