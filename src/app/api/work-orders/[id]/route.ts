@@ -422,13 +422,19 @@ export async function PATCH(
       });
 
       if (changes.length > 0) {
+        const serializedUpdateData = Object.fromEntries(
+          Object.entries(updateData).map(([key, value]) => [
+            key,
+            value instanceof Date ? value.toISOString() : value,
+          ])
+        );
         await tx.auditLog.createMany({
           data: changes.map((change) => ({
             actorId: user.userId,
             action: "UPDATE",
             modelType: "WorkOrder",
             modelId: workOrderId,
-            changes: { message: change, ...updateData },
+            changes: { message: change, ...serializedUpdateData },
             metadata: { workOrderNumber: updated.number },
           })),
         });
