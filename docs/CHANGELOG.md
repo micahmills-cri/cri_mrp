@@ -2,6 +2,16 @@
 
 > Record every pull request chronologically with the newest entry at the top. Use UTC timestamps in ISO 8601 format.
 
+## 2026-01-07T15:28:58Z — Agent: gpt-5-codex
+
+- **Summary:** Synced component default selections with option defaults for product configurations.
+- **Reasoning:** Default selections should persist across edits by keeping component `defaultOptionId` and option `isDefault` in lockstep.
+- **Changes Made:**
+  - Updated component saves to update option default flags and clear defaults when needed.
+  - Adjusted optimistic UI updates to reflect default selection changes immediately.
+  - Logged the fix in ActionItems for traceability.
+- **Hats:** role-ui, api-contract, docs.
+
 ## 2026-01-07T14:35:35Z — Agent: gpt-5-codex
 
 - **Summary:** Preserved model-wide product configuration sections when editing from a trim-filtered view.

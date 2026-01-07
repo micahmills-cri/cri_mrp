@@ -535,7 +535,19 @@ export default function ProductConfigurationsPage() {
                   ? sortComponents(
                       currentSection.components.map((existing) =>
                         existing.id === component.id
-                          ? { ...existing, ...optimisticComponent }
+                          ? {
+                              ...existing,
+                              ...optimisticComponent,
+                              options: payload.defaultOptionId
+                                ? existing.options.map((option) => ({
+                                    ...option,
+                                    isDefault: option.id === payload.defaultOptionId,
+                                  }))
+                                : existing.options.map((option) => ({
+                                    ...option,
+                                    isDefault: false,
+                                  })),
+                            }
                           : existing
                       )
                     )

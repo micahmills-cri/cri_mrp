@@ -117,6 +117,12 @@ _(All medium priority admin panel UI tasks are complete - moved to Completed Ite
   - **Agent role**: UI/UX Implementer
   - **Discovered**: 2026-01-07 during product configuration edit review
 
+- [x] **Keep component default selection in sync with option defaults** (Agent: UI/UX Implementer, Completed: 2026-01-07)
+  - Ensure component saves update option `isDefault` state so defaults persist across edits and reloads
+  - **Estimated effort**: 20 minutes
+  - **Agent role**: UI/UX Implementer
+  - **Discovered**: 2026-01-07 during product configuration default selection review
+
 - [ ] **Fix exported function in supervisor page component**
   - File: `src/app/supervisor/page.tsx`
   - Issue: `buildKanbanColumns` function is exported but shouldn't be
