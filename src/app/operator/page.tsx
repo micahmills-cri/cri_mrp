@@ -872,7 +872,7 @@ export default function OperatorConsole() {
                   <div className="rounded-md border border-[var(--border)] bg-[var(--surface)]">
                     <FileListDisplay
                       workOrderId={selectedWorkOrder.workOrder.id}
-                      readOnly={true}
+                      readOnly={false}
                       onError={(err) => setError(err)}
                     />
                   </div>
