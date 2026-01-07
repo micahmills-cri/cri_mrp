@@ -1,21 +1,18 @@
-import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/server/db/client";
-import { getUserFromRequest } from "../../../../lib/auth";
-import { Role } from "@prisma/client";
-import { z } from "zod";
-import { WORK_ORDER_SNAPSHOT_SCHEMA_HASH } from "@/server/work-orders/snapshot-metadata";
+import { NextRequest, NextResponse } from 'next/server'
+import { prisma } from '@/server/db/client'
+import { getUserFromRequest } from '../../../../lib/auth'
+import { Role } from '@prisma/client'
+import { z } from 'zod'
+import { WORK_ORDER_SNAPSHOT_SCHEMA_HASH } from '@/server/work-orders/snapshot-metadata'
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } },
-) {
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const user = getUserFromRequest(request);
+    const user = getUserFromRequest(request)
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const workOrderId = params.id;
+    const workOrderId = params.id
 
     // Get work order with full details
     const workOrder = await prisma.workOrder.findUnique({
@@ -24,7 +21,7 @@ export async function GET(
         routingVersion: {
           include: {
             stages: {
-              orderBy: { sequence: "asc" },
+              orderBy: { sequence: 'asc' },
               include: {
                 workCenter: {
                   include: {
@@ -36,7 +33,7 @@ export async function GET(
                 },
                 workInstructionVersions: {
                   where: { isActive: true },
-                  orderBy: { version: "desc" },
+                  orderBy: { version: 'desc' },
                   take: 1,
                 },
               },
@@ -44,7 +41,7 @@ export async function GET(
           },
         },
         woStageLogs: {
-          orderBy: { createdAt: "desc" },
+          orderBy: { createdAt: 'desc' },
           include: {
             routingStage: {
               include: {
@@ -62,37 +59,26 @@ export async function GET(
           },
         },
       },
-    });
+    })
 
     if (!workOrder) {
-      return NextResponse.json(
-        { error: "Work order not found" },
-        { status: 404 },
-      );
+      return NextResponse.json({ error: 'Work order not found' }, { status: 404 })
     }
 
     // Check department scoping for operators only (admin and supervisor have full access)
     if (user.role === Role.OPERATOR && user.departmentId) {
-      const enabledStages = workOrder.routingVersion.stages.filter(
-        (s) => s.enabled,
-      );
-      const currentStage = enabledStages[workOrder.currentStageIndex];
+      const enabledStages = workOrder.routingVersion.stages.filter((s) => s.enabled)
+      const currentStage = enabledStages[workOrder.currentStageIndex]
 
-      if (
-        currentStage &&
-        currentStage.workCenter.department.id !== user.departmentId
-      ) {
-        return NextResponse.json(
-          { error: "Work order not in your department" },
-          { status: 403 },
-        );
+      if (currentStage && currentStage.workCenter.department.id !== user.departmentId) {
+        return NextResponse.json({ error: 'Work order not in your department' }, { status: 403 })
       }
     }
 
     // Calculate stage timeline
     const stageTimeline = workOrder.woStageLogs.reduce(
       (timeline, log) => {
-        const stageId = log.routingStage.id;
+        const stageId = log.routingStage.id
         if (!timeline[stageId]) {
           timeline[stageId] = {
             stageId,
@@ -100,7 +86,7 @@ export async function GET(
             stageCode: log.routingStage.code,
             workCenter: log.routingStage.workCenter.name,
             events: [],
-          };
+          }
         }
 
         timeline[stageId].events.push({
@@ -113,18 +99,16 @@ export async function GET(
           goodQty: log.goodQty,
           scrapQty: log.scrapQty,
           note: log.note,
-        });
+        })
 
-        return timeline;
+        return timeline
       },
-      {} as Record<string, any>,
-    );
+      {} as Record<string, any>
+    )
 
     // Get enabled stages for progress tracking
-    const enabledStages = workOrder.routingVersion.stages.filter(
-      (s) => s.enabled,
-    );
-    const currentStage = enabledStages[workOrder.currentStageIndex];
+    const enabledStages = workOrder.routingVersion.stages.filter((s) => s.enabled)
+    const currentStage = enabledStages[workOrder.currentStageIndex]
 
     return NextResponse.json({
       workOrder: {
@@ -178,13 +162,10 @@ export async function GET(
             createdAt: log.createdAt,
           })),
       },
-    });
+    })
   } catch (error) {
-    console.error("Get work order details error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    console.error('Get work order details error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
@@ -193,208 +174,163 @@ const updateWorkOrderSchema = z.object({
   hullId: z.string().min(1).optional(),
   productSku: z.string().min(1).optional(),
   qty: z.number().positive().optional(),
-  priority: z.enum(["LOW", "NORMAL", "HIGH", "CRITICAL"]).optional(),
+  priority: z.enum(['LOW', 'NORMAL', 'HIGH', 'CRITICAL']).optional(),
   plannedStartDate: z.string().datetime().optional().nullable(),
   plannedFinishDate: z.string().datetime().optional().nullable(),
-});
+})
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: { id: string } },
-) {
+export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const user = getUserFromRequest(request);
+    const user = getUserFromRequest(request)
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // Only supervisors and admins can update work orders
     if (user.role === Role.OPERATOR) {
-      return NextResponse.json(
-        { error: "Insufficient permissions" },
-        { status: 403 },
-      );
+      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
     }
 
-    const workOrderId = params.id;
-    const body = await request.json();
+    const workOrderId = params.id
+    const body = await request.json()
 
     // Validate request body
-    const validation = updateWorkOrderSchema.safeParse(body);
+    const validation = updateWorkOrderSchema.safeParse(body)
     if (!validation.success) {
       return NextResponse.json(
         {
-          error: "Validation failed",
+          error: 'Validation failed',
           errors: validation.error.flatten().fieldErrors,
         },
-        { status: 400 },
-      );
+        { status: 400 }
+      )
     }
 
-    const data = validation.data;
+    const data = validation.data
 
     const requestedStart =
       data.plannedStartDate === undefined
         ? undefined
         : data.plannedStartDate
           ? new Date(data.plannedStartDate)
-          : null;
+          : null
     const requestedFinish =
       data.plannedFinishDate === undefined
         ? undefined
         : data.plannedFinishDate
           ? new Date(data.plannedFinishDate)
-          : null;
+          : null
 
     const currentWorkOrder = await prisma.workOrder.findUnique({
       where: { id: workOrderId },
-    });
+    })
 
     if (!currentWorkOrder) {
-      return NextResponse.json(
-        { error: "Work order not found" },
-        { status: 404 },
-      );
+      return NextResponse.json({ error: 'Work order not found' }, { status: 404 })
     }
 
     const finalStart =
-      requestedStart !== undefined
-        ? requestedStart
-        : currentWorkOrder.plannedStartDate;
+      requestedStart !== undefined ? requestedStart : currentWorkOrder.plannedStartDate
     const finalFinish =
-      requestedFinish !== undefined
-        ? requestedFinish
-        : currentWorkOrder.plannedFinishDate;
+      requestedFinish !== undefined ? requestedFinish : currentWorkOrder.plannedFinishDate
 
     if (finalStart && finalFinish && finalStart >= finalFinish) {
       return NextResponse.json(
         {
-          error: "Planned start date must be before planned finish date",
+          error: 'Planned start date must be before planned finish date',
         },
-        { status: 400 },
-      );
+        { status: 400 }
+      )
     }
 
-    const editableStatuses = [
-      "PLANNED",
-      "RELEASED",
-      "IN_PROGRESS",
-      "HOLD",
-      "CANCELLED",
-    ];
+    const editableStatuses = ['PLANNED', 'RELEASED', 'IN_PROGRESS', 'HOLD', 'CANCELLED']
     if (!editableStatuses.includes(currentWorkOrder.status)) {
       return NextResponse.json(
         {
-          error: "Work order can only be edited while active",
+          error: 'Work order can only be edited while active',
         },
-        { status: 400 },
-      );
+        { status: 400 }
+      )
     }
 
-    const updateData: Record<string, any> = {};
-    const changes: string[] = [];
+    const updateData: Record<string, any> = {}
+    const changes: string[] = []
 
-    const planningStatuses = ["PLANNED", "CANCELLED"] as const;
-    const isPlanningPhase = planningStatuses.includes(currentWorkOrder.status);
+    const planningStatuses = ['PLANNED', 'CANCELLED'] as const
+    const isPlanningPhase = planningStatuses.includes(currentWorkOrder.status)
 
-    if (
-      data.hullId &&
-      data.hullId !== currentWorkOrder.hullId &&
-      !isPlanningPhase
-    ) {
+    if (data.hullId && data.hullId !== currentWorkOrder.hullId && !isPlanningPhase) {
       return NextResponse.json(
         {
-          error: "Hull cannot be changed once the work order is active",
+          error: 'Hull cannot be changed once the work order is active',
         },
-        { status: 400 },
-      );
+        { status: 400 }
+      )
     }
-    if (
-      data.productSku &&
-      data.productSku !== currentWorkOrder.productSku &&
-      !isPlanningPhase
-    ) {
+    if (data.productSku && data.productSku !== currentWorkOrder.productSku && !isPlanningPhase) {
       return NextResponse.json(
         {
-          error: "Product SKU cannot be changed once the work order is active",
+          error: 'Product SKU cannot be changed once the work order is active',
         },
-        { status: 400 },
-      );
+        { status: 400 }
+      )
     }
-    if (
-      data.qty !== undefined &&
-      data.qty !== currentWorkOrder.qty &&
-      !isPlanningPhase
-    ) {
+    if (data.qty !== undefined && data.qty !== currentWorkOrder.qty && !isPlanningPhase) {
       return NextResponse.json(
         {
-          error: "Quantity cannot be changed once the work order is active",
+          error: 'Quantity cannot be changed once the work order is active',
         },
-        { status: 400 },
-      );
+        { status: 400 }
+      )
     }
 
     if (data.hullId && data.hullId !== currentWorkOrder.hullId) {
-      updateData.hullId = data.hullId;
-      changes.push(
-        `Hull ID changed from ${currentWorkOrder.hullId} to ${data.hullId}`,
-      );
+      updateData.hullId = data.hullId
+      changes.push(`Hull ID changed from ${currentWorkOrder.hullId} to ${data.hullId}`)
     }
 
     if (data.productSku && data.productSku !== currentWorkOrder.productSku) {
-      updateData.productSku = data.productSku;
-      changes.push(
-        `Product SKU changed from ${currentWorkOrder.productSku} to ${data.productSku}`,
-      );
+      updateData.productSku = data.productSku
+      changes.push(`Product SKU changed from ${currentWorkOrder.productSku} to ${data.productSku}`)
     }
 
     if (data.qty !== undefined && data.qty !== currentWorkOrder.qty) {
-      updateData.qty = data.qty;
-      changes.push(
-        `Quantity changed from ${currentWorkOrder.qty} to ${data.qty}`,
-      );
+      updateData.qty = data.qty
+      changes.push(`Quantity changed from ${currentWorkOrder.qty} to ${data.qty}`)
     }
 
-    const currentPriority = currentWorkOrder.priority as string | null;
+    const currentPriority = currentWorkOrder.priority as string | null
     if (data.priority && data.priority !== currentPriority) {
-      updateData.priority = data.priority as any;
-      const previousPriority = currentPriority ?? "NORMAL";
-      changes.push(
-        `Priority changed from ${previousPriority} to ${data.priority}`,
-      );
+      updateData.priority = data.priority as any
+      const previousPriority = currentPriority ?? 'NORMAL'
+      changes.push(`Priority changed from ${previousPriority} to ${data.priority}`)
     }
 
     if (requestedStart !== undefined) {
       const currentStartIso = currentWorkOrder.plannedStartDate
         ? currentWorkOrder.plannedStartDate.toISOString()
-        : null;
-      const newStartIso = requestedStart ? requestedStart.toISOString() : null;
+        : null
+      const newStartIso = requestedStart ? requestedStart.toISOString() : null
 
       if (currentStartIso !== newStartIso) {
-        updateData.plannedStartDate = requestedStart;
-        const previousLabel = currentStartIso ?? "not set";
-        const nextLabel = newStartIso ?? "cleared";
-        changes.push(
-          `Planned start date changed from ${previousLabel} to ${nextLabel}`,
-        );
+        updateData.plannedStartDate = requestedStart
+        const previousLabel = currentStartIso ?? 'not set'
+        const nextLabel = newStartIso ?? 'cleared'
+        changes.push(`Planned start date changed from ${previousLabel} to ${nextLabel}`)
       }
     }
 
     if (requestedFinish !== undefined) {
       const currentFinishIso = currentWorkOrder.plannedFinishDate
         ? currentWorkOrder.plannedFinishDate.toISOString()
-        : null;
-      const newFinishIso = requestedFinish
-        ? requestedFinish.toISOString()
-        : null;
+        : null
+      const newFinishIso = requestedFinish ? requestedFinish.toISOString() : null
 
       if (currentFinishIso !== newFinishIso) {
-        updateData.plannedFinishDate = requestedFinish;
-        const previousLabel = currentFinishIso ?? "not set";
-        const nextLabel = newFinishIso ?? "cleared";
-        changes.push(
-          `Planned finish date changed from ${previousLabel} to ${nextLabel}`,
-        );
+        updateData.plannedFinishDate = requestedFinish
+        const previousLabel = currentFinishIso ?? 'not set'
+        const nextLabel = newFinishIso ?? 'cleared'
+        changes.push(`Planned finish date changed from ${previousLabel} to ${nextLabel}`)
       }
     }
 
@@ -402,8 +338,8 @@ export async function PATCH(
       return NextResponse.json({
         success: true,
         workOrder: currentWorkOrder,
-        changes: ["No changes detected"],
-      });
+        changes: ['No changes detected'],
+      })
     }
 
     const updatedWorkOrder = await prisma.$transaction(async (tx) => {
@@ -414,12 +350,12 @@ export async function PATCH(
           routingVersion: {
             include: {
               stages: {
-                orderBy: { sequence: "asc" },
+                orderBy: { sequence: 'asc' },
               },
             },
           },
         },
-      });
+      })
 
       if (changes.length > 0) {
         const serializedUpdateData = Object.fromEntries(
@@ -427,24 +363,28 @@ export async function PATCH(
             key,
             value instanceof Date ? value.toISOString() : value,
           ])
-        );
+        )
         await tx.auditLog.createMany({
           data: changes.map((change) => ({
             actorId: user.userId,
-            action: "UPDATE",
-            modelType: "WorkOrder",
+            action: 'UPDATE',
+            model: 'WorkOrder',
             modelId: workOrderId,
-            changes: { message: change, ...serializedUpdateData },
-            metadata: { workOrderNumber: updated.number },
+            before: null,
+            after: {
+              message: change,
+              workOrderNumber: updated.number,
+              ...serializedUpdateData,
+            },
           })),
-        });
+        })
 
         const latestVersion = await tx.workOrderVersion.findFirst({
           where: { workOrderId },
-          orderBy: { versionNumber: "desc" },
-        });
+          orderBy: { versionNumber: 'desc' },
+        })
 
-        const newVersionNumber = (latestVersion?.versionNumber || 0) + 1;
+        const newVersionNumber = (latestVersion?.versionNumber || 0) + 1
         const snapshot = {
           schema_hash: WORK_ORDER_SNAPSHOT_SCHEMA_HASH,
           versionNumber: newVersionNumber,
@@ -472,17 +412,15 @@ export async function PATCH(
                     name: stage.name,
                     enabled: stage.enabled,
                     workCenterId: stage.workCenterId,
-                  standardStageSeconds: stage.standardStageSeconds,
-                })),
+                    standardStageSeconds: stage.standardStageSeconds,
+                  })),
               }
             : null,
-        };
+        }
 
-        const reasonSuffix = changes.join(" | ");
+        const reasonSuffix = changes.join(' | ')
         const versionReason =
-          changes.length === 1
-            ? changes[0]
-            : `Planning details updated: ${reasonSuffix}`;
+          changes.length === 1 ? changes[0] : `Planning details updated: ${reasonSuffix}`
 
         await tx.workOrderVersion.create({
           data: {
@@ -492,22 +430,19 @@ export async function PATCH(
             reason: versionReason.slice(0, 255),
             createdBy: user.email || user.userId || user.id,
           },
-        });
+        })
       }
 
-      return updated;
-    });
+      return updated
+    })
 
     return NextResponse.json({
       success: true,
       workOrder: updatedWorkOrder,
       changes,
-    });
+    })
   } catch (error) {
-    console.error("Update work order error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    console.error('Update work order error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
