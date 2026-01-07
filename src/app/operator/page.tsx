@@ -455,14 +455,28 @@ export default function OperatorConsole() {
 
       <div className="mx-auto flex max-w-6xl flex-col gap-6 px-6 py-8">
         {error && (
-          <div className="rounded-md border border-[var(--status-danger-border)] bg-[var(--status-danger-surface)] px-4 py-3 text-[color:var(--status-danger-foreground)]">
-            {error}
+          <div className="flex items-center justify-between rounded-md border border-[var(--status-danger-border)] bg-[var(--status-danger-surface)] px-4 py-3 text-[color:var(--status-danger-foreground)]">
+            <span>{error}</span>
+            <button
+              onClick={() => setError('')}
+              className="ml-4 text-xl leading-none opacity-70 hover:opacity-100"
+              aria-label="Dismiss error"
+            >
+              ×
+            </button>
           </div>
         )}
 
         {message && (
-          <div className="rounded-md border border-[var(--status-success-border)] bg-[var(--status-success-surface)] px-4 py-3 text-[color:var(--status-success-foreground)]">
-            {message}
+          <div className="flex items-center justify-between rounded-md border border-[var(--status-success-border)] bg-[var(--status-success-surface)] px-4 py-3 text-[color:var(--status-success-foreground)]">
+            <span>{message}</span>
+            <button
+              onClick={() => setMessage('')}
+              className="ml-4 text-xl leading-none opacity-70 hover:opacity-100"
+              aria-label="Dismiss message"
+            >
+              ×
+            </button>
           </div>
         )}
 

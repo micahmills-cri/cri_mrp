@@ -1448,9 +1448,28 @@ export default function SupervisorView() {
               borderRadius: '4px',
               marginBottom: '1rem',
               border: '1px solid var(--status-danger-border)',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
             }}
           >
-            {error}
+            <span>{error}</span>
+            <button
+              onClick={() => setError('')}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'var(--status-danger-foreground)',
+                cursor: 'pointer',
+                padding: '0.25rem',
+                fontSize: '1.25rem',
+                lineHeight: 1,
+                opacity: 0.7,
+              }}
+              aria-label="Dismiss error"
+            >
+              ×
+            </button>
           </div>
         )}
 
@@ -1463,9 +1482,28 @@ export default function SupervisorView() {
               borderRadius: '4px',
               marginBottom: '1rem',
               border: '1px solid var(--status-success-border)',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
             }}
           >
-            {message}
+            <span>{message}</span>
+            <button
+              onClick={() => setMessage('')}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'var(--status-success-foreground)',
+                cursor: 'pointer',
+                padding: '0.25rem',
+                fontSize: '1.25rem',
+                lineHeight: 1,
+                opacity: 0.7,
+              }}
+              aria-label="Dismiss message"
+            >
+              ×
+            </button>
           </div>
         )}
 
