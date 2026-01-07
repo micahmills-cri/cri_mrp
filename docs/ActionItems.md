@@ -111,6 +111,12 @@ _(All medium priority admin panel UI tasks are complete - moved to Completed Ite
 
 ### Bug Fixes
 
+- [x] **Preserve model-wide section scope when editing product configuration sections** (Agent: UI/UX Implementer, Completed: 2026-01-07)
+  - Fix edit payloads so model-wide sections (`productTrimId = null`) remain model-wide even when a trim is selected
+  - **Estimated effort**: 10 minutes
+  - **Agent role**: UI/UX Implementer
+  - **Discovered**: 2026-01-07 during product configuration edit review
+
 - [ ] **Fix exported function in supervisor page component**
   - File: `src/app/supervisor/page.tsx`
   - Issue: `buildKanbanColumns` function is exported but shouldn't be
@@ -156,6 +162,13 @@ _(All medium priority admin panel UI tasks are complete - moved to Completed Ite
   - **Agent role**: Docs & Runbooks
 
 ### Developer Experience
+
+- [ ] **Investigate npm http-proxy config warning during tooling runs**
+  - Warning: `npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.`
+  - Seen while running `npx prettier@3 --write`
+  - **Estimated effort**: 15 minutes
+  - **Agent role**: QA & Release Gate
+  - **Discovered**: 2026-01-07 during formatting
 
 - [ ] **Provide default env vars for local dev API flows**
   - Local QA attempts fail with 500 errors because `DATABASE_URL`, `JWT_SECRET`, and `STORAGE_BUCKET_ID` are undefined during `next dev`

@@ -353,10 +353,19 @@ export default function ProductConfigurationsPage() {
     setIsSavingSection(true)
     const previousSections = sections
 
+    const sectionTrimId = editingSection
+      ? (editingSection.productTrimId ?? null)
+      : (selectedTrim?.id ?? null)
+    const sectionTrim = editingSection
+      ? (editingSection.productTrim ?? null)
+      : selectedTrim
+        ? { id: selectedTrim.id, name: selectedTrim.name }
+        : null
+
     const payload = {
       ...(editingSection ? { id: editingSection.id } : {}),
       productModelId: selectedModel.id,
-      productTrimId: editingSection?.productTrimId ?? selectedTrim?.id ?? null,
+      productTrimId: sectionTrimId,
       code: sectionForm.code.trim(),
       name: sectionForm.name.trim(),
       description: sectionForm.description.trim() || null,
@@ -368,7 +377,7 @@ export default function ProductConfigurationsPage() {
     const optimisticSection: ProductConfigurationSection = {
       id: optimisticId,
       productModelId: selectedModel.id,
-      productTrimId: payload.productTrimId,
+      productTrimId: sectionTrimId,
       code: payload.code,
       name: payload.name,
       description: payload.description,
@@ -379,9 +388,7 @@ export default function ProductConfigurationsPage() {
         id: selectedModel.id,
         name: selectedModel.name,
       },
-      productTrim:
-        editingSection?.productTrim ??
-        (selectedTrim ? { id: selectedTrim.id, name: selectedTrim.name } : null),
+      productTrim: sectionTrim,
     }
 
     setSections((current) => {
@@ -415,9 +422,7 @@ export default function ProductConfigurationsPage() {
           id: selectedModel.id,
           name: selectedModel.name,
         },
-        productTrim:
-          editingSection?.productTrim ??
-          (selectedTrim ? { id: selectedTrim.id, name: selectedTrim.name } : null),
+        productTrim: sectionTrim,
       }
 
       setSections((current) =>

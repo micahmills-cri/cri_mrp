@@ -2,6 +2,15 @@
 
 > Record every pull request chronologically with the newest entry at the top. Use UTC timestamps in ISO 8601 format.
 
+## 2026-01-07T14:35:35Z — Agent: gpt-5-codex
+
+- **Summary:** Preserved model-wide product configuration sections when editing from a trim-filtered view.
+- **Reasoning:** Editing a model-wide section while a trim is selected should not silently scope the section to that trim.
+- **Changes Made:**
+  - Kept `productTrimId` and trim metadata aligned to the original section during edits, only using the selected trim for new sections.
+  - Documented the fix in ActionItems for traceability.
+- **Hats:** role-ui, docs.
+
 ## 2025-11-01T18:00:00Z — Agent: gpt-5-codex
 
 - **Summary:** Added an admin Product Configurator experience with hierarchical browsing, inline editing forms, and optimistic persistence against the product-configuration APIs.
