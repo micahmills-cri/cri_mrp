@@ -41,15 +41,9 @@ export async function GET(
       return NextResponse.json({ message: 'Work order not found' }, { status: 404 });
     }
 
-    // Department-based access control for operators only (admin and supervisor have full access)
-    if (user.role === 'OPERATOR' && user.departmentId) {
-      const enabledStages = workOrder.routingVersion.stages.filter(s => s.enabled).sort((a, b) => a.sequence - b.sequence);
-      const currentStage = enabledStages[workOrder.currentStageIndex];
-      
-      if (!currentStage || currentStage.workCenter.department.id !== user.departmentId) {
-        return NextResponse.json({ message: 'Work order not in your department' }, { status: 403 });
-      }
-    }
+    // For GET requests, allow operators to view attachments for any work order they can see
+    // This matches the queue behavior where operators can view work orders from any department
+    // More restrictive checks apply to POST (upload) operations
 
     const attachments = await prisma.workOrderAttachment.findMany({
       where: { workOrderId },
