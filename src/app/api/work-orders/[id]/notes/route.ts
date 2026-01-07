@@ -39,17 +39,10 @@ export async function GET(
       return NextResponse.json({ message: 'Work order not found' }, { status: 404 });
     }
 
-    // Department-based access control for operators only (admin and supervisor have full access)
-    if (user.role === 'OPERATOR' && user.departmentId) {
-      const enabledStages = workOrder.routingVersion.stages.filter(s => s.enabled).sort((a, b) => a.sequence - b.sequence);
-      const currentStage = enabledStages[workOrder.currentStageIndex];
-      
-      if (!currentStage || currentStage.workCenter.department.id !== user.departmentId) {
-        return NextResponse.json({ message: 'Work order not in your department' }, { status: 403 });
-      }
-    }
+    // For GET requests (viewing notes), allow any authenticated user to access notes
+    // This matches the behavior of the attachments endpoint where operators can view from any work order in their queue
 
-    // Role-based access control
+    // Role-based access control for filtering notes content
     let whereClause: any = { workOrderId };
     
     if (user.role === 'OPERATOR') {
@@ -150,15 +143,8 @@ export async function POST(
       return NextResponse.json({ message: 'Work order not found' }, { status: 404 });
     }
 
-    // Department-based access control for operators only (admin and supervisor have full access)
-    if (user.role === 'OPERATOR' && user.departmentId) {
-      const enabledStages = workOrder.routingVersion.stages.filter(s => s.enabled).sort((a, b) => a.sequence - b.sequence);
-      const currentStage = enabledStages[workOrder.currentStageIndex];
-      
-      if (!currentStage || currentStage.workCenter.department.id !== user.departmentId) {
-        return NextResponse.json({ message: 'Work order not in your department' }, { status: 403 });
-      }
-    }
+    // For POST requests (creating notes), allow any authenticated user to add notes
+    // This matches the behavior of the attachments endpoint
 
     // Role-based restrictions for creating department-specific notes
     if (scope === 'DEPARTMENT') {
