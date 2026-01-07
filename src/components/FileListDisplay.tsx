@@ -133,10 +133,36 @@ export default function FileListDisplay({
     }
   }
 
+  // State for image lightbox
+  const [lightboxImage, setLightboxImage] = useState<{ url: string; name: string } | null>(null)
+
+  // Check if file can be viewed inline
+  const canViewInline = (mimeType?: string) => {
+    if (!mimeType) return false
+    return mimeType.startsWith('image/') || mimeType === 'application/pdf'
+  }
+
+  // Check if file is an image
+  const isImage = (mimeType?: string) => {
+    if (!mimeType) return false
+    return mimeType.startsWith('image/')
+  }
+
+  // View file inline
+  const viewFile = async (attachment: FileAttachment) => {
+    const viewUrl = `/api/attachments/${attachment.id}?inline=true`
+    
+    if (isImage(attachment.mimeType)) {
+      setLightboxImage({ url: viewUrl, name: attachment.originalName })
+    } else {
+      window.open(viewUrl, '_blank')
+    }
+  }
+
   // Download file
   const downloadFile = async (attachment: FileAttachment) => {
     try {
-      const response = await fetch(`/api/attachments/${attachment.id}/download`, {
+      const response = await fetch(`/api/attachments/${attachment.id}`, {
         credentials: 'include'
       })
       
@@ -230,6 +256,20 @@ export default function FileListDisplay({
   useEffect(() => {
     loadAttachments()
   }, [workOrderId, refreshTrigger])
+
+  // Handle ESC key to close lightbox
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && lightboxImage) {
+        setLightboxImage(null)
+      }
+    }
+    
+    if (lightboxImage) {
+      document.addEventListener('keydown', handleKeyDown)
+      return () => document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [lightboxImage])
 
   return (
     <div style={{ padding: '1rem' }}>
@@ -408,6 +448,25 @@ export default function FileListDisplay({
               
               {/* Actions */}
               <div style={{ display: 'flex', gap: '0.25rem' }}>
+                {canViewInline(attachment.mimeType) && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      viewFile(attachment)
+                    }}
+                    style={{
+                      padding: '0.25rem 0.5rem',
+                      backgroundColor: '#28a745',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '3px',
+                      cursor: 'pointer',
+                      fontSize: '0.75rem'
+                    }}
+                  >
+                    View
+                  </button>
+                )}
                 <button
                   onClick={(e) => {
                     e.stopPropagation()
@@ -445,6 +504,77 @@ export default function FileListDisplay({
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Image Lightbox Modal */}
+      {lightboxImage && (
+        <div
+          onClick={() => setLightboxImage(null)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.85)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            cursor: 'pointer',
+            padding: '2rem'
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              position: 'relative',
+              maxWidth: '90vw',
+              maxHeight: '90vh',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center'
+            }}
+          >
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              width: '100%',
+              marginBottom: '1rem',
+              color: 'white'
+            }}>
+              <span style={{ fontSize: '1rem', fontWeight: '500' }}>
+                {lightboxImage.name}
+              </span>
+              <button
+                onClick={() => setLightboxImage(null)}
+                style={{
+                  padding: '0.5rem 1rem',
+                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '0.875rem'
+                }}
+              >
+                Close (ESC)
+              </button>
+            </div>
+            <img
+              src={lightboxImage.url}
+              alt={lightboxImage.name}
+              style={{
+                maxWidth: '100%',
+                maxHeight: 'calc(90vh - 4rem)',
+                objectFit: 'contain',
+                borderRadius: '4px',
+                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)'
+              }}
+            />
+          </div>
         </div>
       )}
     </div>

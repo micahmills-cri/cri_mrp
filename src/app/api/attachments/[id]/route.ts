@@ -74,13 +74,21 @@ export async function GET(
 
       const { stream, metadata } = await objectStorageService.getObjectStream(objectFile);
       
-      // Create a response with proper headers for file download
+      // Check if inline viewing is requested
+      const url = new URL(request.url);
+      const inline = url.searchParams.get('inline') === 'true';
+      
+      // Create a response with proper headers for file download or inline viewing
+      const contentDisposition = inline 
+        ? `inline; filename="${attachment.originalName}"`
+        : `attachment; filename="${attachment.originalName}"`;
+      
       const response = new NextResponse(stream as any, {
         status: 200,
         headers: {
           'Content-Type': attachment.mimeType,
           'Content-Length': attachment.fileSize.toString(),
-          'Content-Disposition': `attachment; filename="${attachment.originalName}"`,
+          'Content-Disposition': contentDisposition,
           'Cache-Control': 'private, max-age=3600'
         }
       });
