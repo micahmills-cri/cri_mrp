@@ -45,15 +45,9 @@ export async function GET(
       return NextResponse.json({ message: 'Attachment not found' }, { status: 404 });
     }
 
-    // Department-based access control for operators only (admin and supervisor have full access)
-    if (user.role === 'OPERATOR' && user.departmentId) {
-      const enabledStages = attachment.workOrder.routingVersion.stages.filter(s => s.enabled).sort((a, b) => a.sequence - b.sequence);
-      const currentStage = enabledStages[attachment.workOrder.currentStageIndex];
-      
-      if (!currentStage || currentStage.workCenter.department.id !== user.departmentId) {
-        return NextResponse.json({ message: 'Work order not in your department' }, { status: 403 });
-      }
-    }
+    // For GET requests (view/download), allow any authenticated user to access attachments
+    // This matches the behavior of the attachments list endpoint where operators can view attachments
+    // More restrictive checks apply to DELETE operations
 
     const objectStorageService = new ObjectStorageService();
     
