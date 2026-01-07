@@ -277,6 +277,29 @@ export default function SupervisorView() {
   const [availableRoutingVersions, setAvailableRoutingVersions] = useState<any[]>([])
   const [loadingRoutings, setLoadingRoutings] = useState(false)
 
+  // Filter, search, and sort state
+  const [searchQuery, setSearchQuery] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [statusFilters, setStatusFilters] = useState<string[]>([])
+  const [priorityFilters, setPriorityFilters] = useState<string[]>([])
+  const [workCenterFilter, setWorkCenterFilter] = useState('')
+  const [modelFilter, setModelFilter] = useState('')
+  const [sortBy, setSortBy] = useState('createdAt')
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
+  const [filterOptions, setFilterOptions] = useState<{
+    models: string[]
+    statuses: string[]
+    priorities: string[]
+  }>({ models: [], statuses: [], priorities: [] })
+
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery)
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [searchQuery])
+
   // Check authentication and user role
   useEffect(() => {
     fetch('/api/auth/me', {
@@ -340,7 +363,18 @@ export default function SupervisorView() {
       }
 
       try {
-        const response = await fetch('/api/supervisor/dashboard', {
+        // Build query params for filtering/sorting/searching
+        const params = new URLSearchParams()
+        if (debouncedSearch) params.set('search', debouncedSearch)
+        if (modelFilter) params.set('model', modelFilter)
+        if (workCenterFilter) params.set('workCenter', workCenterFilter)
+        if (sortBy) params.set('sortBy', sortBy)
+        if (sortDir) params.set('sortDir', sortDir)
+        statusFilters.forEach((s) => params.append('status', s))
+        priorityFilters.forEach((p) => params.append('priority', p))
+
+        const url = `/api/supervisor/dashboard${params.toString() ? `?${params.toString()}` : ''}`
+        const response = await fetch(url, {
           credentials: 'include',
         })
         const result = await response.json()
@@ -388,6 +422,10 @@ export default function SupervisorView() {
           } else {
             setKanbanWorkCenters([])
           }
+          // Store filter options for dropdowns
+          if (result.data.filterOptions) {
+            setFilterOptions(result.data.filterOptions)
+          }
         } else {
           setError(result.error || 'Failed to load dashboard')
         }
@@ -407,8 +445,15 @@ export default function SupervisorView() {
         }
       }
     },
-    [isInitialLoad]
+    [isInitialLoad, debouncedSearch, statusFilters, priorityFilters, workCenterFilter, modelFilter, sortBy, sortDir]
   )
+
+  // Reload data when filters change (after initial load)
+  useEffect(() => {
+    if (!isInitialLoad) {
+      loadBoardData({ trigger: 'manual' })
+    }
+  }, [debouncedSearch, statusFilters, priorityFilters, workCenterFilter, modelFilter, sortBy, sortDir])
 
   // Poll for updates
   useEffect(() => {
@@ -1643,6 +1688,133 @@ export default function SupervisorView() {
                   </Button>
                 </div>
 
+                {/* Filter and Search Controls */}
+                <div
+                  style={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: '0.75rem',
+                    marginBottom: '1rem',
+                    alignItems: 'center',
+                  }}
+                >
+                  {/* Search Input */}
+                  <div style={{ flex: '1', minWidth: '200px', maxWidth: '300px' }}>
+                    <input
+                      type="text"
+                      placeholder="Search WO#, Hull ID, SKU, Model..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '0.5rem 0.75rem',
+                        borderRadius: '6px',
+                        border: '1px solid var(--border)',
+                        backgroundColor: 'var(--surface)',
+                        color: 'var(--foreground)',
+                        fontSize: '0.875rem',
+                      }}
+                    />
+                  </div>
+
+                  {/* Status Filter */}
+                  <select
+                    value={statusFilters.length === 1 ? statusFilters[0] : ''}
+                    onChange={(e) => setStatusFilters(e.target.value ? [e.target.value] : [])}
+                    style={{
+                      padding: '0.5rem 0.75rem',
+                      borderRadius: '6px',
+                      border: '1px solid var(--border)',
+                      backgroundColor: 'var(--surface)',
+                      color: 'var(--foreground)',
+                      fontSize: '0.875rem',
+                      minWidth: '120px',
+                    }}
+                  >
+                    <option value="">All Statuses</option>
+                    {filterOptions.statuses.map((s) => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+
+                  {/* Priority Filter */}
+                  <select
+                    value={priorityFilters.length === 1 ? priorityFilters[0] : ''}
+                    onChange={(e) => setPriorityFilters(e.target.value ? [e.target.value] : [])}
+                    style={{
+                      padding: '0.5rem 0.75rem',
+                      borderRadius: '6px',
+                      border: '1px solid var(--border)',
+                      backgroundColor: 'var(--surface)',
+                      color: 'var(--foreground)',
+                      fontSize: '0.875rem',
+                      minWidth: '120px',
+                    }}
+                  >
+                    <option value="">All Priorities</option>
+                    {filterOptions.priorities.map((p) => (
+                      <option key={p} value={p}>{p}</option>
+                    ))}
+                  </select>
+
+                  {/* Model Filter */}
+                  <select
+                    value={modelFilter}
+                    onChange={(e) => setModelFilter(e.target.value)}
+                    style={{
+                      padding: '0.5rem 0.75rem',
+                      borderRadius: '6px',
+                      border: '1px solid var(--border)',
+                      backgroundColor: 'var(--surface)',
+                      color: 'var(--foreground)',
+                      fontSize: '0.875rem',
+                      minWidth: '120px',
+                    }}
+                  >
+                    <option value="">All Models</option>
+                    {filterOptions.models.map((m) => (
+                      <option key={m} value={m}>{m}</option>
+                    ))}
+                  </select>
+
+                  {/* Work Center Filter */}
+                  <select
+                    value={workCenterFilter}
+                    onChange={(e) => setWorkCenterFilter(e.target.value)}
+                    style={{
+                      padding: '0.5rem 0.75rem',
+                      borderRadius: '6px',
+                      border: '1px solid var(--border)',
+                      backgroundColor: 'var(--surface)',
+                      color: 'var(--foreground)',
+                      fontSize: '0.875rem',
+                      minWidth: '140px',
+                    }}
+                  >
+                    <option value="">All Work Centers</option>
+                    {kanbanWorkCenters.map((wc) => (
+                      <option key={wc.id} value={wc.id}>{wc.name}</option>
+                    ))}
+                  </select>
+
+                  {/* Clear Filters Button */}
+                  {(searchQuery || statusFilters.length > 0 || priorityFilters.length > 0 || modelFilter || workCenterFilter) && (
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => {
+                        setSearchQuery('')
+                        setStatusFilters([])
+                        setPriorityFilters([])
+                        setModelFilter('')
+                        setWorkCenterFilter('')
+                      }}
+                    >
+                      Clear Filters
+                    </Button>
+                  )}
+                </div>
+
                 <div
                   style={{
                     backgroundColor: 'var(--surface)',
@@ -1659,22 +1831,42 @@ export default function SupervisorView() {
                         }}
                       >
                         <th
+                          onClick={() => {
+                            if (sortBy === 'status') {
+                              setSortDir(sortDir === 'asc' ? 'desc' : 'asc')
+                            } else {
+                              setSortBy('status')
+                              setSortDir('asc')
+                            }
+                          }}
                           style={{
                             padding: '0.75rem',
                             textAlign: 'left',
                             borderBottom: '2px solid var(--border)',
+                            cursor: 'pointer',
+                            userSelect: 'none',
                           }}
                         >
-                          Status
+                          Status {sortBy === 'status' && (sortDir === 'asc' ? '▲' : '▼')}
                         </th>
                         <th
+                          onClick={() => {
+                            if (sortBy === 'number') {
+                              setSortDir(sortDir === 'asc' ? 'desc' : 'asc')
+                            } else {
+                              setSortBy('number')
+                              setSortDir('asc')
+                            }
+                          }}
                           style={{
                             padding: '0.75rem',
                             textAlign: 'left',
                             borderBottom: '2px solid var(--border)',
+                            cursor: 'pointer',
+                            userSelect: 'none',
                           }}
                         >
-                          WO Number
+                          WO Number {sortBy === 'number' && (sortDir === 'asc' ? '▲' : '▼')}
                         </th>
                         <th
                           style={{
@@ -1695,31 +1887,61 @@ export default function SupervisorView() {
                           Model
                         </th>
                         <th
+                          onClick={() => {
+                            if (sortBy === 'priority') {
+                              setSortDir(sortDir === 'asc' ? 'desc' : 'asc')
+                            } else {
+                              setSortBy('priority')
+                              setSortDir('desc')
+                            }
+                          }}
                           style={{
                             padding: '0.75rem',
                             textAlign: 'left',
                             borderBottom: '2px solid var(--border)',
+                            cursor: 'pointer',
+                            userSelect: 'none',
                           }}
                         >
-                          Priority
+                          Priority {sortBy === 'priority' && (sortDir === 'asc' ? '▲' : '▼')}
                         </th>
                         <th
+                          onClick={() => {
+                            if (sortBy === 'plannedStartDate') {
+                              setSortDir(sortDir === 'asc' ? 'desc' : 'asc')
+                            } else {
+                              setSortBy('plannedStartDate')
+                              setSortDir('asc')
+                            }
+                          }}
                           style={{
                             padding: '0.75rem',
                             textAlign: 'left',
                             borderBottom: '2px solid var(--border)',
+                            cursor: 'pointer',
+                            userSelect: 'none',
                           }}
                         >
-                          Planned Start
+                          Planned Start {sortBy === 'plannedStartDate' && (sortDir === 'asc' ? '▲' : '▼')}
                         </th>
                         <th
+                          onClick={() => {
+                            if (sortBy === 'plannedFinishDate') {
+                              setSortDir(sortDir === 'asc' ? 'desc' : 'asc')
+                            } else {
+                              setSortBy('plannedFinishDate')
+                              setSortDir('asc')
+                            }
+                          }}
                           style={{
                             padding: '0.75rem',
                             textAlign: 'left',
                             borderBottom: '2px solid var(--border)',
+                            cursor: 'pointer',
+                            userSelect: 'none',
                           }}
                         >
-                          Planned Finish
+                          Planned Finish {sortBy === 'plannedFinishDate' && (sortDir === 'asc' ? '▲' : '▼')}
                         </th>
                         <th
                           style={{

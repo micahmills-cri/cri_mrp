@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/server/db/client";
 import { getUserFromRequest } from "../../../../lib/auth";
+import { Prisma } from "@prisma/client";
 
 export async function GET(request: NextRequest) {
   try {
@@ -16,13 +17,57 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Parse query parameters for filtering, sorting, and search
+    const { searchParams } = new URL(request.url);
+    const search = searchParams.get("search") || "";
+    const statusFilter = searchParams.getAll("status");
+    const priorityFilter = searchParams.getAll("priority");
+    const workCenterFilter = searchParams.get("workCenter") || "";
+    const modelFilter = searchParams.get("model") || "";
+    const sortBy = searchParams.get("sortBy") || "createdAt";
+    const sortDir = (searchParams.get("sortDir") || "desc") as "asc" | "desc";
+
+    // Build where clause dynamically
+    const whereClause: Prisma.WorkOrderWhereInput = {
+      status: {
+        in: statusFilter.length > 0
+          ? statusFilter as any[]
+          : ["PLANNED", "RELEASED", "IN_PROGRESS", "HOLD", "COMPLETED"],
+      },
+    };
+
+    // Add priority filter
+    if (priorityFilter.length > 0) {
+      whereClause.priority = { in: priorityFilter as any[] };
+    }
+
+    // Add search filter (search across multiple fields)
+    if (search) {
+      whereClause.OR = [
+        { number: { contains: search, mode: "insensitive" } },
+        { hullId: { contains: search, mode: "insensitive" } },
+        { productSku: { contains: search, mode: "insensitive" } },
+        { routingVersion: { model: { contains: search, mode: "insensitive" } } },
+      ];
+    }
+
+    // Add model filter via routing version
+    if (modelFilter) {
+      whereClause.routingVersion = {
+        model: { contains: modelFilter, mode: "insensitive" },
+      };
+    }
+
+    // Build orderBy clause
+    let orderByClause: Prisma.WorkOrderOrderByWithRelationInput = { createdAt: "desc" };
+    const validSortFields = ["createdAt", "priority", "plannedStartDate", "plannedFinishDate", "status", "number"];
+    if (validSortFields.includes(sortBy)) {
+      orderByClause = { [sortBy]: sortDir };
+    }
+
     // Get ALL work orders for supervisors to see complete factory status
     const workOrders = await prisma.workOrder.findMany({
-      where: {
-        status: {
-          in: ["PLANNED", "RELEASED", "IN_PROGRESS", "HOLD", "COMPLETED"],
-        },
-      },
+      where: whereClause,
       include: {
         routingVersion: {
           include: {
@@ -52,7 +97,7 @@ export async function GET(request: NextRequest) {
           },
         },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: orderByClause,
     });
 
     // Show all work orders to supervisors for complete factory visibility
@@ -282,16 +327,47 @@ export async function GET(request: NextRequest) {
       (a, b) => a.sequence - b.sequence,
     );
 
+    // Get unique models for filter dropdown
+    const uniqueModels = await prisma.routingVersion.findMany({
+      select: { model: true },
+      distinct: ["model"],
+      orderBy: { model: "asc" },
+    });
+
+    // Apply work center filter post-query (since it's a nested relation)
+    // Only filter work orders that have a current stage; others (PLANNED/RELEASED) pass through
+    let finalWipData = wipData;
+    if (workCenterFilter) {
+      finalWipData = wipData.filter((wo) => {
+        // If work order has no current stage (e.g., PLANNED), include it
+        if (!wo.currentStage?.workCenter) {
+          return true;
+        }
+        // Otherwise, check if it matches the work center filter
+        return (
+          wo.currentStage.workCenter.id === workCenterFilter ||
+          wo.currentStage.workCenter.name
+            .toLowerCase()
+            .includes(workCenterFilter.toLowerCase())
+        );
+      });
+    }
+
     return NextResponse.json({
       success: true,
       data: {
-        wipData,
+        wipData: finalWipData,
         summary: {
           statusCounts,
           avgStageTimes,
           trends,
         },
         workCenters: orderedWorkCenters,
+        filterOptions: {
+          models: uniqueModels.map((m) => m.model),
+          statuses: ["PLANNED", "RELEASED", "IN_PROGRESS", "HOLD", "COMPLETED"],
+          priorities: ["STANDARD", "RUSH", "CRITICAL"],
+        },
       },
     });
   } catch (error) {
