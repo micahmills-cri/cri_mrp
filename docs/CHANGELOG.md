@@ -2,35 +2,6 @@
 
 > Record every pull request chronologically with the newest entry at the top. Use UTC timestamps in ISO 8601 format.
 
-## 2026-01-07T15:28:58Z — Agent: gpt-5-codex
-
-- **Summary:** Synced component default selections with option defaults for product configurations.
-- **Reasoning:** Default selections should persist across edits by keeping component `defaultOptionId` and option `isDefault` in lockstep.
-- **Changes Made:**
-  - Updated component saves to update option default flags and clear defaults when needed.
-  - Adjusted optimistic UI updates to reflect default selection changes immediately.
-  - Logged the fix in ActionItems for traceability.
-- **Hats:** role-ui, api-contract, docs.
-
-## 2026-01-07T14:35:35Z — Agent: gpt-5-codex
-
-- **Summary:** Preserved model-wide product configuration sections when editing from a trim-filtered view.
-- **Reasoning:** Editing a model-wide section while a trim is selected should not silently scope the section to that trim.
-- **Changes Made:**
-  - Kept `productTrimId` and trim metadata aligned to the original section during edits, only using the selected trim for new sections.
-  - Documented the fix in ActionItems for traceability.
-- **Hats:** role-ui, docs.
-
-## 2025-11-01T18:00:00Z — Agent: gpt-5-codex
-
-- **Summary:** Added an admin Product Configurator experience with hierarchical browsing, inline editing forms, and optimistic persistence against the product-configuration APIs.
-- **Reasoning:** Admins need first-class tooling inside the dashboard to review and adjust model configurations, including dependencies, without resorting to raw API calls.
-- **Changes Made:**
-  - Linked the dashboard to a new `/admin/product-configurations` route and built model/trim selectors with a tabular tree that surfaces section, component, and option metadata.
-  - Implemented create/edit modals for sections, components, and options with optimistic state updates that fan out to `/api/product-configurations` endpoints and dependency management.
-  - Logged the Vitest duplicate-class warning in `docs/ActionItems.md` to address the `Card` component style map issue spotted during test runs.
-- **Hats:** role-ui, api-contract, qa-gate.
-
 ## 2025-10-31T15:15:00Z — Agent: gpt-5-codex
 
 - **Summary:** Added product-configuration API endpoints with RBAC, Prisma-backed helpers, and contract tests to validate success and failure paths.

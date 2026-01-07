@@ -158,34 +158,18 @@ export async function upsertProductConfigurationComponent(
   }
 
   if (data.id) {
-    const component = await prisma.$transaction(async (tx) => {
-      await tx.productConfigurationComponent.update({
-        where: { id: data.id },
-        data: payload,
-      })
-
-      if (payload.defaultOptionId) {
-        await updateComponentDefaultOption(tx, data.id, payload.defaultOptionId, true)
-      } else {
-        await clearComponentDefaultOption(tx, data.id)
-      }
-
-      return tx.productConfigurationComponent.findUnique({
-        where: { id: data.id },
-        include: {
-          options: {
-            include: {
-              dependencies: true,
-              dependents: true,
-            },
+    const component = await prisma.productConfigurationComponent.update({
+      where: { id: data.id },
+      data: payload,
+      include: {
+        options: {
+          include: {
+            dependencies: true,
+            dependents: true,
           },
         },
-      })
+      },
     })
-
-    if (!component) {
-      throw createZodError(['id'], 'Component not found')
-    }
 
     return component
   }
@@ -308,11 +292,6 @@ async function updateComponentDefaultOption(
   isDefault: boolean
 ) {
   if (isDefault) {
-    await tx.productConfigurationOption.update({
-      where: { id: optionId },
-      data: { isDefault: true },
-    })
-
     await tx.productConfigurationOption.updateMany({
       where: {
         componentId,
@@ -326,11 +305,6 @@ async function updateComponentDefaultOption(
       data: { defaultOptionId: optionId },
     })
   } else {
-    await tx.productConfigurationOption.update({
-      where: { id: optionId },
-      data: { isDefault: false },
-    })
-
     await tx.productConfigurationComponent.updateMany({
       where: {
         id: componentId,
@@ -339,18 +313,6 @@ async function updateComponentDefaultOption(
       data: { defaultOptionId: null },
     })
   }
-}
-
-async function clearComponentDefaultOption(tx: Prisma.TransactionClient, componentId: string) {
-  await tx.productConfigurationOption.updateMany({
-    where: { componentId },
-    data: { isDefault: false },
-  })
-
-  await tx.productConfigurationComponent.update({
-    where: { id: componentId },
-    data: { defaultOptionId: null },
-  })
 }
 
 export type ListProductConfigurationSectionsInput = z.input<typeof listInputSchema>
