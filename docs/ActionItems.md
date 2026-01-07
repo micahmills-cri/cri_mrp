@@ -34,6 +34,13 @@ This document tracks outstanding tasks, improvements, and technical debt for the
   - **Agent role**: QA & Release Gate
   - **Discovered**: 2025-01-16 during ESLint/Prettier setup
 
+- [ ] **Resolve npm "Unknown env config http-proxy" warning**
+  - Warning appears when running `npx prettier@3 --write`
+  - Investigate npm config/environment to remove deprecated `http-proxy` setting
+  - **Estimated effort**: 15 minutes
+  - **Agent role**: QA & Release Gate
+  - **Discovered**: 2026-01-07 during Prettier formatting
+
 - [ ] **Remove console.log statements from production code**
   - Create structured logging utility in `src/lib/logger.ts`
   - Replace console.log/warn/error in 17 files flagged by ESLint

@@ -2,6 +2,12 @@
 
 > Record every pull request chronologically with the newest entry at the top. Use UTC timestamps in ISO 8601 format.
 
+## 2026-01-07T17:18:34Z - Agent: Codex (api-contract, qa-gate, docs)
+
+- **Summary:** Updated the work order PATCH audit log writes to use schema-aligned fields and capture update details in the `after` payload. Logged the npm `http-proxy` config warning in ActionItems for follow-up.
+- **Reasoning:** Audit logs must align with the `AuditLog` model fields to keep API handlers consistent and avoid schema drift.
+- **Validation:** Not run (not requested).
+- **Files Modified:** `src/app/api/work-orders/[id]/route.ts`, `docs/ActionItems.md`, `docs/CHANGELOG.md`
 
 ## 2025-10-27T20:30:26Z - Agent: Codex (role-ui, qa-gate, docs)
 
@@ -29,7 +35,6 @@
   - Seeded LX-series configuration sections, components, options, and dependency links via `backup-data.ts` and `seed.ts` for deterministic reseeds.
   - Introduced server typings for configuration payloads to keep API layers aligned with the expanded schema.
 - **Hats:** domain, schema-change, seed, docs.
-
 
 ## 2025-10-27T21:00:00Z — Agent: QA & Release Gate
 
