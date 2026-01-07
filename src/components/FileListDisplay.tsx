@@ -33,13 +33,15 @@ type FileListDisplayProps = {
   onError?: (error: string) => void
   onSuccess?: (message: string) => void
   refreshTrigger?: number // Used to trigger refresh from parent
+  readOnly?: boolean // When true, hides delete buttons and selection
 }
 
 export default function FileListDisplay({ 
   workOrderId, 
   onError, 
   onSuccess,
-  refreshTrigger 
+  refreshTrigger,
+  readOnly = false
 }: FileListDisplayProps) {
   const [attachments, setAttachments] = useState<FileAttachment[]>([])
   const [loading, setLoading] = useState(false)
@@ -345,8 +347,8 @@ export default function FileListDisplay({
         </select>
       </div>
 
-      {/* Bulk Actions */}
-      {filteredAttachments.length > 0 && (
+      {/* Bulk Actions - hidden in readOnly mode */}
+      {!readOnly && filteredAttachments.length > 0 && (
         <div style={{
           display: 'flex',
           gap: '0.5rem',
@@ -410,23 +412,25 @@ export default function FileListDisplay({
           {filteredAttachments.map(attachment => (
             <div key={attachment.id} style={{
               backgroundColor: 'var(--surface)',
-              border: selectedFiles.has(attachment.id) ? '2px solid var(--status-info-accent)' : '1px solid var(--border-strong)',
+              border: !readOnly && selectedFiles.has(attachment.id) ? '2px solid var(--status-info-accent)' : '1px solid var(--border-strong)',
               borderRadius: '4px',
               padding: '0.75rem',
               display: 'flex',
               alignItems: 'center',
               gap: '0.75rem',
-              cursor: 'pointer',
+              cursor: readOnly ? 'default' : 'pointer',
               transition: 'all 0.2s ease',
               position: 'relative'
             }}>
-              {/* Checkbox */}
-              <input
-                type="checkbox"
-                checked={selectedFiles.has(attachment.id)}
-                onChange={() => toggleFileSelection(attachment.id)}
-                style={{ cursor: 'pointer' }}
-              />
+              {/* Checkbox - hidden in readOnly mode */}
+              {!readOnly && (
+                <input
+                  type="checkbox"
+                  checked={selectedFiles.has(attachment.id)}
+                  onChange={() => toggleFileSelection(attachment.id)}
+                  style={{ cursor: 'pointer' }}
+                />
+              )}
               
               {/* File Icon */}
               <div style={{ 
@@ -488,23 +492,25 @@ export default function FileListDisplay({
                 >
                   Download
                 </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    deleteAttachment(attachment.id, attachment.originalName)
-                  }}
-                  style={{
-                    padding: '0.25rem 0.5rem',
-                    backgroundColor: 'var(--status-danger-accent)',
-                    color: 'var(--status-danger-foreground)',
-                    border: 'none',
-                    borderRadius: '3px',
-                    cursor: 'pointer',
-                    fontSize: '0.75rem'
-                  }}
-                >
-                  Delete
-                </button>
+                {!readOnly && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      deleteAttachment(attachment.id, attachment.originalName)
+                    }}
+                    style={{
+                      padding: '0.25rem 0.5rem',
+                      backgroundColor: 'var(--status-danger-accent)',
+                      color: 'var(--status-danger-foreground)',
+                      border: 'none',
+                      borderRadius: '3px',
+                      cursor: 'pointer',
+                      fontSize: '0.75rem'
+                    }}
+                  >
+                    Delete
+                  </button>
+                )}
               </div>
             </div>
           ))}
