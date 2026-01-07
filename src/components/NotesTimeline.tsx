@@ -31,9 +31,10 @@ type NotesTimelineProps = {
   workOrderId: string
   onError?: (error: string) => void
   onSuccess?: (message: string) => void
+  onNotesChange?: (count: number) => void
 }
 
-export default function NotesTimeline({ workOrderId, onError, onSuccess }: NotesTimelineProps) {
+export default function NotesTimeline({ workOrderId, onError, onSuccess, onNotesChange }: NotesTimelineProps) {
   const [notes, setNotes] = useState<Note[]>([])
   const [loading, setLoading] = useState(false)
   const [showAddNote, setShowAddNote] = useState(false)
@@ -78,6 +79,7 @@ export default function NotesTimeline({ workOrderId, onError, onSuccess }: Notes
       if (response.ok) {
         const notesData = await response.json()
         setNotes(notesData)
+        onNotesChange?.(notesData.length)
       } else {
         const error = await response.json()
         onError?.(error.message || 'Failed to load notes')
@@ -114,7 +116,11 @@ export default function NotesTimeline({ workOrderId, onError, onSuccess }: Notes
       
       if (response.ok) {
         const note = await response.json()
-        setNotes(prev => [note, ...prev])
+        setNotes(prev => {
+          const newNotes = [note, ...prev]
+          onNotesChange?.(newNotes.length)
+          return newNotes
+        })
         setNewNote('')
         setShowAddNote(false)
         setNoteScope('GENERAL')
@@ -169,7 +175,11 @@ export default function NotesTimeline({ workOrderId, onError, onSuccess }: Notes
       })
       
       if (response.ok) {
-        setNotes(prev => prev.filter(note => note.id !== noteId))
+        setNotes(prev => {
+          const newNotes = prev.filter(note => note.id !== noteId)
+          onNotesChange?.(newNotes.length)
+          return newNotes
+        })
         onSuccess?.('Note deleted successfully')
       } else {
         const error = await response.json()

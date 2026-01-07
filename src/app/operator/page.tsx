@@ -13,8 +13,8 @@ import {
 } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
-import { Textarea } from "@/components/ui/Textarea";
 import FileListDisplay from "@/components/FileListDisplay";
+import NotesTimeline from "@/components/NotesTimeline";
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/solid";
 
 type Station = {
@@ -137,7 +137,6 @@ export default function OperatorConsole() {
     null,
   );
   const [selectedStation, setSelectedStation] = useState("");
-  const [note, setNote] = useState("");
   const [searchLoading, setSearchLoading] = useState(false);
   const [openLoadingId, setOpenLoadingId] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
@@ -150,7 +149,9 @@ export default function OperatorConsole() {
   const [scrapQty, setScrapQty] = useState("");
   const [isActionPanelOpen, setIsActionPanelOpen] = useState(false);
   const [isAttachmentsOpen, setIsAttachmentsOpen] = useState(false);
+  const [isNotesOpen, setIsNotesOpen] = useState(false);
   const [attachmentCount, setAttachmentCount] = useState(0);
+  const [notesCount, setNotesCount] = useState(0);
   const router = useRouter();
 
   useEffect(() => {
@@ -262,8 +263,32 @@ export default function OperatorConsole() {
         const data = await response.json();
         setSelectedWorkOrder(data);
         setIsActionPanelOpen(true);
+        setIsAttachmentsOpen(false);
+        setIsNotesOpen(false);
         if (data.workOrder.currentStage.workCenter.stations.length === 1) {
           setSelectedStation(data.workOrder.currentStage.workCenter.stations[0].id);
+        }
+        // Fetch attachment count and notes count in parallel
+        try {
+          const [attachmentsResponse, notesResponse] = await Promise.all([
+            fetch(`/api/work-orders/${data.workOrder.id}/attachments`, { credentials: "include" }),
+            fetch(`/api/work-orders/${data.workOrder.id}/notes`, { credentials: "include" })
+          ]);
+          if (attachmentsResponse.ok) {
+            const attachments = await attachmentsResponse.json();
+            setAttachmentCount(Array.isArray(attachments) ? attachments.length : 0);
+          } else {
+            setAttachmentCount(0);
+          }
+          if (notesResponse.ok) {
+            const notes = await notesResponse.json();
+            setNotesCount(Array.isArray(notes) ? notes.length : 0);
+          } else {
+            setNotesCount(0);
+          }
+        } catch {
+          setAttachmentCount(0);
+          setNotesCount(0);
         }
       } else {
         const data = await response.json();
@@ -298,23 +323,31 @@ export default function OperatorConsole() {
           setSelectedWorkOrder(data);
           setIsActionPanelOpen(true);
           setIsAttachmentsOpen(false);
+          setIsNotesOpen(false);
           if (data.workOrder.currentStage.workCenter.stations.length === 1) {
             setSelectedStation(data.workOrder.currentStage.workCenter.stations[0].id);
           }
-          // Fetch attachment count
+          // Fetch attachment count and notes count in parallel
           try {
-            const attachmentsResponse = await fetch(
-              `/api/work-orders/${data.workOrder.id}/attachments`,
-              { credentials: "include" }
-            );
+            const [attachmentsResponse, notesResponse] = await Promise.all([
+              fetch(`/api/work-orders/${data.workOrder.id}/attachments`, { credentials: "include" }),
+              fetch(`/api/work-orders/${data.workOrder.id}/notes`, { credentials: "include" })
+            ]);
             if (attachmentsResponse.ok) {
               const attachments = await attachmentsResponse.json();
               setAttachmentCount(Array.isArray(attachments) ? attachments.length : 0);
             } else {
               setAttachmentCount(0);
             }
+            if (notesResponse.ok) {
+              const notes = await notesResponse.json();
+              setNotesCount(Array.isArray(notes) ? notes.length : 0);
+            } else {
+              setNotesCount(0);
+            }
           } catch {
             setAttachmentCount(0);
+            setNotesCount(0);
           }
         } else {
           const data = await response.json();
@@ -348,7 +381,6 @@ export default function OperatorConsole() {
       const requestBody: Record<string, unknown> = {
         workOrderId: selectedWorkOrder.workOrder.id,
         stationId: selectedStation,
-        note: note || undefined,
       };
 
       if (action === "complete") {
@@ -370,7 +402,6 @@ export default function OperatorConsole() {
 
       if (response.ok && data.success) {
         setMessage(data.message);
-        setNote("");
         setGoodQty("");
         setScrapQty("");
 
@@ -747,6 +778,38 @@ export default function OperatorConsole() {
                 )}
               </div>
 
+              {/* Collapsible Notes Section */}
+              <div className="space-y-2">
+                <button
+                  onClick={() => setIsNotesOpen(!isNotesOpen)}
+                  className="flex w-full items-center justify-between rounded-md border border-[var(--border)] bg-[var(--surface-muted)] px-4 py-3 text-left transition-colors hover:bg-[var(--table-row-hover)]"
+                >
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-lg font-semibold">Notes</h3>
+                    {notesCount > 0 && (
+                      <span className="inline-flex items-center justify-center rounded-full bg-[var(--status-info-accent)] px-2 py-0.5 text-xs font-medium text-[color:var(--status-info-foreground)]">
+                        {notesCount}
+                      </span>
+                    )}
+                  </div>
+                  {isNotesOpen ? (
+                    <ChevronUpIcon className="h-5 w-5 text-[color:var(--muted)]" />
+                  ) : (
+                    <ChevronDownIcon className="h-5 w-5 text-[color:var(--muted)]" />
+                  )}
+                </button>
+                {isNotesOpen && (
+                  <div className="rounded-md border border-[var(--border)] bg-[var(--surface)] p-4">
+                    <NotesTimeline
+                      workOrderId={selectedWorkOrder.workOrder.id}
+                      onError={(err) => setError(err)}
+                      onSuccess={(msg) => setMessage(msg)}
+                      onNotesChange={(count) => setNotesCount(count)}
+                    />
+                  </div>
+                )}
+              </div>
+
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold">Actions</h3>
                 <Select
@@ -778,14 +841,6 @@ export default function OperatorConsole() {
                     fullWidth={false}
                   />
                 </div>
-
-                <Textarea
-                  label="Note (optional)"
-                  value={note}
-                  onChange={(event) => setNote(event.target.value)}
-                  placeholder="Add context for the next shift…"
-                  rows={3}
-                />
 
                 <div className="flex flex-wrap gap-3">
                   <StartButton
