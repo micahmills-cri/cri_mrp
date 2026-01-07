@@ -1648,7 +1648,7 @@ export default function SupervisorView() {
                     backgroundColor: 'var(--surface)',
                     borderRadius: '8px',
                     boxShadow: 'var(--shadow-card)',
-                    overflow: 'hidden',
+                    overflowX: 'auto',
                   }}
                 >
                   <table style={{ width: '100%', borderCollapse: 'collapse' }}>
