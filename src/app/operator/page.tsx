@@ -667,6 +667,7 @@ export default function OperatorConsole() {
             </div>
 
             <div className="space-y-6 px-6 py-6">
+              {/* 1. WO Details */}
               <div className="grid gap-4 border-b border-[var(--border)] pb-6 md:grid-cols-2 lg:grid-cols-3">
                 <div className="space-y-1">
                   <p className="text-xs uppercase tracking-wide text-[color:var(--muted)]">WO Number</p>
@@ -682,10 +683,22 @@ export default function OperatorConsole() {
                   <p className="text-xs uppercase tracking-wide text-[color:var(--muted)]">SKU</p>
                   <p className="text-sm font-medium">{selectedWorkOrder.workOrder.productSku}</p>
                 </div>
-                <div className="space-y-1">
-                  <p className="text-xs uppercase tracking-wide text-[color:var(--muted)]">Quantity</p>
-                  <p className="text-sm font-medium">{selectedWorkOrder.workOrder.qty}</p>
-                </div>
+                {selectedWorkOrder.workOrder.specSnapshot && Object.keys(selectedWorkOrder.workOrder.specSnapshot).length > 0 && (
+                  <div className="space-y-1 md:col-span-2 lg:col-span-3">
+                    <p className="text-xs uppercase tracking-wide text-[color:var(--muted)]">Features</p>
+                    <div className="flex flex-wrap gap-2">
+                      {Object.entries(selectedWorkOrder.workOrder.specSnapshot).map(([key, value]) => (
+                        <span
+                          key={key}
+                          className="inline-flex items-center rounded-md border border-[var(--border)] bg-[var(--surface-muted)] px-2 py-1 text-xs"
+                        >
+                          <span className="font-medium">{key}:</span>
+                          <span className="ml-1 text-[color:var(--muted-strong)]">{String(value)}</span>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 <div className="space-y-1">
                   <p className="text-xs uppercase tracking-wide text-[color:var(--muted)]">Status</p>
                   <span
@@ -710,139 +723,27 @@ export default function OperatorConsole() {
                     {selectedWorkOrder.workOrder.priority}
                   </span>
                 </div>
-                <div className="space-y-1">
-                  <p className="text-xs uppercase tracking-wide text-[color:var(--muted)]">Stage Progress</p>
-                  <p className="text-sm font-medium">
-                    {selectedWorkOrder.workOrder.currentStageIndex + 1} of{" "}
-                    {selectedWorkOrder.workOrder.enabledStagesCount}
+              </div>
+
+              {/* 2. Last Activity */}
+              {selectedWorkOrder.workOrder.lastEvent && (
+                <div className="rounded-md border border-[var(--border)] bg-[var(--surface-muted)] px-4 py-3 text-sm">
+                  <p className="font-medium">Last Activity</p>
+                  <p className="mt-1 text-[color:var(--muted)]">
+                    {selectedWorkOrder.workOrder.lastEvent.event} at station {" "}
+                    {selectedWorkOrder.workOrder.lastEvent.station} on {" "}
+                    {formatDate(selectedWorkOrder.workOrder.lastEvent.createdAt)}
                   </p>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">
-                  Current Stage: {selectedWorkOrder.workOrder.currentStage.name}
-                </h3>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-1 text-sm">
-                    <p className="text-xs uppercase tracking-wide text-[color:var(--muted)]">Stage Code</p>
-                    <p className="font-medium">
-                      {selectedWorkOrder.workOrder.currentStage.code}
+                  {selectedWorkOrder.workOrder.lastEvent.note && (
+                    <p className="mt-2 text-sm italic text-[color:var(--muted-strong)]">
+                      Note: {selectedWorkOrder.workOrder.lastEvent.note}
                     </p>
-                  </div>
-                  <div className="space-y-1 text-sm">
-                    <p className="text-xs uppercase tracking-wide text-[color:var(--muted)]">Sequence</p>
-                    <p className="font-medium">
-                      {selectedWorkOrder.workOrder.currentStage.sequence}
-                    </p>
-                  </div>
-                  <div className="space-y-1 text-sm">
-                    <p className="text-xs uppercase tracking-wide text-[color:var(--muted)]">Work Center</p>
-                    <p className="font-medium">
-                      {selectedWorkOrder.workOrder.currentStage.workCenter.name}
-                    </p>
-                  </div>
-                  <div className="space-y-1 text-sm">
-                    <p className="text-xs uppercase tracking-wide text-[color:var(--muted)]">Department</p>
-                    <p className="font-medium">
-                      {selectedWorkOrder.workOrder.currentStage.workCenter.department.name}
-                    </p>
-                  </div>
-                  <div className="space-y-1 text-sm">
-                    <p className="text-xs uppercase tracking-wide text-[color:var(--muted)]">Standard Time</p>
-                    <p className="font-medium">
-                      {selectedWorkOrder.workOrder.currentStage.standardSeconds} seconds
-                    </p>
-                  </div>
-                </div>
-
-                {selectedWorkOrder.workOrder.lastEvent && (
-                  <div className="rounded-md border border-[var(--border)] bg-[var(--surface-muted)] px-4 py-3 text-sm">
-                    <p className="font-medium">Last Activity</p>
-                    <p className="mt-1 text-[color:var(--muted)]">
-                      {selectedWorkOrder.workOrder.lastEvent.event} at station {" "}
-                      {selectedWorkOrder.workOrder.lastEvent.station} on {" "}
-                      {formatDate(selectedWorkOrder.workOrder.lastEvent.createdAt)}
-                    </p>
-                    {selectedWorkOrder.workOrder.lastEvent.note && (
-                      <p className="mt-2 text-sm italic text-[color:var(--muted-strong)]">
-                        Note: {selectedWorkOrder.workOrder.lastEvent.note}
-                      </p>
-                    )}
-                  </div>
-                )}
-
-                {selectedWorkOrder.workOrder.currentStage.workInstruction && (
-                  <div className="rounded-md border border-[var(--status-info-border)] bg-[var(--status-info-surface)] px-4 py-3 text-sm text-[color:var(--status-info-foreground)]">
-                    Work instruction version {selectedWorkOrder.workOrder.currentStage.workInstruction.version} available
-                  </div>
-                )}
-              </div>
-
-              {/* Collapsible Attachments Section */}
-              <div className="space-y-2">
-                <button
-                  onClick={() => setIsAttachmentsOpen(!isAttachmentsOpen)}
-                  className="flex w-full items-center justify-between rounded-md border border-[var(--border)] bg-[var(--surface-muted)] px-4 py-3 text-left transition-colors hover:bg-[var(--table-row-hover)]"
-                >
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-lg font-semibold">Attachments</h3>
-                    {attachmentCount > 0 && (
-                      <span className="inline-flex items-center justify-center rounded-full bg-[var(--status-info-accent)] px-2 py-0.5 text-xs font-medium text-[color:var(--status-info-foreground)]">
-                        {attachmentCount}
-                      </span>
-                    )}
-                  </div>
-                  {isAttachmentsOpen ? (
-                    <ChevronUpIcon className="h-5 w-5 text-[color:var(--muted)]" />
-                  ) : (
-                    <ChevronDownIcon className="h-5 w-5 text-[color:var(--muted)]" />
                   )}
-                </button>
-                {isAttachmentsOpen && (
-                  <div className="rounded-md border border-[var(--border)] bg-[var(--surface)]">
-                    <FileListDisplay
-                      workOrderId={selectedWorkOrder.workOrder.id}
-                      readOnly={true}
-                      onError={(err) => setError(err)}
-                    />
-                  </div>
-                )}
-              </div>
+                </div>
+              )}
 
-              {/* Collapsible Notes Section */}
-              <div className="space-y-2">
-                <button
-                  onClick={() => setIsNotesOpen(!isNotesOpen)}
-                  className="flex w-full items-center justify-between rounded-md border border-[var(--border)] bg-[var(--surface-muted)] px-4 py-3 text-left transition-colors hover:bg-[var(--table-row-hover)]"
-                >
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-lg font-semibold">Notes</h3>
-                    {notesCount > 0 && (
-                      <span className="inline-flex items-center justify-center rounded-full bg-[var(--status-info-accent)] px-2 py-0.5 text-xs font-medium text-[color:var(--status-info-foreground)]">
-                        {notesCount}
-                      </span>
-                    )}
-                  </div>
-                  {isNotesOpen ? (
-                    <ChevronUpIcon className="h-5 w-5 text-[color:var(--muted)]" />
-                  ) : (
-                    <ChevronDownIcon className="h-5 w-5 text-[color:var(--muted)]" />
-                  )}
-                </button>
-                {isNotesOpen && (
-                  <div className="rounded-md border border-[var(--border)] bg-[var(--surface)] p-4">
-                    <NotesTimeline
-                      workOrderId={selectedWorkOrder.workOrder.id}
-                      onError={(err) => setError(err)}
-                      onSuccess={(msg) => setMessage(msg)}
-                      onNotesChange={(count) => setNotesCount(count)}
-                    />
-                  </div>
-                )}
-              </div>
-
-              <div className="space-y-4">
+              {/* 3. Actions Section */}
+              <div className="space-y-4 border-b border-[var(--border)] pb-6">
                 <h3 className="text-lg font-semibold">Actions</h3>
                 <Select
                   label="Station"
@@ -907,6 +808,121 @@ export default function OperatorConsole() {
                 {selectedWorkOrder.workOrder.status === "HOLD" && (
                   <div className="rounded-md border border-[var(--status-warning-border)] bg-[var(--status-warning-surface)] px-4 py-3 text-sm text-[color:var(--status-warning-foreground)]">
                     Work order is on HOLD — actions are not available.
+                  </div>
+                )}
+              </div>
+
+              {/* 4. Collapsible Notes Section */}
+              <div className="space-y-2">
+                <button
+                  onClick={() => setIsNotesOpen(!isNotesOpen)}
+                  className="flex w-full items-center justify-between rounded-md border border-[var(--border)] bg-[var(--surface-muted)] px-4 py-3 text-left transition-colors hover:bg-[var(--table-row-hover)]"
+                >
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-lg font-semibold">Notes</h3>
+                    {notesCount > 0 && (
+                      <span className="inline-flex items-center justify-center rounded-full bg-[var(--status-info-accent)] px-2 py-0.5 text-xs font-medium text-[color:var(--status-info-foreground)]">
+                        {notesCount}
+                      </span>
+                    )}
+                  </div>
+                  {isNotesOpen ? (
+                    <ChevronUpIcon className="h-5 w-5 text-[color:var(--muted)]" />
+                  ) : (
+                    <ChevronDownIcon className="h-5 w-5 text-[color:var(--muted)]" />
+                  )}
+                </button>
+                {isNotesOpen && (
+                  <div className="rounded-md border border-[var(--border)] bg-[var(--surface)] p-4">
+                    <NotesTimeline
+                      workOrderId={selectedWorkOrder.workOrder.id}
+                      onError={(err) => setError(err)}
+                      onSuccess={(msg) => setMessage(msg)}
+                      onNotesChange={(count) => setNotesCount(count)}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* 5. Collapsible Attachments Section */}
+              <div className="space-y-2">
+                <button
+                  onClick={() => setIsAttachmentsOpen(!isAttachmentsOpen)}
+                  className="flex w-full items-center justify-between rounded-md border border-[var(--border)] bg-[var(--surface-muted)] px-4 py-3 text-left transition-colors hover:bg-[var(--table-row-hover)]"
+                >
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-lg font-semibold">Attachments</h3>
+                    {attachmentCount > 0 && (
+                      <span className="inline-flex items-center justify-center rounded-full bg-[var(--status-info-accent)] px-2 py-0.5 text-xs font-medium text-[color:var(--status-info-foreground)]">
+                        {attachmentCount}
+                      </span>
+                    )}
+                  </div>
+                  {isAttachmentsOpen ? (
+                    <ChevronUpIcon className="h-5 w-5 text-[color:var(--muted)]" />
+                  ) : (
+                    <ChevronDownIcon className="h-5 w-5 text-[color:var(--muted)]" />
+                  )}
+                </button>
+                {isAttachmentsOpen && (
+                  <div className="rounded-md border border-[var(--border)] bg-[var(--surface)]">
+                    <FileListDisplay
+                      workOrderId={selectedWorkOrder.workOrder.id}
+                      readOnly={true}
+                      onError={(err) => setError(err)}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* 6. Stage Details */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">
+                  Stage Details: {selectedWorkOrder.workOrder.currentStage.name}
+                </h3>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-1 text-sm">
+                    <p className="text-xs uppercase tracking-wide text-[color:var(--muted)]">Stage Code</p>
+                    <p className="font-medium">
+                      {selectedWorkOrder.workOrder.currentStage.code}
+                    </p>
+                  </div>
+                  <div className="space-y-1 text-sm">
+                    <p className="text-xs uppercase tracking-wide text-[color:var(--muted)]">Sequence</p>
+                    <p className="font-medium">
+                      {selectedWorkOrder.workOrder.currentStage.sequence}
+                    </p>
+                  </div>
+                  <div className="space-y-1 text-sm">
+                    <p className="text-xs uppercase tracking-wide text-[color:var(--muted)]">Work Center</p>
+                    <p className="font-medium">
+                      {selectedWorkOrder.workOrder.currentStage.workCenter.name}
+                    </p>
+                  </div>
+                  <div className="space-y-1 text-sm">
+                    <p className="text-xs uppercase tracking-wide text-[color:var(--muted)]">Department</p>
+                    <p className="font-medium">
+                      {selectedWorkOrder.workOrder.currentStage.workCenter.department.name}
+                    </p>
+                  </div>
+                  <div className="space-y-1 text-sm">
+                    <p className="text-xs uppercase tracking-wide text-[color:var(--muted)]">Standard Time</p>
+                    <p className="font-medium">
+                      {selectedWorkOrder.workOrder.currentStage.standardSeconds} seconds
+                    </p>
+                  </div>
+                  <div className="space-y-1 text-sm">
+                    <p className="text-xs uppercase tracking-wide text-[color:var(--muted)]">Stage Progress</p>
+                    <p className="font-medium">
+                      {selectedWorkOrder.workOrder.currentStageIndex + 1} of{" "}
+                      {selectedWorkOrder.workOrder.enabledStagesCount}
+                    </p>
+                  </div>
+                </div>
+
+                {selectedWorkOrder.workOrder.currentStage.workInstruction && (
+                  <div className="rounded-md border border-[var(--status-info-border)] bg-[var(--status-info-surface)] px-4 py-3 text-sm text-[color:var(--status-info-foreground)]">
+                    Work instruction version {selectedWorkOrder.workOrder.currentStage.workInstruction.version} available
                   </div>
                 )}
               </div>
