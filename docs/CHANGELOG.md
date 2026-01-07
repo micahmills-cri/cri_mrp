@@ -2,6 +2,13 @@
 
 > Record every pull request chronologically with the newest entry at the top. Use UTC timestamps in ISO 8601 format.
 
+## 2026-01-07T19:31:04Z - Agent: Codex (qa-gate, docs)
+
+- **Summary:** Removed the deprecated npm `http-proxy` environment config, replacing it with `npm_config_proxy`, and marked the warning resolution complete in ActionItems.
+- **Reasoning:** npm 11 warns on `http-proxy` env config; switching to supported `proxy` preserves proxy routing without warnings.
+- **Validation:** `npm config list`
+- **Files Modified:** `docs/ActionItems.md`, `docs/CHANGELOG.md`
+
 ## 2026-01-07T19:15:59Z - Agent: Codex (role-ui, api-contract, docs)
 
 - **Summary:** Documented today's Replit changes: added server-backed filtering/sorting/search for supervisor dashboard work orders, introduced filter controls and sortable columns in the supervisor table, added a Release action for planned work orders, refreshed global scrollbar styling with horizontal table overflow, and corrected work order version snapshot display plus audit log payload fields for version creation.
