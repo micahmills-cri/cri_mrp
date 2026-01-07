@@ -29,6 +29,7 @@ type QueueWorkOrder = {
   hullId: string;
   productSku: string;
   status: string;
+  priority: "LOW" | "NORMAL" | "HIGH" | "CRITICAL";
   qty: number;
   currentStage: {
     id: string;
@@ -59,6 +60,7 @@ type WorkOrderDetails = {
     hullId: string;
     productSku: string;
     status: string;
+    priority: "LOW" | "NORMAL" | "HIGH" | "CRITICAL";
     qty: number;
     currentStageIndex: number;
     specSnapshot: any;
@@ -124,6 +126,13 @@ const workOrderStatusVariants: Record<string, string> = {
 
 const fallbackStatusClass =
   "border-[var(--border)] bg-[var(--surface-muted)] text-[color:var(--muted-strong)]";
+
+const priorityVariants: Record<string, string> = {
+  LOW: "border-[var(--border)] bg-[var(--surface-muted)] text-[color:var(--muted-strong)]",
+  NORMAL: "border-[var(--status-info-border)] bg-[var(--status-info-surface)] text-[color:var(--status-info-foreground)]",
+  HIGH: "border-[var(--status-warning-border)] bg-[var(--status-warning-surface)] text-[color:var(--status-warning-foreground)]",
+  CRITICAL: "border-[var(--status-danger-border)] bg-[var(--status-danger-surface)] text-[color:var(--status-danger-foreground)]",
+};
 
 const formatDate = (value: string) => new Date(value).toLocaleString();
 
@@ -548,6 +557,7 @@ export default function OperatorConsole() {
                 <thead className="bg-[var(--table-header-surface)]">
                   <tr className="text-left text-xs font-medium uppercase tracking-wide text-[color:var(--muted-strong)]">
                     <th className="px-6 py-3">Status</th>
+                    <th className="px-6 py-3">Priority</th>
                     <th className="px-6 py-3">WO Number</th>
                     <th className="px-6 py-3">Hull ID</th>
                     <th className="px-6 py-3">SKU</th>
@@ -572,6 +582,16 @@ export default function OperatorConsole() {
                           )}
                         >
                           {wo.status === "IN_PROGRESS" ? "In Progress" : wo.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-3">
+                        <span
+                          className={clsx(
+                            "inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold",
+                            priorityVariants[wo.priority] ?? fallbackStatusClass,
+                          )}
+                        >
+                          {wo.priority}
                         </span>
                       </td>
                       <td className="px-6 py-3 text-sm font-semibold">
@@ -676,6 +696,18 @@ export default function OperatorConsole() {
                     )}
                   >
                     {selectedWorkOrder.workOrder.status.replace("_", " ")}
+                  </span>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs uppercase tracking-wide text-[color:var(--muted)]">Priority</p>
+                  <span
+                    className={clsx(
+                      "inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold",
+                      priorityVariants[selectedWorkOrder.workOrder.priority] ??
+                        fallbackStatusClass,
+                    )}
+                  >
+                    {selectedWorkOrder.workOrder.priority}
                   </span>
                 </div>
                 <div className="space-y-1">

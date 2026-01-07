@@ -80,6 +80,7 @@ export async function GET(request: NextRequest) {
         hullId: wo.hullId,
         productSku: wo.productSku,
         status: wo.status,
+        priority: wo.priority,
         qty: wo.qty,
         currentStage: currentStage ? {
           id: currentStage.id,
