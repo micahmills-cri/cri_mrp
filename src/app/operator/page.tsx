@@ -150,6 +150,7 @@ export default function OperatorConsole() {
   const [scrapQty, setScrapQty] = useState("");
   const [isActionPanelOpen, setIsActionPanelOpen] = useState(false);
   const [isAttachmentsOpen, setIsAttachmentsOpen] = useState(false);
+  const [attachmentCount, setAttachmentCount] = useState(0);
   const router = useRouter();
 
   useEffect(() => {
@@ -296,8 +297,24 @@ export default function OperatorConsole() {
           const data = await response.json();
           setSelectedWorkOrder(data);
           setIsActionPanelOpen(true);
+          setIsAttachmentsOpen(false);
           if (data.workOrder.currentStage.workCenter.stations.length === 1) {
             setSelectedStation(data.workOrder.currentStage.workCenter.stations[0].id);
+          }
+          // Fetch attachment count
+          try {
+            const attachmentsResponse = await fetch(
+              `/api/work-orders/${data.workOrder.id}/attachments`,
+              { credentials: "include" }
+            );
+            if (attachmentsResponse.ok) {
+              const attachments = await attachmentsResponse.json();
+              setAttachmentCount(Array.isArray(attachments) ? attachments.length : 0);
+            } else {
+              setAttachmentCount(0);
+            }
+          } catch {
+            setAttachmentCount(0);
           }
         } else {
           const data = await response.json();
@@ -705,7 +722,14 @@ export default function OperatorConsole() {
                   onClick={() => setIsAttachmentsOpen(!isAttachmentsOpen)}
                   className="flex w-full items-center justify-between rounded-md border border-[var(--border)] bg-[var(--surface-muted)] px-4 py-3 text-left transition-colors hover:bg-[var(--table-row-hover)]"
                 >
-                  <h3 className="text-lg font-semibold">Attachments</h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-lg font-semibold">Attachments</h3>
+                    {attachmentCount > 0 && (
+                      <span className="inline-flex items-center justify-center rounded-full bg-[var(--status-info-accent)] px-2 py-0.5 text-xs font-medium text-[color:var(--status-info-foreground)]">
+                        {attachmentCount}
+                      </span>
+                    )}
+                  </div>
                   {isAttachmentsOpen ? (
                     <ChevronUpIcon className="h-5 w-5 text-[color:var(--muted)]" />
                   ) : (
