@@ -1310,7 +1310,16 @@ export default function SupervisorView() {
                               <Button size="sm" onClick={() => loadWorkOrderDetails(wo.id)}>
                                 Open
                               </Button>
-                              {wo.status !== 'HOLD' && wo.status !== 'COMPLETED' && (
+                              {wo.status === 'PLANNED' && (
+                                <Button
+                                  size="sm"
+                                  variant="success"
+                                  onClick={() => releaseWorkOrder(wo.id)}
+                                >
+                                  Release
+                                </Button>
+                              )}
+                              {wo.status !== 'HOLD' && wo.status !== 'COMPLETED' && wo.status !== 'PLANNED' && (
                                 <Button
                                   size="sm"
                                   variant="warning"
