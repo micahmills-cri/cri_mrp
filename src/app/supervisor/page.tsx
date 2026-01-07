@@ -10,7 +10,7 @@ import { DataCard, DataGrid } from '../../components/ui/DataCard'
 import { StatusCard, StatusGrid } from '../../components/ui/StatusCard'
 import { Button } from '../../components/ui/Button'
 import { Select } from '../../components/ui/Select'
-import { PaperClipIcon, ChatBubbleLeftIcon } from '@heroicons/react/24/solid'
+import { PaperClipIcon, ChatBubbleLeftIcon, ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/solid'
 
 type WorkOrder = {
   id: string
@@ -272,6 +272,7 @@ export default function SupervisorView() {
     }>
   >([])
   const [kanbanWorkCenters, setKanbanWorkCenters] = useState<KanbanWorkCenter[]>([])
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set())
   const [routingMode, setRoutingMode] = useState<'default' | 'create_new' | 'existing'>('default')
   const [availableRoutingVersions, setAvailableRoutingVersions] = useState<any[]>([])
   const [loadingRoutings, setLoadingRoutings] = useState(false)
@@ -1008,7 +1009,20 @@ export default function SupervisorView() {
     }
   }
 
-  // Render Kanban view
+  // Toggle section expansion
+  const toggleSection = (sectionKey: string) => {
+    setExpandedSections((prev) => {
+      const newSet = new Set(prev)
+      if (newSet.has(sectionKey)) {
+        newSet.delete(sectionKey)
+      } else {
+        newSet.add(sectionKey)
+      }
+      return newSet
+    })
+  }
+
+  // Render Kanban view - Vertical Accordion Layout
   const renderKanbanView = () => {
     const columns = buildKanbanColumns(workOrders, kanbanWorkCenters)
 
@@ -1019,7 +1033,7 @@ export default function SupervisorView() {
           border: '1px solid var(--border)',
           borderRadius: '8px',
           boxShadow: 'var(--shadow-card)',
-          padding: '1.25rem',
+          padding: '1rem',
         }}
       >
         <div
@@ -1037,303 +1051,293 @@ export default function SupervisorView() {
         </div>
 
         <div
+          role="list"
+          aria-label="Active work orders grouped by stage"
           style={{
-            position: 'relative',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.5rem',
           }}
         >
-          <div
-            role="list"
-            aria-label="Active work orders grouped by stage"
-            style={{
-              display: 'flex',
-              gap: '1rem',
-              overflowX: 'auto',
-              padding: '0 0.25rem 0.75rem',
-              margin: '0 -0.25rem',
-              WebkitOverflowScrolling: 'touch',
-              scrollSnapType: 'x mandatory',
-              scrollPaddingInline: '0.25rem',
-              alignItems: 'stretch',
-              scrollbarGutter: 'stable both-edges',
-              touchAction: 'pan-x pan-y',
-            }}
-          >
-            {columns.map((column) => {
-              const columnWOs = column.workOrders
+          {columns.map((column) => {
+            const columnWOs = column.workOrders
+            const isExpanded = expandedSections.has(column.key)
+            const hasWorkOrders = columnWOs.length > 0
 
-              return (
-                <div
-                  key={column.key}
-                  role="listitem"
+            return (
+              <div
+                key={column.key}
+                role="listitem"
+                style={{
+                  backgroundColor: 'var(--surface)',
+                  border: '1px solid var(--border)',
+                  borderRadius: '8px',
+                  overflow: 'hidden',
+                  boxShadow: 'var(--shadow-card)',
+                }}
+              >
+                {/* Collapsible Header */}
+                <button
+                  onClick={() => toggleSection(column.key)}
                   style={{
-                    backgroundColor: 'var(--surface)',
-                    border: '1px solid var(--border)',
-                    borderRadius: '8px',
-                    padding: '1rem',
-                    boxShadow: 'var(--shadow-card-hover)',
-                    minHeight: '400px',
+                    width: '100%',
                     display: 'flex',
-                    flexDirection: 'column',
-                    gap: '0.75rem',
-                    flex: '0 0 clamp(260px, 60vw, 340px)',
-                    scrollSnapAlign: 'start',
-                    scrollMarginInline: '0.25rem',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '0.875rem 1rem',
+                    backgroundColor: hasWorkOrders ? 'var(--table-header-surface)' : 'var(--surface)',
+                    border: 'none',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    transition: 'background-color 0.15s ease',
                   }}
                 >
-                  <div>
-                    <h3
-                      style={{
-                        margin: '0 0 0.25rem 0',
-                        fontSize: '1.1rem',
-                        fontWeight: '600',
-                      }}
-                    >
-                      {column.label} ({columnWOs.length})
-                    </h3>
-                    {column.description && (
-                      <p
-                        style={{
-                          margin: 0,
-                          fontSize: '0.8rem',
-                          color: 'var(--muted)',
-                        }}
-                      >
-                        {column.description}
-                      </p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    {isExpanded ? (
+                      <ChevronDownIcon style={{ width: '1.25rem', height: '1.25rem', color: 'var(--muted)', flexShrink: 0 }} />
+                    ) : (
+                      <ChevronRightIcon style={{ width: '1.25rem', height: '1.25rem', color: 'var(--muted)', flexShrink: 0 }} />
                     )}
-                  </div>
-
-                  {columnWOs.length === 0 ? (
-                    <div
-                      style={{
-                        fontSize: '0.85rem',
-                        color: 'var(--muted)',
-                      }}
-                    >
-                      No work orders
-                    </div>
-                  ) : (
-                    columnWOs.map((wo) => {
-                      const priorityColors: Record<string, { bg: string; text: string }> = {
-                        LOW: {
-                          bg: 'var(--status-success-surface)',
-                          text: 'var(--status-success-foreground)',
-                        },
-                        NORMAL: {
-                          bg: 'var(--status-info-surface)',
-                          text: 'var(--status-info-foreground)',
-                        },
-                        HIGH: {
-                          bg: 'var(--status-warning-surface)',
-                          text: 'var(--status-warning-foreground)',
-                        },
-                        CRITICAL: {
-                          bg: 'var(--status-danger-surface)',
-                          text: 'var(--status-danger-foreground)',
-                        },
-                      }
-                      const priorityColor =
-                        priorityColors[wo.priority || 'NORMAL'] || priorityColors.NORMAL
-                      const stageName = wo.currentStage?.name || 'Stage not assigned'
-                      const workCenterLabel = wo.currentWorkCenterName || 'No work center'
-                      const departmentLabel = wo.currentDepartmentName
-
-                      return (
-                        <div
-                          key={wo.id}
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <span style={{ fontSize: '1rem', fontWeight: '600', color: 'var(--foreground)' }}>
+                          {column.label}
+                        </span>
+                        <span
                           style={{
-                            padding: '0.75rem',
-                            backgroundColor: 'var(--table-header-surface)',
-                            borderRadius: '4px',
-                            border: '1px solid var(--border)',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '0.35rem',
+                            fontSize: '0.75rem',
+                            fontWeight: '600',
+                            backgroundColor: hasWorkOrders ? 'var(--color-primary-600)' : 'var(--muted)',
+                            color: 'white',
+                            padding: '0.125rem 0.5rem',
+                            borderRadius: '999px',
+                            minWidth: '1.5rem',
+                            textAlign: 'center',
                           }}
                         >
+                          {columnWOs.length}
+                        </span>
+                      </div>
+                      {column.description && (
+                        <p style={{ margin: '0.125rem 0 0 0', fontSize: '0.8rem', color: 'var(--muted)' }}>
+                          {column.description}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </button>
+
+                {/* Collapsible Content */}
+                <div
+                  style={{
+                    maxHeight: isExpanded ? '2000px' : '0',
+                    overflow: 'hidden',
+                    transition: 'max-height 0.3s ease-in-out',
+                  }}
+                >
+                  <div
+                    style={{
+                      padding: isExpanded ? '0.75rem 1rem 1rem' : '0 1rem',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.5rem',
+                    }}
+                  >
+                    {columnWOs.length === 0 ? (
+                      <div
+                        style={{
+                          fontSize: '0.875rem',
+                          color: 'var(--muted)',
+                          padding: '0.5rem 0',
+                        }}
+                      >
+                        No work orders in this section
+                      </div>
+                    ) : (
+                      columnWOs.map((wo) => {
+                        const priorityColors: Record<string, { bg: string; text: string }> = {
+                          LOW: {
+                            bg: 'var(--status-success-surface)',
+                            text: 'var(--status-success-foreground)',
+                          },
+                          NORMAL: {
+                            bg: 'var(--status-info-surface)',
+                            text: 'var(--status-info-foreground)',
+                          },
+                          HIGH: {
+                            bg: 'var(--status-warning-surface)',
+                            text: 'var(--status-warning-foreground)',
+                          },
+                          CRITICAL: {
+                            bg: 'var(--status-danger-surface)',
+                            text: 'var(--status-danger-foreground)',
+                          },
+                        }
+                        const priorityColor =
+                          priorityColors[wo.priority || 'NORMAL'] || priorityColors.NORMAL
+                        const stageName = wo.currentStage?.name || 'Stage not assigned'
+                        const workCenterLabel = wo.currentWorkCenterName || 'No work center'
+                        const departmentLabel = wo.currentDepartmentName
+
+                        return (
                           <div
+                            key={wo.id}
                             style={{
+                              padding: '0.875rem',
+                              backgroundColor: 'var(--table-header-surface)',
+                              borderRadius: '6px',
+                              border: '1px solid var(--border)',
                               display: 'flex',
-                              justifyContent: 'space-between',
-                              alignItems: 'center',
+                              flexDirection: 'column',
+                              gap: '0.5rem',
                             }}
                           >
-                            <div style={{ fontWeight: '500' }}>{wo.number}</div>
-                            <div style={{ display: 'flex', gap: '0.25rem' }}>
-                              {wo._count && wo._count.attachments > 0 && (
-                                <span
-                                  style={{
-                                    fontSize: '0.75rem',
-                                    backgroundColor: 'var(--status-info-surface)',
-                                    color: 'var(--status-info-foreground)',
-                                    padding: '0.125rem 0.25rem',
-                                    borderRadius: '10px',
-                                    fontWeight: '500',
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: '0.25rem',
-                                    position: 'relative',
-                                  }}
-                                >
-                                  <span
-                                    style={{
-                                      border: 0,
-                                      clip: 'rect(0, 0, 0, 0)',
-                                      height: '1px',
-                                      margin: '-1px',
-                                      overflow: 'hidden',
-                                      padding: 0,
-                                      position: 'absolute',
-                                      width: '1px',
-                                      whiteSpace: 'nowrap',
-                                    }}
-                                  >
-                                    {`${wo._count.attachments} attachment${
-                                      wo._count.attachments === 1 ? '' : 's'
-                                    }`}
-                                  </span>
-                                  <PaperClipIcon
-                                    aria-hidden="true"
-                                    style={{ height: '0.75rem', width: '0.75rem' }}
-                                  />
-                                  <span aria-hidden="true">{wo._count.attachments}</span>
-                                </span>
-                              )}
-                              {wo._count && wo._count.notes > 0 && (
-                                <span
-                                  style={{
-                                    fontSize: '0.75rem',
-                                    backgroundColor: 'var(--status-success-surface)',
-                                    color: 'var(--status-success-foreground)',
-                                    padding: '0.125rem 0.25rem',
-                                    borderRadius: '10px',
-                                    fontWeight: '500',
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: '0.25rem',
-                                  }}
-                                >
-                                  <span
-                                    className="sr-only"
-                                    style={{
-                                      position: 'absolute',
-                                      width: '1px',
-                                      height: '1px',
-                                      padding: '0',
-                                      margin: '-1px',
-                                      overflow: 'hidden',
-                                      clip: 'rect(0, 0, 0, 0)',
-                                      whiteSpace: 'nowrap',
-                                      borderWidth: '0',
-                                    }}
-                                  >
-                                    {`${wo._count.notes} note${wo._count.notes === 1 ? '' : 's'}`}
-                                  </span>
-                                  <ChatBubbleLeftIcon
-                                    aria-hidden="true"
-                                    style={{ height: '0.75rem', width: '0.75rem' }}
-                                  />
-                                  <span aria-hidden="true">{wo._count.notes}</span>
-                                </span>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Priority Badge */}
-                          <div>
-                            <span
-                              style={{
-                                fontSize: '0.75rem',
-                                backgroundColor: priorityColor.bg,
-                                color: priorityColor.text,
-                                padding: '0.125rem 0.375rem',
-                                borderRadius: '3px',
-                                fontWeight: '600',
-                              }}
-                            >
-                              {wo.priority || 'NORMAL'}
-                            </span>
-                          </div>
-
-                          <div
-                            style={{
-                              fontSize: '0.875rem',
-                              color: 'var(--muted)',
-                            }}
-                          >
-                            {wo.hullId} •{' '}
-                            {wo.routingVersion
-                              ? `${wo.routingVersion.model}${
-                                  wo.routingVersion.trim ? `-${wo.routingVersion.trim}` : ''
-                                }`
-                              : wo.productSku}
-                          </div>
-
-                          {wo.plannedStartDate || wo.plannedFinishDate ? (
+                            {/* Header Row */}
                             <div
                               style={{
-                                fontSize: '0.75rem',
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                flexWrap: 'wrap',
+                                gap: '0.5rem',
+                              }}
+                            >
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <span style={{ fontWeight: '600', fontSize: '1rem' }}>{wo.number}</span>
+                                <span
+                                  style={{
+                                    fontSize: '0.75rem',
+                                    backgroundColor: priorityColor.bg,
+                                    color: priorityColor.text,
+                                    padding: '0.125rem 0.375rem',
+                                    borderRadius: '3px',
+                                    fontWeight: '600',
+                                  }}
+                                >
+                                  {wo.priority || 'NORMAL'}
+                                </span>
+                              </div>
+                              <div style={{ display: 'flex', gap: '0.25rem' }}>
+                                {wo._count && wo._count.attachments > 0 && (
+                                  <span
+                                    style={{
+                                      fontSize: '0.75rem',
+                                      backgroundColor: 'var(--status-info-surface)',
+                                      color: 'var(--status-info-foreground)',
+                                      padding: '0.125rem 0.375rem',
+                                      borderRadius: '10px',
+                                      fontWeight: '500',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '0.25rem',
+                                    }}
+                                  >
+                                    <PaperClipIcon style={{ height: '0.75rem', width: '0.75rem' }} />
+                                    <span>{wo._count.attachments}</span>
+                                  </span>
+                                )}
+                                {wo._count && wo._count.notes > 0 && (
+                                  <span
+                                    style={{
+                                      fontSize: '0.75rem',
+                                      backgroundColor: 'var(--status-success-surface)',
+                                      color: 'var(--status-success-foreground)',
+                                      padding: '0.125rem 0.375rem',
+                                      borderRadius: '10px',
+                                      fontWeight: '500',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '0.25rem',
+                                    }}
+                                  >
+                                    <ChatBubbleLeftIcon style={{ height: '0.75rem', width: '0.75rem' }} />
+                                    <span>{wo._count.notes}</span>
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Details Row */}
+                            <div
+                              style={{
+                                fontSize: '0.875rem',
                                 color: 'var(--muted)',
                               }}
                             >
-                              {wo.plannedStartDate && (
-                                <div>
-                                  Start: {new Date(wo.plannedStartDate).toLocaleDateString()}
-                                </div>
+                              {wo.hullId} •{' '}
+                              {wo.routingVersion
+                                ? `${wo.routingVersion.model}${
+                                    wo.routingVersion.trim ? `-${wo.routingVersion.trim}` : ''
+                                  }`
+                                : wo.productSku}
+                            </div>
+
+                            {/* Stage & Work Center */}
+                            <div style={{ fontSize: '0.875rem', display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                              <span><strong>Stage:</strong> {stageName}</span>
+                              <span style={{ color: 'var(--muted)' }}>|</span>
+                              <span><strong>Work Center:</strong> {workCenterLabel}{departmentLabel ? ` • ${departmentLabel}` : ''}</span>
+                            </div>
+
+                            {/* Dates */}
+                            {(wo.plannedStartDate || wo.plannedFinishDate) && (
+                              <div
+                                style={{
+                                  fontSize: '0.8rem',
+                                  color: 'var(--muted)',
+                                  display: 'flex',
+                                  gap: '1rem',
+                                }}
+                              >
+                                {wo.plannedStartDate && (
+                                  <span>Start: {new Date(wo.plannedStartDate).toLocaleDateString()}</span>
+                                )}
+                                {wo.plannedFinishDate && (
+                                  <span>Finish: {new Date(wo.plannedFinishDate).toLocaleDateString()}</span>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Actions */}
+                            <div
+                              style={{
+                                marginTop: '0.25rem',
+                                display: 'flex',
+                                gap: '0.5rem',
+                                flexWrap: 'wrap',
+                              }}
+                            >
+                              <Button size="sm" onClick={() => loadWorkOrderDetails(wo.id)}>
+                                Open
+                              </Button>
+                              {wo.status !== 'HOLD' && wo.status !== 'COMPLETED' && (
+                                <Button
+                                  size="sm"
+                                  variant="warning"
+                                  onClick={() => holdWorkOrder(wo.id)}
+                                >
+                                  Hold
+                                </Button>
                               )}
-                              {wo.plannedFinishDate && (
-                                <div>
-                                  Finish: {new Date(wo.plannedFinishDate).toLocaleDateString()}
-                                </div>
+                              {wo.status === 'HOLD' && (
+                                <Button
+                                  size="sm"
+                                  variant="success"
+                                  onClick={() => unholdWorkOrder(wo.id)}
+                                >
+                                  Unhold
+                                </Button>
                               )}
                             </div>
-                          ) : null}
-
-                          <div style={{ fontSize: '0.85rem' }}>
-                            <strong>Stage:</strong> {stageName}
                           </div>
-                          <div style={{ fontSize: '0.85rem' }}>
-                            <strong>Work Center:</strong> {workCenterLabel}
-                            {departmentLabel ? ` • ${departmentLabel}` : ''}
-                          </div>
-
-                          <div
-                            style={{
-                              marginTop: '0.25rem',
-                              display: 'flex',
-                              gap: '0.25rem',
-                            }}
-                          >
-                            <Button size="sm" onClick={() => loadWorkOrderDetails(wo.id)}>
-                              Open
-                            </Button>
-                            {wo.status !== 'HOLD' && wo.status !== 'COMPLETED' && (
-                              <Button
-                                size="sm"
-                                variant="warning"
-                                onClick={() => holdWorkOrder(wo.id)}
-                              >
-                                Hold
-                              </Button>
-                            )}
-                            {wo.status === 'HOLD' && (
-                              <Button
-                                size="sm"
-                                variant="success"
-                                onClick={() => unholdWorkOrder(wo.id)}
-                              >
-                                Unhold
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                      )
-                    })
-                  )}
+                        )
+                      })
+                    )}
+                  </div>
                 </div>
-              )
-            })}
-          </div>
+              </div>
+            )
+          })}
         </div>
       </div>
     )
