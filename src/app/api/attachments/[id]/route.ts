@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/server/db/client';
 import { getUserFromRequest } from '../../../../lib/auth';
 import { ObjectStorageService, ObjectNotFoundError } from '@/server/storage/objectStorage';
-import { ObjectPermission } from '@/server/storage/objectAcl';
 
 // GET /api/attachments/[id] - Download attachment
 export async function GET(
@@ -60,18 +59,6 @@ export async function GET(
     
     try {
       const objectFile = await objectStorageService.getObjectEntityFile(attachment.filePath);
-      
-      // Check object-level permissions
-      const canAccess = await objectStorageService.canAccessObjectEntity({
-        objectFile,
-        userId: user.userId,
-        requestedPermission: ObjectPermission.READ,
-      });
-      
-      if (!canAccess) {
-        return NextResponse.json({ message: 'Access denied to file' }, { status: 403 });
-      }
-
       const { stream, metadata } = await objectStorageService.getObjectStream(objectFile);
       
       // Check if inline viewing is requested
