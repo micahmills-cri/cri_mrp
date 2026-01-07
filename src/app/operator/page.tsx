@@ -14,6 +14,8 @@ import {
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { Textarea } from "@/components/ui/Textarea";
+import FileListDisplay from "@/components/FileListDisplay";
+import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/solid";
 
 type Station = {
   id: string;
@@ -147,6 +149,7 @@ export default function OperatorConsole() {
   const [goodQty, setGoodQty] = useState("");
   const [scrapQty, setScrapQty] = useState("");
   const [isActionPanelOpen, setIsActionPanelOpen] = useState(false);
+  const [isAttachmentsOpen, setIsAttachmentsOpen] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -692,6 +695,30 @@ export default function OperatorConsole() {
                 {selectedWorkOrder.workOrder.currentStage.workInstruction && (
                   <div className="rounded-md border border-[var(--status-info-border)] bg-[var(--status-info-surface)] px-4 py-3 text-sm text-[color:var(--status-info-foreground)]">
                     Work instruction version {selectedWorkOrder.workOrder.currentStage.workInstruction.version} available
+                  </div>
+                )}
+              </div>
+
+              {/* Collapsible Attachments Section */}
+              <div className="space-y-2">
+                <button
+                  onClick={() => setIsAttachmentsOpen(!isAttachmentsOpen)}
+                  className="flex w-full items-center justify-between rounded-md border border-[var(--border)] bg-[var(--surface-muted)] px-4 py-3 text-left transition-colors hover:bg-[var(--table-row-hover)]"
+                >
+                  <h3 className="text-lg font-semibold">Attachments</h3>
+                  {isAttachmentsOpen ? (
+                    <ChevronUpIcon className="h-5 w-5 text-[color:var(--muted)]" />
+                  ) : (
+                    <ChevronDownIcon className="h-5 w-5 text-[color:var(--muted)]" />
+                  )}
+                </button>
+                {isAttachmentsOpen && (
+                  <div className="rounded-md border border-[var(--border)] bg-[var(--surface)]">
+                    <FileListDisplay
+                      workOrderId={selectedWorkOrder.workOrder.id}
+                      readOnly={true}
+                      onError={(err) => setError(err)}
+                    />
                   </div>
                 )}
               </div>
