@@ -310,7 +310,9 @@ export default function NotesTimeline({ workOrderId, onError, onSuccess }: Notes
             flex: 1,
             minWidth: '200px',
             padding: '0.5rem',
-            border: '1px solid #ced4da',
+            backgroundColor: 'var(--surface)',
+            color: 'var(--foreground)',
+            border: '1px solid var(--border-strong)',
             borderRadius: '4px',
             fontSize: '0.875rem'
           }}
@@ -320,7 +322,9 @@ export default function NotesTimeline({ workOrderId, onError, onSuccess }: Notes
           onChange={(e) => setFilterScope(e.target.value)}
           style={{
             padding: '0.5rem',
-            border: '1px solid #ced4da',
+            backgroundColor: 'var(--surface)',
+            color: 'var(--foreground)',
+            border: '1px solid var(--border-strong)',
             borderRadius: '4px',
             fontSize: '0.875rem',
             cursor: 'pointer'
@@ -337,11 +341,11 @@ export default function NotesTimeline({ workOrderId, onError, onSuccess }: Notes
       {/* Add Note Form */}
       {showAddNote && (
         <div style={{
-          backgroundColor: '#f8f9fa',
+          backgroundColor: 'var(--surface-muted)',
           padding: '1rem',
           borderRadius: '4px',
           marginBottom: '1rem',
-          border: '1px solid #dee2e6'
+          border: '1px solid var(--border-strong)'
         }}>
           <div style={{ marginBottom: '0.5rem' }}>
             <select
@@ -349,7 +353,9 @@ export default function NotesTimeline({ workOrderId, onError, onSuccess }: Notes
               onChange={(e) => setNoteScope(e.target.value)}
               style={{
                 padding: '0.25rem 0.5rem',
-                border: '1px solid #ced4da',
+                backgroundColor: 'var(--surface)',
+                color: 'var(--foreground)',
+                border: '1px solid var(--border-strong)',
                 borderRadius: '4px',
                 fontSize: '0.875rem'
               }}
@@ -368,7 +374,9 @@ export default function NotesTimeline({ workOrderId, onError, onSuccess }: Notes
               width: '100%',
               minHeight: '80px',
               padding: '0.5rem',
-              border: '1px solid #ced4da',
+              backgroundColor: 'var(--surface)',
+              color: 'var(--foreground)',
+              border: '1px solid var(--border-strong)',
               borderRadius: '4px',
               fontSize: '0.875rem',
               fontFamily: 'inherit',
@@ -386,8 +394,8 @@ export default function NotesTimeline({ workOrderId, onError, onSuccess }: Notes
               style={{
                 padding: '0.5rem 1rem',
                 backgroundColor: 'transparent',
-                color: '#6c757d',
-                border: '1px solid #ced4da',
+                color: 'var(--muted)',
+                border: '1px solid var(--border-strong)',
                 borderRadius: '4px',
                 cursor: 'pointer',
                 fontSize: '0.875rem'
