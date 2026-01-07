@@ -95,6 +95,7 @@ export async function GET(request: NextRequest) {
         hullId: workOrder.hullId,
         productSku: workOrder.productSku,
         status: workOrder.status,
+        priority: workOrder.priority,
         qty: workOrder.qty,
         currentStageIndex: workOrder.currentStageIndex,
         specSnapshot: workOrder.specSnapshot,
