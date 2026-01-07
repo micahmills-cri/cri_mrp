@@ -2,6 +2,13 @@
 
 > Record every pull request chronologically with the newest entry at the top. Use UTC timestamps in ISO 8601 format.
 
+## 2026-01-07T19:15:59Z - Agent: Codex (role-ui, api-contract, docs)
+
+- **Summary:** Documented today's Replit changes: added server-backed filtering/sorting/search for supervisor dashboard work orders, introduced filter controls and sortable columns in the supervisor table, added a Release action for planned work orders, refreshed global scrollbar styling with horizontal table overflow, and corrected work order version snapshot display plus audit log payload fields for version creation.
+- **Reasoning:** Ensure documentation reflects the latest supervisor workflow improvements, UI affordances, and audit/version metadata alignment delivered in the Replit checkpoints.
+- **Validation:** Not run (documentation-only update).
+- **Files Modified:** `docs/CHANGELOG.md`
+
 ## 2026-01-07T17:18:34Z - Agent: Codex (api-contract, qa-gate, docs)
 
 - **Summary:** Updated the work order PATCH audit log writes to use schema-aligned fields and capture update details in the `after` payload. Logged the npm `http-proxy` config warning in ActionItems for follow-up.
