@@ -686,3 +686,35 @@
 .dark .table-row:hover {
   background-color: rgba(148, 163, 184, 0.08);
 }
+
+/* Custom Scrollbar Styles */
+/* WebKit browsers (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--surface-muted);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 5px;
+  border: 2px solid var(--surface-muted);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--muted);
+}
+
+::-webkit-scrollbar-corner {
+  background: var(--surface-muted);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) var(--surface-muted);
+}
