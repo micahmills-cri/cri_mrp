@@ -2705,7 +2705,7 @@ export default function SupervisorView() {
                               maxHeight: '300px',
                             }}
                           >
-                            {JSON.stringify(version.snapshotData, null, 2)}
+                            {JSON.stringify(version.snapshot, null, 2)}
                           </pre>
                         </details>
                       </div>

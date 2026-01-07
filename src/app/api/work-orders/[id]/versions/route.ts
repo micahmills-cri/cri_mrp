@@ -131,10 +131,9 @@ export async function POST(
         data: {
           actorId: user.userId,
           action: 'CREATE',
-          modelType: 'WorkOrderVersion',
+          model: 'WorkOrderVersion',
           modelId: version.id,
-          changes: { reason, versionNumber: newVersionNumber },
-          metadata: { workOrderNumber: workOrder.number }
+          after: { reason, versionNumber: newVersionNumber, workOrderNumber: workOrder.number }
         }
       })
 
