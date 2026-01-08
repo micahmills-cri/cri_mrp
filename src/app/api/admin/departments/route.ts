@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/server/db/client'
 import { getUserFromRequest } from '@/lib/auth'
+import { logger } from '@/lib/logger'
 import { z } from 'zod'
 
 // GET /api/admin/departments - List all departments
@@ -27,7 +28,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ success: true, departments })
   } catch (error) {
-    console.error('Error fetching departments:', error)
+    logger.error('Error fetching departments:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -53,10 +54,7 @@ export async function POST(request: NextRequest) {
     })
 
     if (existing) {
-      return NextResponse.json(
-        { error: 'Department name already exists' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Department name already exists' }, { status: 400 })
     }
 
     // Create department
@@ -74,7 +72,7 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
-    console.error('Error creating department:', error)
+    logger.error('Error creating department:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

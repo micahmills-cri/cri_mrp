@@ -30,10 +30,7 @@ export function ConfirmDialog({
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
-        onClick={onCancel}
-      />
+      <div className="fixed inset-0 bg-black bg-opacity-50 transition-opacity" onClick={onCancel} />
 
       {/* Dialog */}
       <div className="flex min-h-full items-center justify-center p-4">
@@ -51,25 +48,18 @@ export function ConfirmDialog({
             >
               <ExclamationTriangleIcon className="h-6 w-6" />
             </div>
-            <h3 className="text-lg font-semibold text-[color:var(--foreground)]">
-              {title}
-            </h3>
+            <h3 className="text-lg font-semibold text-[color:var(--foreground)]">{title}</h3>
           </div>
 
           {/* Message */}
-          <p className="text-sm text-[color:var(--muted-strong)] mb-6">
-            {message}
-          </p>
+          <p className="text-sm text-[color:var(--muted-strong)] mb-6">{message}</p>
 
           {/* Actions */}
           <div className="flex justify-end gap-3">
             <Button onClick={onCancel} variant="outline">
               {cancelLabel}
             </Button>
-            <Button
-              onClick={onConfirm}
-              variant={variant === 'danger' ? 'danger' : 'primary'}
-            >
+            <Button onClick={onConfirm} variant={variant === 'danger' ? 'danger' : 'primary'}>
               {confirmLabel}
             </Button>
           </div>

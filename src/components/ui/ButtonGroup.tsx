@@ -14,7 +14,7 @@ export const ButtonGroup: React.FC<ButtonGroupProps> = ({
   children,
   className,
   orientation = 'horizontal',
-  size = 'md'
+  size = 'md',
 }) => {
   return (
     <div
@@ -36,23 +36,22 @@ export const ButtonGroup: React.FC<ButtonGroupProps> = ({
         const isMiddle = !isFirst && !isLast
 
         return React.cloneElement(child, {
-          className: clsx(
-            child.props.className,
-            {
-              // Horizontal orientation
-              '-ml-px': orientation === 'horizontal' && !isFirst,
-              'rounded-r-none': orientation === 'horizontal' && !isLast,
-              'rounded-l-none': orientation === 'horizontal' && !isFirst,
-              
-              // Vertical orientation
-              '-mt-px': orientation === 'vertical' && !isFirst,
-              'rounded-b-none': orientation === 'vertical' && !isLast,
-              'rounded-t-none': orientation === 'vertical' && !isFirst,
-              
-              // Middle elements lose all rounded corners
-              'rounded-none': (orientation === 'horizontal' && isMiddle) || (orientation === 'vertical' && isMiddle),
-            }
-          ),
+          className: clsx(child.props.className, {
+            // Horizontal orientation
+            '-ml-px': orientation === 'horizontal' && !isFirst,
+            'rounded-r-none': orientation === 'horizontal' && !isLast,
+            'rounded-l-none': orientation === 'horizontal' && !isFirst,
+
+            // Vertical orientation
+            '-mt-px': orientation === 'vertical' && !isFirst,
+            'rounded-b-none': orientation === 'vertical' && !isLast,
+            'rounded-t-none': orientation === 'vertical' && !isFirst,
+
+            // Middle elements lose all rounded corners
+            'rounded-none':
+              (orientation === 'horizontal' && isMiddle) ||
+              (orientation === 'vertical' && isMiddle),
+          }),
           size: child.props.size || size,
         } as any)
       })}

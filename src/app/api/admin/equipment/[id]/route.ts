@@ -1,13 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/server/db/client'
 import { getUserFromRequest } from '@/lib/auth'
+import { logger } from '@/lib/logger'
 import { z } from 'zod'
 
 // GET /api/admin/equipment/[id] - Get equipment details
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = getUserFromRequest(request)
     if (!user || user.role !== 'ADMIN') {
@@ -31,7 +29,7 @@ export async function GET(
 
     return NextResponse.json({ success: true, equipment })
   } catch (error) {
-    console.error('Error fetching equipment:', error)
+    logger.error('Error fetching equipment:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -43,10 +41,7 @@ const updateEquipmentSchema = z.object({
   isActive: z.boolean().optional(),
 })
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = getUserFromRequest(request)
     if (!user || user.role !== 'ADMIN') {
@@ -72,10 +67,7 @@ export async function PATCH(
       })
 
       if (nameConflict) {
-        return NextResponse.json(
-          { error: 'Equipment name already exists' },
-          { status: 400 }
-        )
+        return NextResponse.json({ error: 'Equipment name already exists' }, { status: 400 })
       }
     }
 
@@ -93,16 +85,13 @@ export async function PATCH(
         { status: 400 }
       )
     }
-    console.error('Error updating equipment:', error)
+    logger.error('Error updating equipment:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
 // DELETE /api/admin/equipment/[id] - Soft delete equipment
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = getUserFromRequest(request)
     if (!user || user.role !== 'ADMIN') {
@@ -126,7 +115,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true, message: 'Equipment deleted' })
   } catch (error) {
-    console.error('Error deleting equipment:', error)
+    logger.error('Error deleting equipment:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

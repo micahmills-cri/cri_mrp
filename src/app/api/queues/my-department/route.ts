@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/server/db/client'
 import { getUserFromRequest } from '../../../../lib/auth'
+import { logger } from '@/lib/logger'
 import { WOStatus } from '@prisma/client'
 
 export async function GET(request: NextRequest) {
@@ -22,10 +23,7 @@ export async function GET(request: NextRequest) {
     // where the current stage's work center belongs to the user's department
     const workOrders = await prisma.workOrder.findMany({
       where: {
-        OR: [
-          { status: WOStatus.RELEASED },
-          { status: WOStatus.IN_PROGRESS }
-        ]
+        OR: [{ status: WOStatus.RELEASED }, { status: WOStatus.IN_PROGRESS }],
       },
       include: {
         routingVersion: {
@@ -38,39 +36,43 @@ export async function GET(request: NextRequest) {
                     department: true,
                     stations: {
                       where: { isActive: true },
-                      orderBy: { code: 'asc' }
-                    }
-                  }
-                }
-              }
-            }
-          }
+                      orderBy: { code: 'asc' },
+                    },
+                  },
+                },
+              },
+            },
+          },
         },
         woStageLogs: {
           orderBy: { createdAt: 'desc' },
           take: 1,
           include: {
             station: true,
-            user: true
-          }
-        }
+            user: true,
+          },
+        },
       },
       orderBy: [
         { status: 'desc' }, // IN_PROGRESS first
-        { createdAt: 'asc' } // Then by age
-      ]
+        { createdAt: 'asc' }, // Then by age
+      ],
     })
 
     // Filter to only include work orders where current stage is in selected department
-    const filteredWorkOrders = workOrders.filter(wo => {
-      const enabledStages = wo.routingVersion.stages.filter(s => s.enabled).sort((a, b) => a.sequence - b.sequence)
+    const filteredWorkOrders = workOrders.filter((wo) => {
+      const enabledStages = wo.routingVersion.stages
+        .filter((s) => s.enabled)
+        .sort((a, b) => a.sequence - b.sequence)
       const currentStage = enabledStages[wo.currentStageIndex]
       return currentStage && currentStage.workCenter.department.id === selectedDepartmentId
     })
 
     // Transform the data for the queue display
-    const queue = filteredWorkOrders.map(wo => {
-      const enabledStages = wo.routingVersion.stages.filter(s => s.enabled).sort((a, b) => a.sequence - b.sequence)
+    const queue = filteredWorkOrders.map((wo) => {
+      const enabledStages = wo.routingVersion.stages
+        .filter((s) => s.enabled)
+        .sort((a, b) => a.sequence - b.sequence)
       const currentStage = enabledStages[wo.currentStageIndex]
       const lastEvent = wo.woStageLogs[0]
 
@@ -82,46 +84,50 @@ export async function GET(request: NextRequest) {
         status: wo.status,
         priority: wo.priority,
         qty: wo.qty,
-        currentStage: currentStage ? {
-          id: currentStage.id,
-          code: currentStage.code,
-          name: currentStage.name,
-          sequence: currentStage.sequence,
-          workCenter: {
-            id: currentStage.workCenter.id,
-            name: currentStage.workCenter.name
-          },
-          stations: currentStage.workCenter.stations
-        } : null,
-        lastEvent: lastEvent ? {
-          event: lastEvent.event,
-          createdAt: lastEvent.createdAt,
-          station: lastEvent.station.code,
-          user: lastEvent.user.email
-        } : null,
+        currentStage: currentStage
+          ? {
+              id: currentStage.id,
+              code: currentStage.code,
+              name: currentStage.name,
+              sequence: currentStage.sequence,
+              workCenter: {
+                id: currentStage.workCenter.id,
+                name: currentStage.workCenter.name,
+              },
+              stations: currentStage.workCenter.stations,
+            }
+          : null,
+        lastEvent: lastEvent
+          ? {
+              event: lastEvent.event,
+              createdAt: lastEvent.createdAt,
+              station: lastEvent.station.code,
+              user: lastEvent.user.email,
+            }
+          : null,
         currentStageIndex: wo.currentStageIndex,
         totalEnabledStages: enabledStages.length,
-        createdAt: wo.createdAt
+        createdAt: wo.createdAt,
       }
     })
 
     // Get department name for selected department
     const selectedDepartment = await prisma.department.findUnique({
       where: { id: selectedDepartmentId },
-      select: { id: true, name: true }
+      select: { id: true, name: true },
     })
 
     return NextResponse.json({
       queue,
       department: {
         id: selectedDepartmentId,
-        name: selectedDepartment?.name || 'Unknown'
+        name: selectedDepartment?.name || 'Unknown',
       },
-      totalReady: queue.filter(wo => wo.status === WOStatus.RELEASED).length,
-      totalInProgress: queue.filter(wo => wo.status === WOStatus.IN_PROGRESS).length
+      totalReady: queue.filter((wo) => wo.status === WOStatus.RELEASED).length,
+      totalInProgress: queue.filter((wo) => wo.status === WOStatus.IN_PROGRESS).length,
     })
   } catch (error) {
-    console.error('Get queue error:', error)
+    logger.error('Get queue error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

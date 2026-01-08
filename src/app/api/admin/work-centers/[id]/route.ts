@@ -1,13 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/server/db/client'
 import { getUserFromRequest } from '@/lib/auth'
+import { logger } from '@/lib/logger'
 import { z } from 'zod'
 
 // GET /api/admin/work-centers/[id] - Get work center details
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = getUserFromRequest(request)
     if (!user || user.role !== 'ADMIN') {
@@ -35,7 +33,7 @@ export async function GET(
 
     return NextResponse.json({ success: true, workCenter })
   } catch (error) {
-    console.error('Error fetching work center:', error)
+    logger.error('Error fetching work center:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -47,10 +45,7 @@ const updateWorkCenterSchema = z.object({
   isActive: z.boolean().optional(),
 })
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = getUserFromRequest(request)
     if (!user || user.role !== 'ADMIN') {
@@ -76,10 +71,7 @@ export async function PATCH(
       })
 
       if (nameConflict) {
-        return NextResponse.json(
-          { error: 'Work center name already exists' },
-          { status: 400 }
-        )
+        return NextResponse.json({ error: 'Work center name already exists' }, { status: 400 })
       }
     }
 
@@ -111,16 +103,13 @@ export async function PATCH(
         { status: 400 }
       )
     }
-    console.error('Error updating work center:', error)
+    logger.error('Error updating work center:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
 // DELETE /api/admin/work-centers/[id] - Soft delete work center
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = getUserFromRequest(request)
     if (!user || user.role !== 'ADMIN') {
@@ -144,7 +133,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true, message: 'Work center deleted' })
   } catch (error) {
-    console.error('Error deleting work center:', error)
+    logger.error('Error deleting work center:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

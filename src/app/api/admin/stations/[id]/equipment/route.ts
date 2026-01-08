@@ -1,13 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/server/db/client'
 import { getUserFromRequest } from '@/lib/auth'
+import { logger } from '@/lib/logger'
 import { z } from 'zod'
 
 // GET /api/admin/stations/[id]/equipment - Get station equipment
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = getUserFromRequest(request)
     if (!user || user.role !== 'ADMIN') {
@@ -26,7 +24,7 @@ export async function GET(
 
     return NextResponse.json({ success: true, equipment })
   } catch (error) {
-    console.error('Error fetching station equipment:', error)
+    logger.error('Error fetching station equipment:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -36,10 +34,7 @@ const addEquipmentSchema = z.object({
   equipmentId: z.string().cuid(),
 })
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = getUserFromRequest(request)
     if (!user || user.role !== 'ADMIN') {
@@ -103,16 +98,13 @@ export async function POST(
         { status: 400 }
       )
     }
-    console.error('Error adding station equipment:', error)
+    logger.error('Error adding station equipment:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
 // DELETE /api/admin/stations/[id]/equipment - Remove equipment from station
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = getUserFromRequest(request)
     if (!user || user.role !== 'ADMIN') {
@@ -124,10 +116,7 @@ export async function DELETE(
     const equipmentAssignmentId = searchParams.get('assignmentId')
 
     if (!equipmentAssignmentId) {
-      return NextResponse.json(
-        { error: 'Equipment assignment ID required' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Equipment assignment ID required' }, { status: 400 })
     }
 
     // Check if assignment exists
@@ -136,10 +125,7 @@ export async function DELETE(
     })
 
     if (!assignment || assignment.stationId !== params.id) {
-      return NextResponse.json(
-        { error: 'Equipment assignment not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Equipment assignment not found' }, { status: 404 })
     }
 
     // Hard delete the assignment
@@ -152,7 +138,7 @@ export async function DELETE(
       message: 'Equipment removed from station',
     })
   } catch (error) {
-    console.error('Error removing station equipment:', error)
+    logger.error('Error removing station equipment:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

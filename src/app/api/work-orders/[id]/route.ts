@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/server/db/client'
 import { getUserFromRequest } from '../../../../lib/auth'
+import { logger } from '@/lib/logger'
 import { Role } from '@prisma/client'
 import { z } from 'zod'
 import { WORK_ORDER_SNAPSHOT_SCHEMA_HASH } from '@/server/work-orders/snapshot-metadata'
@@ -164,7 +165,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       },
     })
   } catch (error) {
-    console.error('Get work order details error:', error)
+    logger.error('Get work order details error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -442,7 +443,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
       changes,
     })
   } catch (error) {
-    console.error('Update work order error:', error)
+    logger.error('Update work order error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

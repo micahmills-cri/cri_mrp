@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/server/db/client'
 import { getUserFromRequest } from '../../../../../lib/auth'
+import { logger } from '@/lib/logger'
 import { WOStatus, Role } from '@prisma/client'
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = getUserFromRequest(request)
     if (!user) {
@@ -22,7 +20,7 @@ export async function POST(
 
     // Get work order
     const workOrder = await prisma.workOrder.findUnique({
-      where: { id: workOrderId }
+      where: { id: workOrderId },
     })
 
     if (!workOrder) {
@@ -39,9 +37,9 @@ export async function POST(
       where: {
         modelId: workOrderId,
         model: 'WorkOrder',
-        action: 'HOLD'
+        action: 'HOLD',
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
     })
 
     // Determine status to restore
@@ -56,7 +54,7 @@ export async function POST(
     // Update work order status
     const updatedWorkOrder = await prisma.workOrder.update({
       where: { id: workOrderId },
-      data: { status: restoreStatus }
+      data: { status: restoreStatus },
     })
 
     // Create audit log
@@ -67,8 +65,8 @@ export async function POST(
         modelId: workOrderId,
         action: 'UNHOLD',
         before: { status: WOStatus.HOLD },
-        after: { status: restoreStatus }
-      }
+        after: { status: restoreStatus },
+      },
     })
 
     return NextResponse.json({
@@ -77,11 +75,11 @@ export async function POST(
       workOrder: {
         id: updatedWorkOrder.id,
         number: updatedWorkOrder.number,
-        status: updatedWorkOrder.status
-      }
+        status: updatedWorkOrder.status,
+      },
     })
   } catch (error) {
-    console.error('Unhold work order error:', error)
+    logger.error('Unhold work order error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

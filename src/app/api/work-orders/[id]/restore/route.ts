@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/server/db/client'
 import { getUserFromRequest } from '../../../../../lib/auth'
+import { logger } from '@/lib/logger'
 import { Role, WOStatus, WOPriority } from '@prisma/client'
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = getUserFromRequest(request)
     if (!user) {
@@ -27,7 +25,7 @@ export async function POST(
 
     // Get the version to restore
     const version = await prisma.workOrderVersion.findUnique({
-      where: { id: versionId }
+      where: { id: versionId },
     })
 
     if (!version) {
@@ -35,12 +33,15 @@ export async function POST(
     }
 
     if (version.workOrderId !== workOrderId) {
-      return NextResponse.json({ error: 'Version does not belong to this work order' }, { status: 400 })
+      return NextResponse.json(
+        { error: 'Version does not belong to this work order' },
+        { status: 400 }
+      )
     }
 
     // Get current work order state for comparison
     const currentWorkOrder = await prisma.workOrder.findUnique({
-      where: { id: workOrderId }
+      where: { id: workOrderId },
     })
 
     if (!currentWorkOrder) {
@@ -62,16 +63,18 @@ export async function POST(
           status: snapshot.status as WOStatus,
           priority: snapshot.priority as WOPriority,
           plannedStartDate: snapshot.plannedStartDate ? new Date(snapshot.plannedStartDate) : null,
-          plannedFinishDate: snapshot.plannedFinishDate ? new Date(snapshot.plannedFinishDate) : null,
+          plannedFinishDate: snapshot.plannedFinishDate
+            ? new Date(snapshot.plannedFinishDate)
+            : null,
           currentStageIndex: snapshot.currentStageIndex,
-          specSnapshot: snapshot.specSnapshot
-        }
+          specSnapshot: snapshot.specSnapshot,
+        },
       })
 
       // Get latest version number for new version
       const latestVersion = await tx.workOrderVersion.findFirst({
         where: { workOrderId },
-        orderBy: { versionNumber: 'desc' }
+        orderBy: { versionNumber: 'desc' },
       })
 
       const newVersionNumber = (latestVersion?.versionNumber || 0) + 1
@@ -83,8 +86,8 @@ export async function POST(
           versionNumber: newVersionNumber,
           snapshotData: snapshot,
           reason: `Restored from Version ${version.versionNumber}`,
-          createdBy: user.email
-        }
+          createdBy: user.email,
+        },
       })
 
       // Create audit log
@@ -94,12 +97,12 @@ export async function POST(
           action: 'RESTORE',
           modelType: 'WorkOrder',
           modelId: workOrderId,
-          changes: { 
+          changes: {
             restoredFromVersion: version.versionNumber,
-            reason: `Restored from Version ${version.versionNumber}`
+            reason: `Restored from Version ${version.versionNumber}`,
           },
-          metadata: { workOrderNumber: updated.number }
-        }
+          metadata: { workOrderNumber: updated.number },
+        },
       })
 
       return updated
@@ -108,10 +111,10 @@ export async function POST(
     return NextResponse.json({
       success: true,
       message: `Work order restored to Version ${version.versionNumber}`,
-      workOrder: restoredWorkOrder
+      workOrder: restoredWorkOrder,
     })
   } catch (error) {
-    console.error('Restore work order version error:', error)
+    logger.error('Restore work order version error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

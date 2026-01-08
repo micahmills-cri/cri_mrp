@@ -1,13 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/server/db/client'
 import { getUserFromRequest } from '../../../../../lib/auth'
+import { logger } from '@/lib/logger'
 import { Role } from '@prisma/client'
 
 // GET all versions for a work order
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = getUserFromRequest(request)
     if (!user) {
@@ -19,31 +17,28 @@ export async function GET(
     // Get all versions for the work order
     const versions = await prisma.workOrderVersion.findMany({
       where: { workOrderId },
-      orderBy: { versionNumber: 'desc' }
+      orderBy: { versionNumber: 'desc' },
     })
 
     return NextResponse.json({
       success: true,
-      versions: versions.map(v => ({
+      versions: versions.map((v) => ({
         id: v.id,
         versionNumber: v.versionNumber,
         reason: v.reason,
         createdBy: v.createdBy,
         createdAt: v.createdAt,
-        snapshot: v.snapshotData
-      }))
+        snapshot: v.snapshotData,
+      })),
     })
   } catch (error) {
-    console.error('Get work order versions error:', error)
+    logger.error('Get work order versions error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
 // POST create a new version snapshot
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = getUserFromRequest(request)
     if (!user) {
@@ -68,10 +63,10 @@ export async function POST(
       include: {
         routingVersion: {
           include: {
-            stages: true
-          }
-        }
-      }
+            stages: true,
+          },
+        },
+      },
     })
 
     if (!workOrder) {
@@ -81,7 +76,7 @@ export async function POST(
     // Get the latest version number
     const latestVersion = await prisma.workOrderVersion.findFirst({
       where: { workOrderId },
-      orderBy: { versionNumber: 'desc' }
+      orderBy: { versionNumber: 'desc' },
     })
 
     const newVersionNumber = (latestVersion?.versionNumber || 0) + 1
@@ -103,15 +98,15 @@ export async function POST(
         model: workOrder.routingVersion.model,
         trim: workOrder.routingVersion.trim,
         version: workOrder.routingVersion.version,
-        stages: workOrder.routingVersion.stages.map(s => ({
+        stages: workOrder.routingVersion.stages.map((s) => ({
           sequence: s.sequence,
           code: s.code,
           name: s.name,
           enabled: s.enabled,
           workCenterId: s.workCenterId,
-          standardStageSeconds: s.standardStageSeconds
-        }))
-      }
+          standardStageSeconds: s.standardStageSeconds,
+        })),
+      },
     }
 
     // Create version with audit log
@@ -122,8 +117,8 @@ export async function POST(
           versionNumber: newVersionNumber,
           snapshotData: snapshot,
           reason,
-          createdBy: user.email
-        }
+          createdBy: user.email,
+        },
       })
 
       // Create audit log
@@ -133,8 +128,8 @@ export async function POST(
           action: 'CREATE',
           model: 'WorkOrderVersion',
           modelId: version.id,
-          after: { reason, versionNumber: newVersionNumber, workOrderNumber: workOrder.number }
-        }
+          after: { reason, versionNumber: newVersionNumber, workOrderNumber: workOrder.number },
+        },
       })
 
       return version
@@ -147,11 +142,11 @@ export async function POST(
         versionNumber: newVersion.versionNumber,
         reason: newVersion.reason,
         createdBy: newVersion.createdBy,
-        createdAt: newVersion.createdAt
-      }
+        createdAt: newVersion.createdAt,
+      },
     })
   } catch (error) {
-    console.error('Create work order version error:', error)
+    logger.error('Create work order version error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

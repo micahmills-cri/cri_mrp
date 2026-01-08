@@ -13,19 +13,19 @@ async function main() {
         where: { number: woNumber },
         include: {
           woStageLogs: {
-            orderBy: { createdAt: 'desc' }
+            orderBy: { createdAt: 'desc' },
           },
           routingVersion: {
             include: {
               stages: {
                 where: { enabled: true },
-                orderBy: { sequence: 'asc' }
-              }
-            }
-          }
-        }
+                orderBy: { sequence: 'asc' },
+              },
+            },
+          },
+        },
       })
-      
+
       if (workOrder) {
         console.log(`Work Order: ${workOrder.number}`)
         console.log(`  Status: ${workOrder.status}`)
@@ -38,7 +38,7 @@ async function main() {
       }
       break
     }
-    
+
     case 'stage-logs': {
       const woNumber = args[1]
       const workOrder = await prisma.workOrder.findUnique({
@@ -49,15 +49,15 @@ async function main() {
             include: {
               routingStage: true,
               station: true,
-              user: true
-            }
-          }
-        }
+              user: true,
+            },
+          },
+        },
       })
-      
+
       if (workOrder) {
         console.log(`Stage logs for WO ${workOrder.number}:`)
-        workOrder.woStageLogs.forEach(log => {
+        workOrder.woStageLogs.forEach((log) => {
           console.log(`  ${log.event} at ${log.createdAt.toISOString()}`)
           console.log(`    Stage: ${log.routingStage.name} (${log.routingStage.code})`)
           console.log(`    Station: ${log.station.code}`)
@@ -72,19 +72,19 @@ async function main() {
       }
       break
     }
-    
+
     case 'audit-logs': {
       const modelId = args[1]
       const auditLogs = await prisma.auditLog.findMany({
         where: { modelId },
         orderBy: { createdAt: 'desc' },
         include: {
-          actor: true
-        }
+          actor: true,
+        },
       })
-      
+
       console.log(`Audit logs for ${modelId}:`)
-      auditLogs.forEach(log => {
+      auditLogs.forEach((log) => {
         console.log(`  ${log.action} at ${log.createdAt.toISOString()}`)
         console.log(`    Actor: ${log.actor?.email || 'System'}`)
         console.log(`    Model: ${log.model}`)
@@ -93,7 +93,7 @@ async function main() {
       })
       break
     }
-    
+
     case 'department-workorders': {
       const deptId = args[1]
       const workOrders = await prisma.workOrder.findMany({
@@ -103,11 +103,11 @@ async function main() {
               some: {
                 enabled: true,
                 workCenter: {
-                  departmentId: deptId
-                }
-              }
-            }
-          }
+                  departmentId: deptId,
+                },
+              },
+            },
+          },
         },
         include: {
           routingVersion: {
@@ -118,19 +118,19 @@ async function main() {
                 include: {
                   workCenter: {
                     include: {
-                      department: true
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
+                      department: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
       })
-      
+
       console.log(`Work orders in department ${deptId}:`)
-      workOrders.forEach(wo => {
-        const enabledStages = wo.routingVersion.stages.filter(s => s.enabled)
+      workOrders.forEach((wo) => {
+        const enabledStages = wo.routingVersion.stages.filter((s) => s.enabled)
         const currentStage = enabledStages[wo.currentStageIndex]
         if (currentStage && currentStage.workCenter.departmentId === deptId) {
           console.log(`  ${wo.number} - Status: ${wo.status}, Current Stage: ${currentStage.name}`)
@@ -138,7 +138,7 @@ async function main() {
       })
       break
     }
-    
+
     default:
       console.log('Usage: ts-node scripts/assert.ts <command> [args]')
       console.log('Commands:')

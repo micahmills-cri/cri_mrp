@@ -1,13 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/server/db/client'
 import { getUserFromRequest } from '@/lib/auth'
+import { logger } from '@/lib/logger'
 import { z } from 'zod'
 
 // GET /api/admin/departments/[id] - Get department details
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = getUserFromRequest(request)
     if (!user || user.role !== 'ADMIN') {
@@ -40,7 +38,7 @@ export async function GET(
 
     return NextResponse.json({ success: true, department })
   } catch (error) {
-    console.error('Error fetching department:', error)
+    logger.error('Error fetching department:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -50,10 +48,7 @@ const updateDepartmentSchema = z.object({
   name: z.string().min(1).max(255).optional(),
 })
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = getUserFromRequest(request)
     if (!user || user.role !== 'ADMIN') {
@@ -79,10 +74,7 @@ export async function PATCH(
       })
 
       if (nameConflict) {
-        return NextResponse.json(
-          { error: 'Department name already exists' },
-          { status: 400 }
-        )
+        return NextResponse.json({ error: 'Department name already exists' }, { status: 400 })
       }
     }
 
@@ -100,16 +92,13 @@ export async function PATCH(
         { status: 400 }
       )
     }
-    console.error('Error updating department:', error)
+    logger.error('Error updating department:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
 // DELETE /api/admin/departments/[id] - Delete department
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = getUserFromRequest(request)
     if (!user || user.role !== 'ADMIN') {
@@ -150,7 +139,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true, message: 'Department deleted' })
   } catch (error) {
-    console.error('Error deleting department:', error)
+    logger.error('Error deleting department:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

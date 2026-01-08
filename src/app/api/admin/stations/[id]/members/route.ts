@@ -1,13 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/server/db/client'
 import { getUserFromRequest } from '@/lib/auth'
+import { logger } from '@/lib/logger'
 import { z } from 'zod'
 
 // GET /api/admin/stations/[id]/members - Get station members
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = getUserFromRequest(request)
     if (!user || user.role !== 'ADMIN') {
@@ -40,7 +38,7 @@ export async function GET(
 
     return NextResponse.json({ success: true, members })
   } catch (error) {
-    console.error('Error fetching station members:', error)
+    logger.error('Error fetching station members:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -50,10 +48,7 @@ const addMemberSchema = z.object({
   userId: z.string().cuid(),
 })
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = getUserFromRequest(request)
     if (!user || user.role !== 'ADMIN') {
@@ -146,16 +141,13 @@ export async function POST(
         { status: 400 }
       )
     }
-    console.error('Error adding station member:', error)
+    logger.error('Error adding station member:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
 // DELETE /api/admin/stations/[id]/members/[memberId] - Remove member from station
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = getUserFromRequest(request)
     if (!user || user.role !== 'ADMIN') {
@@ -187,7 +179,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true, message: 'Member removed from station' })
   } catch (error) {
-    console.error('Error removing station member:', error)
+    logger.error('Error removing station member:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

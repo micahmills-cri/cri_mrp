@@ -12,6 +12,7 @@ import {
   HomeIcon,
 } from '@heroicons/react/24/outline'
 import Link from 'next/link'
+import { logger } from '@/lib/logger'
 
 type AdminLayoutProps = {
   children: React.node
@@ -47,7 +48,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
         setUser(data.user)
       } catch (error) {
-        console.error('Auth check failed:', error)
+        logger.error('Auth check failed:', error)
         router.push('/login')
       } finally {
         setLoading(false)
@@ -135,9 +136,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-auto">
-        {children}
-      </div>
+      <div className="flex-1 overflow-auto">{children}</div>
     </div>
   )
 }

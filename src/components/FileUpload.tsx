@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
+import { logger } from '@/lib/logger'
 
 type FileUploadProps = {
   workOrderId: string
@@ -16,7 +17,12 @@ type UploadProgress = {
   error?: string
 }
 
-export default function FileUpload({ workOrderId, onSuccess, onError, onFileUploaded }: FileUploadProps) {
+export default function FileUpload({
+  workOrderId,
+  onSuccess,
+  onError,
+  onFileUploaded,
+}: FileUploadProps) {
   const [isDragging, setIsDragging] = useState(false)
   const [uploads, setUploads] = useState<UploadProgress[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -43,7 +49,7 @@ export default function FileUpload({ workOrderId, onSuccess, onError, onFileUplo
     e.preventDefault()
     e.stopPropagation()
     setIsDragging(false)
-    
+
     const files = Array.from(e.dataTransfer.files)
     if (files.length > 0) {
       handleFiles(files)
@@ -62,7 +68,7 @@ export default function FileUpload({ workOrderId, onSuccess, onError, onFileUplo
   const handleFiles = async (files: File[]) => {
     // Validate files
     const maxSize = 10 * 1024 * 1024 // 10MB
-    const validFiles = files.filter(file => {
+    const validFiles = files.filter((file) => {
       if (file.size > maxSize) {
         onError?.(`File ${file.name} is too large. Maximum size is 10MB.`)
         return false
@@ -73,23 +79,23 @@ export default function FileUpload({ workOrderId, onSuccess, onError, onFileUplo
     if (validFiles.length === 0) return
 
     // Initialize upload progress
-    const newUploads: UploadProgress[] = validFiles.map(file => ({
+    const newUploads: UploadProgress[] = validFiles.map((file) => ({
       file,
       progress: 0,
-      status: 'uploading'
+      status: 'uploading',
     }))
-    
-    setUploads(prev => [...prev, ...newUploads])
+
+    setUploads((prev) => [...prev, ...newUploads])
 
     // Upload each file
     for (let i = 0; i < validFiles.length; i++) {
       const file = validFiles[i]
       const uploadIndex = uploads.length + i
-      
+
       try {
         await uploadFile(file, uploadIndex)
       } catch (error) {
-        console.error('Error uploading file:', error)
+        logger.error('Error uploading file:', error)
       }
     }
   }
@@ -100,7 +106,7 @@ export default function FileUpload({ workOrderId, onSuccess, onError, onFileUplo
       // Step 1: Get presigned URL
       const uploadResponse = await fetch('/api/attachments/upload', {
         method: 'POST',
-        credentials: 'include'
+        credentials: 'include',
       })
 
       if (!uploadResponse.ok) {
@@ -111,13 +117,13 @@ export default function FileUpload({ workOrderId, onSuccess, onError, onFileUplo
 
       // Step 2: Upload file to storage
       const uploadRequest = new XMLHttpRequest()
-      
+
       uploadRequest.upload.addEventListener('progress', (e) => {
         if (e.lengthComputable) {
           const progress = Math.round((e.loaded / e.total) * 100)
-          setUploads(prev => prev.map((upload, index) => 
-            index === uploadIndex ? { ...upload, progress } : upload
-          ))
+          setUploads((prev) =>
+            prev.map((upload, index) => (index === uploadIndex ? { ...upload, progress } : upload))
+          )
         }
       })
 
@@ -129,9 +135,9 @@ export default function FileUpload({ workOrderId, onSuccess, onError, onFileUplo
             reject(new Error('Upload failed'))
           }
         }
-        
+
         uploadRequest.onerror = () => reject(new Error('Upload failed'))
-        
+
         uploadRequest.open('PUT', uploadURL)
         uploadRequest.setRequestHeader('Content-Type', file.type)
         uploadRequest.send(file)
@@ -146,8 +152,8 @@ export default function FileUpload({ workOrderId, onSuccess, onError, onFileUplo
           fileUrl: uploadURL.split('?')[0], // Remove query params
           originalName: file.name,
           fileSize: file.size.toString(),
-          mimeType: file.type
-        })
+          mimeType: file.type,
+        }),
       })
 
       if (!recordResponse.ok) {
@@ -156,39 +162,42 @@ export default function FileUpload({ workOrderId, onSuccess, onError, onFileUplo
       }
 
       // Update upload status to completed
-      setUploads(prev => prev.map((upload, index) => 
-        index === uploadIndex 
-          ? { ...upload, status: 'completed', progress: 100 }
-          : upload
-      ))
+      setUploads((prev) =>
+        prev.map((upload, index) =>
+          index === uploadIndex ? { ...upload, status: 'completed', progress: 100 } : upload
+        )
+      )
 
       onSuccess?.(`File ${file.name} uploaded successfully`)
       onFileUploaded?.()
-
     } catch (error) {
       // Update upload status to error
-      setUploads(prev => prev.map((upload, index) => 
-        index === uploadIndex 
-          ? { 
-              ...upload, 
-              status: 'error', 
-              error: error instanceof Error ? error.message : 'Upload failed' 
-            }
-          : upload
-      ))
+      setUploads((prev) =>
+        prev.map((upload, index) =>
+          index === uploadIndex
+            ? {
+                ...upload,
+                status: 'error',
+                error: error instanceof Error ? error.message : 'Upload failed',
+              }
+            : upload
+        )
+      )
 
-      onError?.(`Failed to upload ${file.name}: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      onError?.(
+        `Failed to upload ${file.name}: ${error instanceof Error ? error.message : 'Unknown error'}`
+      )
     }
   }
 
   // Clear completed uploads
   const clearCompleted = () => {
-    setUploads(prev => prev.filter(upload => upload.status !== 'completed'))
+    setUploads((prev) => prev.filter((upload) => upload.status !== 'completed'))
   }
 
   // Remove upload
   const removeUpload = (index: number) => {
-    setUploads(prev => prev.filter((_, i) => i !== index))
+    setUploads((prev) => prev.filter((_, i) => i !== index))
   }
 
   // Format file size
@@ -202,16 +211,16 @@ export default function FileUpload({ workOrderId, onSuccess, onError, onFileUplo
 
   return (
     <div style={{ padding: '1rem' }}>
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        marginBottom: '1rem' 
-      }}>
-        <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '600' }}>
-          File Attachments
-        </h3>
-        {uploads.some(u => u.status === 'completed') && (
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '1rem',
+        }}
+      >
+        <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '600' }}>File Attachments</h3>
+        {uploads.some((u) => u.status === 'completed') && (
           <button
             onClick={clearCompleted}
             style={{
@@ -221,7 +230,7 @@ export default function FileUpload({ workOrderId, onSuccess, onError, onFileUplo
               color: 'var(--muted)',
               border: '1px solid var(--border-strong)',
               borderRadius: '3px',
-              cursor: 'pointer'
+              cursor: 'pointer',
             }}
           >
             Clear Completed
@@ -246,18 +255,23 @@ export default function FileUpload({ workOrderId, onSuccess, onError, onFileUplo
           backgroundColor: isDragging ? 'var(--status-info-surface)' : 'var(--surface-muted)',
           cursor: 'pointer',
           marginBottom: '1rem',
-          transition: 'all 0.2s ease'
+          transition: 'all 0.2s ease',
         }}
         onClick={() => fileInputRef.current?.click()}
       >
         <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📁</div>
-        <div style={{ fontSize: '1rem', fontWeight: '500', marginBottom: '0.25rem', color: 'var(--foreground)' }}>
+        <div
+          style={{
+            fontSize: '1rem',
+            fontWeight: '500',
+            marginBottom: '0.25rem',
+            color: 'var(--foreground)',
+          }}
+        >
           {isDragging ? 'Drop files here' : 'Drop files here or click to browse'}
         </div>
-        <div style={{ fontSize: '0.875rem', color: 'var(--muted)' }}>
-          Maximum file size: 10MB
-        </div>
-        
+        <div style={{ fontSize: '0.875rem', color: 'var(--muted)' }}>Maximum file size: 10MB</div>
+
         <input
           ref={fileInputRef}
           type="file"
@@ -273,30 +287,37 @@ export default function FileUpload({ workOrderId, onSuccess, onError, onFileUplo
           <h4 style={{ fontSize: '0.875rem', fontWeight: '500', marginBottom: '0.5rem' }}>
             Upload Progress
           </h4>
-          
+
           {uploads.map((upload, index) => (
-            <div key={index} style={{
-              backgroundColor: 'var(--surface)',
-              border: '1px solid var(--border-strong)',
-              borderRadius: '4px',
-              padding: '0.75rem',
-              marginBottom: '0.5rem'
-            }}>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '0.5rem'
-              }}>
+            <div
+              key={index}
+              style={{
+                backgroundColor: 'var(--surface)',
+                border: '1px solid var(--border-strong)',
+                borderRadius: '4px',
+                padding: '0.75rem',
+                marginBottom: '0.5rem',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '0.5rem',
+                }}
+              >
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: '0.875rem', fontWeight: '500', color: 'var(--foreground)' }}>
+                  <div
+                    style={{ fontSize: '0.875rem', fontWeight: '500', color: 'var(--foreground)' }}
+                  >
                     {upload.file.name}
                   </div>
                   <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>
                     {formatFileSize(upload.file.size)}
                   </div>
                 </div>
-                
+
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   {upload.status === 'uploading' && (
                     <span style={{ fontSize: '0.75rem', color: 'var(--status-info-accent)' }}>
@@ -313,7 +334,7 @@ export default function FileUpload({ workOrderId, onSuccess, onError, onFileUplo
                       ✗ Error
                     </span>
                   )}
-                  
+
                   <button
                     onClick={() => removeUpload(index)}
                     style={{
@@ -322,37 +343,43 @@ export default function FileUpload({ workOrderId, onSuccess, onError, onFileUplo
                       color: 'var(--muted)',
                       border: 'none',
                       cursor: 'pointer',
-                      fontSize: '0.75rem'
+                      fontSize: '0.75rem',
                     }}
                   >
                     ✕
                   </button>
                 </div>
               </div>
-              
+
               {upload.status === 'uploading' && (
-                <div style={{
-                  width: '100%',
-                  height: '4px',
-                  backgroundColor: 'var(--border-strong)',
-                  borderRadius: '2px',
-                  overflow: 'hidden'
-                }}>
-                  <div style={{
-                    width: `${upload.progress}%`,
-                    height: '100%',
-                    backgroundColor: 'var(--status-info-accent)',
-                    transition: 'width 0.3s ease'
-                  }} />
+                <div
+                  style={{
+                    width: '100%',
+                    height: '4px',
+                    backgroundColor: 'var(--border-strong)',
+                    borderRadius: '2px',
+                    overflow: 'hidden',
+                  }}
+                >
+                  <div
+                    style={{
+                      width: `${upload.progress}%`,
+                      height: '100%',
+                      backgroundColor: 'var(--status-info-accent)',
+                      transition: 'width 0.3s ease',
+                    }}
+                  />
                 </div>
               )}
-              
+
               {upload.status === 'error' && upload.error && (
-                <div style={{
-                  fontSize: '0.75rem',
-                  color: 'var(--status-danger-accent)',
-                  marginTop: '0.25rem'
-                }}>
+                <div
+                  style={{
+                    fontSize: '0.75rem',
+                    color: 'var(--status-danger-accent)',
+                    marginTop: '0.25rem',
+                  }}
+                >
                   {upload.error}
                 </div>
               )}

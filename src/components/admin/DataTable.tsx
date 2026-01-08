@@ -74,13 +74,9 @@ export function DataTable<T extends { id: string }>({
         {/* Table */}
         <Card>
           {isLoading ? (
-            <div className="p-8 text-center text-[color:var(--muted-strong)]">
-              Loading...
-            </div>
+            <div className="p-8 text-center text-[color:var(--muted-strong)]">Loading...</div>
           ) : data.length === 0 ? (
-            <div className="p-8 text-center text-[color:var(--muted-strong)]">
-              {emptyMessage}
-            </div>
+            <div className="p-8 text-center text-[color:var(--muted-strong)]">{emptyMessage}</div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -103,18 +99,13 @@ export function DataTable<T extends { id: string }>({
                 </thead>
                 <tbody className="divide-y divide-[var(--border)]">
                   {data.map((row) => (
-                    <tr
-                      key={row.id}
-                      className="hover:bg-[var(--muted-weak)] transition-colors"
-                    >
+                    <tr key={row.id} className="hover:bg-[var(--muted-weak)] transition-colors">
                       {columns.map((column) => (
                         <td
                           key={column.key}
                           className="px-6 py-4 whitespace-nowrap text-sm text-[color:var(--foreground)]"
                         >
-                          {column.render
-                            ? column.render(row)
-                            : (row as any)[column.key]}
+                          {column.render ? column.render(row) : (row as any)[column.key]}
                         </td>
                       ))}
                       {(onEdit || onDelete) && (

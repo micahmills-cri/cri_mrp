@@ -9,7 +9,7 @@ import {
   DocumentTextIcon,
   ArchiveBoxIcon,
   TableCellsIcon,
-  PresentationChartBarIcon
+  PresentationChartBarIcon,
 } from '@heroicons/react/24/solid'
 
 type FileAttachment = {
@@ -36,12 +36,12 @@ type FileListDisplayProps = {
   readOnly?: boolean // When true, hides delete buttons and selection
 }
 
-export default function FileListDisplay({ 
-  workOrderId, 
-  onError, 
+export default function FileListDisplay({
+  workOrderId,
+  onError,
   onSuccess,
   refreshTrigger,
-  readOnly = false
+  readOnly = false,
 }: FileListDisplayProps) {
   const [attachments, setAttachments] = useState<FileAttachment[]>([])
   const [loading, setLoading] = useState(false)
@@ -55,9 +55,9 @@ export default function FileListDisplay({
     setLoading(true)
     try {
       const response = await fetch(`/api/work-orders/${workOrderId}/attachments`, {
-        credentials: 'include'
+        credentials: 'include',
       })
-      
+
       if (response.ok) {
         const data = await response.json()
         setAttachments(data)
@@ -75,16 +75,16 @@ export default function FileListDisplay({
   // Delete attachment
   const deleteAttachment = async (attachmentId: string, fileName: string) => {
     if (!confirm(`Are you sure you want to delete ${fileName}?`)) return
-    
+
     try {
       const response = await fetch(`/api/attachments/${attachmentId}`, {
         method: 'DELETE',
-        credentials: 'include'
+        credentials: 'include',
       })
-      
+
       if (response.ok) {
-        setAttachments(prev => prev.filter(att => att.id !== attachmentId))
-        setSelectedFiles(prev => {
+        setAttachments((prev) => prev.filter((att) => att.id !== attachmentId))
+        setSelectedFiles((prev) => {
           const newSet = new Set(prev)
           newSet.delete(attachmentId)
           return newSet
@@ -109,12 +109,12 @@ export default function FileListDisplay({
       const response = await fetch(`/api/work-orders/${workOrderId}/attachments`, {
         method: 'POST',
         credentials: 'include',
-        body: formData
+        body: formData,
       })
 
       if (response.ok) {
         const newAttachment = await response.json()
-        setAttachments(prev => [newAttachment, ...prev])
+        setAttachments((prev) => [newAttachment, ...prev])
         onSuccess?.(`File ${file.name} uploaded successfully`)
       } else {
         const error = await response.json()
@@ -139,32 +139,32 @@ export default function FileListDisplay({
   // Bulk delete
   const bulkDelete = async () => {
     if (selectedFiles.size === 0) return
-    
+
     const fileNames = attachments
-      .filter(att => selectedFiles.has(att.id))
-      .map(att => att.originalName)
+      .filter((att) => selectedFiles.has(att.id))
+      .map((att) => att.originalName)
       .join(', ')
-    
+
     if (!confirm(`Delete ${selectedFiles.size} file(s):\n${fileNames}?`)) return
-    
-    const deletePromises = Array.from(selectedFiles).map(id => 
+
+    const deletePromises = Array.from(selectedFiles).map((id) =>
       fetch(`/api/attachments/${id}`, {
         method: 'DELETE',
-        credentials: 'include'
+        credentials: 'include',
       })
     )
-    
+
     try {
       const results = await Promise.allSettled(deletePromises)
-      const successful = results.filter(r => r.status === 'fulfilled').length
-      const failed = results.filter(r => r.status === 'rejected').length
-      
+      const successful = results.filter((r) => r.status === 'fulfilled').length
+      const failed = results.filter((r) => r.status === 'rejected').length
+
       if (successful > 0) {
-        setAttachments(prev => prev.filter(att => !selectedFiles.has(att.id)))
+        setAttachments((prev) => prev.filter((att) => !selectedFiles.has(att.id)))
         setSelectedFiles(new Set())
         onSuccess?.(`Successfully deleted ${successful} file(s)`)
       }
-      
+
       if (failed > 0) {
         onError?.(`Failed to delete ${failed} file(s)`)
       }
@@ -191,7 +191,7 @@ export default function FileListDisplay({
   // View file inline
   const viewFile = async (attachment: FileAttachment) => {
     const viewUrl = `/api/attachments/${attachment.id}?inline=true`
-    
+
     if (isImage(attachment.mimeType)) {
       setLightboxImage({ url: viewUrl, name: attachment.originalName })
     } else {
@@ -203,9 +203,9 @@ export default function FileListDisplay({
   const downloadFile = async (attachment: FileAttachment) => {
     try {
       const response = await fetch(`/api/attachments/${attachment.id}`, {
-        credentials: 'include'
+        credentials: 'include',
       })
-      
+
       if (response.ok) {
         const blob = await response.blob()
         const url = window.URL.createObjectURL(blob)
@@ -228,7 +228,7 @@ export default function FileListDisplay({
 
   // Toggle file selection
   const toggleFileSelection = (fileId: string) => {
-    setSelectedFiles(prev => {
+    setSelectedFiles((prev) => {
       const newSet = new Set(prev)
       if (newSet.has(fileId)) {
         newSet.delete(fileId)
@@ -244,7 +244,7 @@ export default function FileListDisplay({
     if (selectedFiles.size === filteredAttachments.length) {
       setSelectedFiles(new Set())
     } else {
-      setSelectedFiles(new Set(filteredAttachments.map(att => att.id)))
+      setSelectedFiles(new Set(filteredAttachments.map((att) => att.id)))
     }
   }
 
@@ -266,29 +266,41 @@ export default function FileListDisplay({
 
   // Get file icon
   const getFileIcon = (mimeType?: string) => {
-    const iconClass = "h-6 w-6"
-    
+    const iconClass = 'h-6 w-6'
+
     if (!mimeType) return <DocumentIcon className={iconClass} />
     if (mimeType.startsWith('image/')) return <PhotoIcon className={iconClass} />
     if (mimeType.startsWith('video/')) return <VideoCameraIcon className={iconClass} />
     if (mimeType.startsWith('audio/')) return <MusicalNoteIcon className={iconClass} />
     if (mimeType.includes('pdf')) return <DocumentTextIcon className={iconClass} />
-    if (mimeType.includes('zip') || mimeType.includes('rar')) return <ArchiveBoxIcon className={iconClass} />
-    if (mimeType.includes('spreadsheet') || mimeType.includes('excel') || mimeType.includes('csv')) return <TableCellsIcon className={iconClass} />
-    if (mimeType.includes('presentation') || mimeType.includes('powerpoint')) return <PresentationChartBarIcon className={iconClass} />
-    if (mimeType.includes('document') || mimeType.includes('word')) return <DocumentIcon className={iconClass} />
+    if (mimeType.includes('zip') || mimeType.includes('rar'))
+      return <ArchiveBoxIcon className={iconClass} />
+    if (mimeType.includes('spreadsheet') || mimeType.includes('excel') || mimeType.includes('csv'))
+      return <TableCellsIcon className={iconClass} />
+    if (mimeType.includes('presentation') || mimeType.includes('powerpoint'))
+      return <PresentationChartBarIcon className={iconClass} />
+    if (mimeType.includes('document') || mimeType.includes('word'))
+      return <DocumentIcon className={iconClass} />
     if (mimeType.includes('text/')) return <DocumentTextIcon className={iconClass} />
     return <DocumentIcon className={iconClass} />
   }
 
   // Filter attachments
-  const filteredAttachments = attachments.filter(att => {
+  const filteredAttachments = attachments.filter((att) => {
     const matchesSearch = att.originalName.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesType = filterType === 'all' || 
+    const matchesType =
+      filterType === 'all' ||
       (filterType === 'images' && att.mimeType?.startsWith('image/')) ||
-      (filterType === 'documents' && (att.mimeType?.includes('pdf') || att.mimeType?.includes('document') || att.mimeType?.includes('word'))) ||
-      (filterType === 'other' && !att.mimeType?.startsWith('image/') && !att.mimeType?.includes('pdf') && !att.mimeType?.includes('document') && !att.mimeType?.includes('word'))
-    
+      (filterType === 'documents' &&
+        (att.mimeType?.includes('pdf') ||
+          att.mimeType?.includes('document') ||
+          att.mimeType?.includes('word'))) ||
+      (filterType === 'other' &&
+        !att.mimeType?.startsWith('image/') &&
+        !att.mimeType?.includes('pdf') &&
+        !att.mimeType?.includes('document') &&
+        !att.mimeType?.includes('word'))
+
     return matchesSearch && matchesType
   })
 
@@ -304,7 +316,7 @@ export default function FileListDisplay({
         setLightboxImage(null)
       }
     }
-    
+
     if (lightboxImage) {
       document.addEventListener('keydown', handleKeyDown)
       return () => document.removeEventListener('keydown', handleKeyDown)
@@ -314,31 +326,35 @@ export default function FileListDisplay({
   return (
     <div style={{ padding: '1rem' }}>
       {/* Header */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        marginBottom: '1rem',
-        flexWrap: 'wrap',
-        gap: '0.5rem'
-      }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '1rem',
+          flexWrap: 'wrap',
+          gap: '0.5rem',
+        }}
+      >
         <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '600' }}>
           Attachments ({filteredAttachments.length})
         </h3>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           {!readOnly && (
-            <label style={{
-              padding: '0.5rem 1rem',
-              backgroundColor: 'var(--status-success-accent)',
-              color: 'var(--status-success-foreground)',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: uploading ? 'not-allowed' : 'pointer',
-              fontSize: '0.875rem',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.25rem'
-            }}>
+            <label
+              style={{
+                padding: '0.5rem 1rem',
+                backgroundColor: 'var(--status-success-accent)',
+                color: 'var(--status-success-foreground)',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: uploading ? 'not-allowed' : 'pointer',
+                fontSize: '0.875rem',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.25rem',
+              }}
+            >
               {uploading ? 'Uploading...' : 'Add File'}
               <input
                 type="file"
@@ -358,7 +374,7 @@ export default function FileListDisplay({
               border: '1px solid var(--status-info-accent)',
               borderRadius: '4px',
               cursor: loading ? 'not-allowed' : 'pointer',
-              fontSize: '0.875rem'
+              fontSize: '0.875rem',
             }}
           >
             {loading ? 'Refreshing...' : 'Refresh'}
@@ -367,12 +383,14 @@ export default function FileListDisplay({
       </div>
 
       {/* Search and Filter Bar */}
-      <div style={{
-        display: 'flex',
-        gap: '0.5rem',
-        marginBottom: '1rem',
-        flexWrap: 'wrap'
-      }}>
+      <div
+        style={{
+          display: 'flex',
+          gap: '0.5rem',
+          marginBottom: '1rem',
+          flexWrap: 'wrap',
+        }}
+      >
         <input
           type="text"
           placeholder="Search files..."
@@ -386,7 +404,7 @@ export default function FileListDisplay({
             color: 'var(--foreground)',
             border: '1px solid var(--border-strong)',
             borderRadius: '4px',
-            fontSize: '0.875rem'
+            fontSize: '0.875rem',
           }}
         />
         <select
@@ -399,7 +417,7 @@ export default function FileListDisplay({
             border: '1px solid var(--border-strong)',
             borderRadius: '4px',
             fontSize: '0.875rem',
-            cursor: 'pointer'
+            cursor: 'pointer',
           }}
         >
           <option value="all">All Files</option>
@@ -411,12 +429,14 @@ export default function FileListDisplay({
 
       {/* Bulk Actions - hidden in readOnly mode */}
       {!readOnly && filteredAttachments.length > 0 && (
-        <div style={{
-          display: 'flex',
-          gap: '0.5rem',
-          marginBottom: '1rem',
-          alignItems: 'center'
-        }}>
+        <div
+          style={{
+            display: 'flex',
+            gap: '0.5rem',
+            marginBottom: '1rem',
+            alignItems: 'center',
+          }}
+        >
           <button
             onClick={selectAll}
             style={{
@@ -426,7 +446,7 @@ export default function FileListDisplay({
               border: '1px solid var(--border-strong)',
               borderRadius: '3px',
               cursor: 'pointer',
-              fontSize: '0.75rem'
+              fontSize: '0.75rem',
             }}
           >
             {selectedFiles.size === filteredAttachments.length ? 'Deselect All' : 'Select All'}
@@ -445,7 +465,7 @@ export default function FileListDisplay({
                   border: 'none',
                   borderRadius: '3px',
                   cursor: 'pointer',
-                  fontSize: '0.75rem'
+                  fontSize: '0.75rem',
                 }}
               >
                 Delete Selected
@@ -462,28 +482,36 @@ export default function FileListDisplay({
         </div>
       ) : filteredAttachments.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--muted)' }}>
-          {searchQuery || filterType !== 'all' 
-            ? 'No files match your filters.' 
+          {searchQuery || filterType !== 'all'
+            ? 'No files match your filters.'
             : 'No files attached yet.'}
         </div>
       ) : (
-        <div style={{
-          display: 'grid',
-          gap: '0.5rem'
-        }}>
-          {filteredAttachments.map(attachment => (
-            <div key={attachment.id} style={{
-              backgroundColor: 'var(--surface)',
-              border: !readOnly && selectedFiles.has(attachment.id) ? '2px solid var(--status-info-accent)' : '1px solid var(--border-strong)',
-              borderRadius: '4px',
-              padding: '0.75rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.75rem',
-              cursor: readOnly ? 'default' : 'pointer',
-              transition: 'all 0.2s ease',
-              position: 'relative'
-            }}>
+        <div
+          style={{
+            display: 'grid',
+            gap: '0.5rem',
+          }}
+        >
+          {filteredAttachments.map((attachment) => (
+            <div
+              key={attachment.id}
+              style={{
+                backgroundColor: 'var(--surface)',
+                border:
+                  !readOnly && selectedFiles.has(attachment.id)
+                    ? '2px solid var(--status-info-accent)'
+                    : '1px solid var(--border-strong)',
+                borderRadius: '4px',
+                padding: '0.75rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+                cursor: readOnly ? 'default' : 'pointer',
+                transition: 'all 0.2s ease',
+                position: 'relative',
+              }}
+            >
               {/* Checkbox - hidden in readOnly mode */}
               {!readOnly && (
                 <input
@@ -493,19 +521,23 @@ export default function FileListDisplay({
                   style={{ cursor: 'pointer' }}
                 />
               )}
-              
+
               {/* File Icon */}
-              <div style={{ 
-                display: 'flex', 
-                alignItems: 'center',
-                color: 'var(--muted)'
-              }}>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  color: 'var(--muted)',
+                }}
+              >
                 {getFileIcon(attachment.mimeType)}
               </div>
-              
+
               {/* File Info */}
               <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: '500', fontSize: '0.875rem', color: 'var(--foreground)' }}>
+                <div
+                  style={{ fontWeight: '500', fontSize: '0.875rem', color: 'var(--foreground)' }}
+                >
                   {attachment.originalName}
                 </div>
                 <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>
@@ -515,7 +547,7 @@ export default function FileListDisplay({
                   Uploaded by: {attachment.user.email}
                 </div>
               </div>
-              
+
               {/* Actions */}
               <div style={{ display: 'flex', gap: '0.25rem' }}>
                 {canViewInline(attachment.mimeType) && (
@@ -531,7 +563,7 @@ export default function FileListDisplay({
                       border: 'none',
                       borderRadius: '3px',
                       cursor: 'pointer',
-                      fontSize: '0.75rem'
+                      fontSize: '0.75rem',
                     }}
                   >
                     View
@@ -549,7 +581,7 @@ export default function FileListDisplay({
                     border: 'none',
                     borderRadius: '3px',
                     cursor: 'pointer',
-                    fontSize: '0.75rem'
+                    fontSize: '0.75rem',
                   }}
                 >
                   Download
@@ -567,7 +599,7 @@ export default function FileListDisplay({
                       border: 'none',
                       borderRadius: '3px',
                       cursor: 'pointer',
-                      fontSize: '0.75rem'
+                      fontSize: '0.75rem',
                     }}
                   >
                     Delete
@@ -595,7 +627,7 @@ export default function FileListDisplay({
             justifyContent: 'center',
             zIndex: 9999,
             cursor: 'pointer',
-            padding: '2rem'
+            padding: '2rem',
           }}
         >
           <div
@@ -606,20 +638,20 @@ export default function FileListDisplay({
               maxHeight: '90vh',
               display: 'flex',
               flexDirection: 'column',
-              alignItems: 'center'
+              alignItems: 'center',
             }}
           >
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              width: '100%',
-              marginBottom: '1rem',
-              color: 'white'
-            }}>
-              <span style={{ fontSize: '1rem', fontWeight: '500' }}>
-                {lightboxImage.name}
-              </span>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                width: '100%',
+                marginBottom: '1rem',
+                color: 'white',
+              }}
+            >
+              <span style={{ fontSize: '1rem', fontWeight: '500' }}>{lightboxImage.name}</span>
               <button
                 onClick={() => setLightboxImage(null)}
                 style={{
@@ -629,7 +661,7 @@ export default function FileListDisplay({
                   border: 'none',
                   borderRadius: '4px',
                   cursor: 'pointer',
-                  fontSize: '0.875rem'
+                  fontSize: '0.875rem',
                 }}
               >
                 Close (ESC)
@@ -643,7 +675,7 @@ export default function FileListDisplay({
                 maxHeight: 'calc(90vh - 4rem)',
                 objectFit: 'contain',
                 borderRadius: '4px',
-                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)'
+                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
               }}
             />
           </div>

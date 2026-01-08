@@ -40,11 +40,7 @@ function escapeCsvValue(value: any): string {
   const stringValue = String(value)
 
   // If value contains comma, quote, or newline, wrap in quotes and escape quotes
-  if (
-    stringValue.includes(',') ||
-    stringValue.includes('"') ||
-    stringValue.includes('\n')
-  ) {
+  if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
     return `"${stringValue.replace(/"/g, '""')}"`
   }
 

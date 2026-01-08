@@ -7,6 +7,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { XMarkIcon } from '@heroicons/react/24/outline'
+import { logger } from '@/lib/logger'
 
 type Department = {
   id: string
@@ -41,7 +42,7 @@ export default function DepartmentsPage() {
         setDepartments(data.departments)
       }
     } catch (error) {
-      console.error('Error loading departments:', error)
+      logger.error('Error loading departments:', error)
     } finally {
       setIsLoading(false)
     }
@@ -76,7 +77,7 @@ export default function DepartmentsPage() {
         alert(`Failed to delete department: ${data.error}`)
       }
     } catch (error) {
-      console.error('Error deleting department:', error)
+      logger.error('Error deleting department:', error)
       alert('Error deleting department')
     }
   }
@@ -99,7 +100,7 @@ export default function DepartmentsPage() {
       window.URL.revokeObjectURL(url)
       document.body.removeChild(a)
     } catch (error) {
-      console.error('Error exporting departments:', error)
+      logger.error('Error exporting departments:', error)
       alert('Error exporting departments')
     }
   }
@@ -121,7 +122,7 @@ export default function DepartmentsPage() {
         alert(`Error: ${data.error}`)
       }
     } catch (error) {
-      console.error('Error creating department:', error)
+      logger.error('Error creating department:', error)
       alert('Error creating department')
     }
   }
@@ -146,7 +147,7 @@ export default function DepartmentsPage() {
         alert(`Error: ${data.error}`)
       }
     } catch (error) {
-      console.error('Error updating department:', error)
+      logger.error('Error updating department:', error)
       alert('Error updating department')
     }
   }

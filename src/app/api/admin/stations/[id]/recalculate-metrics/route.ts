@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getUserFromRequest } from '@/lib/auth'
+import { logger } from '@/lib/logger'
 import { updateStationMetrics } from '@/lib/metrics/calculateStationMetrics'
 
 // POST /api/admin/stations/[id]/recalculate-metrics - Recalculate station metrics
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = getUserFromRequest(request)
     if (!user || user.role !== 'ADMIN') {
@@ -29,7 +27,7 @@ export async function POST(
       metrics: result,
     })
   } catch (error) {
-    console.error('Error recalculating station metrics:', error)
+    logger.error('Error recalculating station metrics:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

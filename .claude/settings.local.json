@@ -1,9 +1,6 @@
 {
   "permissions": {
-    "allow": [
-      "Bash(tree:*)",
-      "Bash(npm outdated:*)"
-    ],
+    "allow": ["Bash(tree:*)", "Bash(npm outdated:*)"],
     "deny": [],
     "ask": []
   }

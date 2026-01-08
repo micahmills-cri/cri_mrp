@@ -1,4 +1,5 @@
 import { prisma } from '@/server/db/client'
+import { logger } from '@/lib/logger'
 
 /**
  * Calculate weighted average pay rate for a station based on historical work logs
@@ -50,10 +51,7 @@ export async function calculateStationMetrics(
   const userWork = new Map<string, UserWork>()
 
   // Track active work sessions
-  const activeSessions = new Map<
-    string,
-    { userId: string; startTime: Date; hourlyRate: number }
-  >()
+  const activeSessions = new Map<string, { userId: string; startTime: Date; hourlyRate: number }>()
 
   for (const log of logs) {
     const workOrderKey = log.workOrderId
@@ -133,7 +131,7 @@ export async function updateStationMetrics(stationId: string) {
   const metrics = await calculateStationMetrics(stationId, periodStart, periodEnd)
 
   if (!metrics) {
-    console.log(`No metrics data for station ${stationId}`)
+    logger.info(`No metrics data for station ${stationId}`)
     return null
   }
 
@@ -179,12 +177,12 @@ export async function updateAllStationMetrics() {
   const results = []
 
   for (const station of stations) {
-    console.log(`Calculating metrics for station ${station.code}...`)
+    logger.info(`Calculating metrics for station ${station.code}...`)
     try {
       const result = await updateStationMetrics(station.id)
       results.push({ stationId: station.id, code: station.code, success: true, result })
     } catch (error) {
-      console.error(`Error calculating metrics for station ${station.code}:`, error)
+      logger.error(`Error calculating metrics for station ${station.code}:`, error)
       results.push({
         stationId: station.id,
         code: station.code,

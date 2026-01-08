@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/server/db/client'
 import { getUserFromRequest } from '../../../../lib/auth'
+import { logger } from '@/lib/logger'
 import { z } from 'zod'
 import { WOStatus, WOEvent } from '@prisma/client'
 
 const startWOSchema = z.object({
   workOrderId: z.string(),
   stationId: z.string(),
-  note: z.string().optional()
+  note: z.string().optional(),
 })
 
 export async function POST(request: NextRequest) {
@@ -19,7 +20,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
     const { workOrderId, stationId, note } = startWOSchema.parse(body)
-    
+
     // Get selected department from query params, fallback to user's assigned department
     const { searchParams } = new URL(request.url)
     const selectedDepartmentId = searchParams.get('departmentId') || user.departmentId
@@ -36,11 +37,11 @@ export async function POST(request: NextRequest) {
           include: {
             stages: {
               orderBy: { sequence: 'asc' },
-              include: { workCenter: { include: { department: true } } }
-            }
-          }
-        }
-      }
+              include: { workCenter: { include: { department: true } } },
+            },
+          },
+        },
+      },
     })
 
     if (!workOrder) {
@@ -53,7 +54,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Get only enabled stages
-    const enabledStages = workOrder.routingVersion.stages.filter(s => s.enabled).sort((a, b) => a.sequence - b.sequence)
+    const enabledStages = workOrder.routingVersion.stages
+      .filter((s) => s.enabled)
+      .sort((a, b) => a.sequence - b.sequence)
     const currentStage = enabledStages[workOrder.currentStageIndex]
     if (!currentStage) {
       return NextResponse.json({ error: 'No current stage found' }, { status: 400 })
@@ -68,8 +71,8 @@ export async function POST(request: NextRequest) {
       where: {
         id: stationId,
         workCenterId: currentStage.workCenterId,
-        isActive: true
-      }
+        isActive: true,
+      },
     })
 
     if (!station) {
@@ -84,24 +87,24 @@ export async function POST(request: NextRequest) {
         stationId: station.id,
         userId: user.userId,
         event: WOEvent.START,
-        note: note || null
-      }
+        note: note || null,
+      },
     })
 
     // Update work order status if first time starting
     if (workOrder.status === WOStatus.RELEASED) {
       await prisma.workOrder.update({
         where: { id: workOrder.id },
-        data: { status: WOStatus.IN_PROGRESS }
+        data: { status: WOStatus.IN_PROGRESS },
       })
     }
 
-    return NextResponse.json({ 
-      success: true, 
-      message: `Started work on ${workOrder.number} at station ${station.code}` 
+    return NextResponse.json({
+      success: true,
+      message: `Started work on ${workOrder.number} at station ${station.code}`,
     })
   } catch (error) {
-    console.error('Start work order error:', error)
+    logger.error('Start work order error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

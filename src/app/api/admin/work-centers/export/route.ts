@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/server/db/client'
 import { getUserFromRequest } from '@/lib/auth'
+import { logger } from '@/lib/logger'
 import { arrayToCsv, createCsvResponse } from '@/lib/csv/exportCsv'
 
 // GET /api/admin/work-centers/export - Export work centers as CSV
@@ -36,7 +37,7 @@ export async function GET(request: NextRequest) {
 
     return createCsvResponse(csv, 'work-centers.csv')
   } catch (error) {
-    console.error('Error exporting work centers:', error)
+    logger.error('Error exporting work centers:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

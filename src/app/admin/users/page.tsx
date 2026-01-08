@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { XMarkIcon } from '@heroicons/react/24/outline'
+import { logger } from '@/lib/logger'
 
 type User = {
   id: string
@@ -65,7 +66,7 @@ export default function UsersPage() {
         setUsers(data.users)
       }
     } catch (error) {
-      console.error('Error loading users:', error)
+      logger.error('Error loading users:', error)
     } finally {
       setIsLoading(false)
     }
@@ -80,7 +81,7 @@ export default function UsersPage() {
         setDepartments(data.departments)
       }
     } catch (error) {
-      console.error('Error loading departments:', error)
+      logger.error('Error loading departments:', error)
     }
   }
 
@@ -118,7 +119,7 @@ export default function UsersPage() {
         alert(`Failed to delete user: ${data.error}`)
       }
     } catch (error) {
-      console.error('Error deleting user:', error)
+      logger.error('Error deleting user:', error)
       alert('Error deleting user')
     }
   }
@@ -165,7 +166,7 @@ export default function UsersPage() {
         alert(`Error: ${data.error}`)
       }
     } catch (error) {
-      console.error('Error creating user:', error)
+      logger.error('Error creating user:', error)
       alert('Error creating user')
     }
   }
@@ -206,7 +207,7 @@ export default function UsersPage() {
         alert(`Error: ${data.error}`)
       }
     } catch (error) {
-      console.error('Error updating user:', error)
+      logger.error('Error updating user:', error)
       alert('Error updating user')
     }
   }
@@ -306,9 +307,7 @@ export default function UsersPage() {
                     <label className="block text-sm font-medium mb-2">Role *</label>
                     <Select
                       value={formData.role}
-                      onChange={(e) =>
-                        setFormData({ ...formData, role: e.target.value as any })
-                      }
+                      onChange={(e) => setFormData({ ...formData, role: e.target.value as any })}
                       options={[
                         { value: 'OPERATOR', label: 'Operator' },
                         { value: 'SUPERVISOR', label: 'Supervisor' },
@@ -321,9 +320,7 @@ export default function UsersPage() {
                     <label className="block text-sm font-medium mb-2">Department</label>
                     <Select
                       value={formData.departmentId}
-                      onChange={(e) =>
-                        setFormData({ ...formData, departmentId: e.target.value })
-                      }
+                      onChange={(e) => setFormData({ ...formData, departmentId: e.target.value })}
                       options={[
                         { value: '', label: 'None' },
                         ...departments.map((d) => ({ value: d.id, label: d.name })),
@@ -332,16 +329,12 @@ export default function UsersPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Hourly Rate ($/hr)
-                    </label>
+                    <label className="block text-sm font-medium mb-2">Hourly Rate ($/hr)</label>
                     <Input
                       type="number"
                       step="0.01"
                       value={formData.hourlyRate}
-                      onChange={(e) =>
-                        setFormData({ ...formData, hourlyRate: e.target.value })
-                      }
+                      onChange={(e) => setFormData({ ...formData, hourlyRate: e.target.value })}
                       placeholder="e.g., 22.50"
                     />
                   </div>
@@ -411,9 +404,7 @@ export default function UsersPage() {
                     <label className="block text-sm font-medium mb-2">Role *</label>
                     <Select
                       value={formData.role}
-                      onChange={(e) =>
-                        setFormData({ ...formData, role: e.target.value as any })
-                      }
+                      onChange={(e) => setFormData({ ...formData, role: e.target.value as any })}
                       options={[
                         { value: 'OPERATOR', label: 'Operator' },
                         { value: 'SUPERVISOR', label: 'Supervisor' },
@@ -426,9 +417,7 @@ export default function UsersPage() {
                     <label className="block text-sm font-medium mb-2">Department</label>
                     <Select
                       value={formData.departmentId}
-                      onChange={(e) =>
-                        setFormData({ ...formData, departmentId: e.target.value })
-                      }
+                      onChange={(e) => setFormData({ ...formData, departmentId: e.target.value })}
                       options={[
                         { value: '', label: 'None' },
                         ...departments.map((d) => ({ value: d.id, label: d.name })),
@@ -437,16 +426,12 @@ export default function UsersPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Hourly Rate ($/hr)
-                    </label>
+                    <label className="block text-sm font-medium mb-2">Hourly Rate ($/hr)</label>
                     <Input
                       type="number"
                       step="0.01"
                       value={formData.hourlyRate}
-                      onChange={(e) =>
-                        setFormData({ ...formData, hourlyRate: e.target.value })
-                      }
+                      onChange={(e) => setFormData({ ...formData, hourlyRate: e.target.value })}
                       placeholder="e.g., 22.50"
                     />
                   </div>

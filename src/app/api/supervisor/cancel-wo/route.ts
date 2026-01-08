@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/server/db/client'
 import { getUserFromRequest } from '../../../../lib/auth'
+import { logger } from '@/lib/logger'
 import { Role } from '@prisma/client'
 
 export async function POST(request: NextRequest) {
@@ -27,10 +28,10 @@ export async function POST(request: NextRequest) {
       include: {
         routingVersion: {
           include: {
-            stages: true
-          }
-        }
-      }
+            stages: true,
+          },
+        },
+      },
     })
 
     if (!currentWorkOrder) {
@@ -39,15 +40,21 @@ export async function POST(request: NextRequest) {
 
     // Check if work order can be cancelled
     if (['COMPLETED', 'CLOSED'].includes(currentWorkOrder.status)) {
-      return NextResponse.json({
-        error: 'Cannot cancel completed or closed work orders'
-      }, { status: 400 })
+      return NextResponse.json(
+        {
+          error: 'Cannot cancel completed or closed work orders',
+        },
+        { status: 400 }
+      )
     }
 
     if (currentWorkOrder.status === 'CANCELLED') {
-      return NextResponse.json({
-        error: 'Work order is already cancelled'
-      }, { status: 400 })
+      return NextResponse.json(
+        {
+          error: 'Work order is already cancelled',
+        },
+        { status: 400 }
+      )
     }
 
     // Cancel work order with version creation and audit log
@@ -55,7 +62,7 @@ export async function POST(request: NextRequest) {
       // Get latest version number
       const latestVersion = await tx.workOrderVersion.findFirst({
         where: { workOrderId },
-        orderBy: { versionNumber: 'desc' }
+        orderBy: { versionNumber: 'desc' },
       })
 
       const newVersionNumber = (latestVersion?.versionNumber || 0) + 1
@@ -77,15 +84,15 @@ export async function POST(request: NextRequest) {
           model: currentWorkOrder.routingVersion.model,
           trim: currentWorkOrder.routingVersion.trim,
           version: currentWorkOrder.routingVersion.version,
-          stages: currentWorkOrder.routingVersion.stages.map(s => ({
+          stages: currentWorkOrder.routingVersion.stages.map((s) => ({
             sequence: s.sequence,
             code: s.code,
             name: s.name,
             enabled: s.enabled,
             workCenterId: s.workCenterId,
-            standardStageSeconds: s.standardStageSeconds
-          }))
-        }
+            standardStageSeconds: s.standardStageSeconds,
+          })),
+        },
       }
 
       // Create version for cancellation
@@ -95,16 +102,16 @@ export async function POST(request: NextRequest) {
           versionNumber: newVersionNumber,
           snapshotData: snapshot,
           reason: 'Work order cancelled',
-          createdBy: user.userId
-        }
+          createdBy: user.userId,
+        },
       })
 
       // Update work order status
       const updated = await tx.workOrder.update({
         where: { id: workOrderId },
         data: {
-          status: 'CANCELLED' as any
-        }
+          status: 'CANCELLED' as any,
+        },
       })
 
       // Create audit log
@@ -115,8 +122,8 @@ export async function POST(request: NextRequest) {
           model: 'WorkOrder',
           modelId: workOrderId,
           before: { status: currentWorkOrder.status },
-          after: { status: 'CANCELLED' }
-        }
+          after: { status: 'CANCELLED' },
+        },
       })
 
       return updated
@@ -125,10 +132,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       message: 'Work order cancelled successfully',
-      workOrder: cancelledWorkOrder
+      workOrder: cancelledWorkOrder,
     })
   } catch (error) {
-    console.error('Cancel work order error:', error)
+    logger.error('Cancel work order error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

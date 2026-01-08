@@ -1,27 +1,27 @@
-import React from "react";
-import clsx from "clsx";
-import { Card, CardContent } from "./Card";
-import { cssVar, metricPalette, trendPalette } from "@/theme/palette";
+import React from 'react'
+import clsx from 'clsx'
+import { Card, CardContent } from './Card'
+import { cssVar, metricPalette, trendPalette } from '@/theme/palette'
 
 export interface StatsCardProps extends React.HTMLAttributes<HTMLDivElement> {
   /** The main value/metric to display */
-  value: string | number;
+  value: string | number
   /** Label describing the metric */
-  label: string;
+  label: string
   /** Optional subtitle or description */
-  subtitle?: string;
+  subtitle?: string
   /** Trend indicator */
   trend?: {
-    value: string | number;
-    direction: "up" | "down" | "neutral";
-    label?: string;
-  };
+    value: string | number
+    direction: 'up' | 'down' | 'neutral'
+    label?: string
+  }
   /** Status color variant */
-  variant?: "default" | "success" | "warning" | "danger";
+  variant?: 'default' | 'success' | 'warning' | 'danger'
   /** Optional icon component */
-  icon?: React.ReactNode;
+  icon?: React.ReactNode
   /** Size variant */
-  size?: "sm" | "md" | "lg";
+  size?: 'sm' | 'md' | 'lg'
 }
 
 export const StatsCard = React.forwardRef<HTMLDivElement, StatsCardProps>(
@@ -31,18 +31,18 @@ export const StatsCard = React.forwardRef<HTMLDivElement, StatsCardProps>(
       label,
       subtitle,
       trend,
-      variant = "default",
+      variant = 'default',
       icon,
-      size = "md",
+      size = 'md',
       className,
       style,
       ...props
     },
-    ref,
+    ref
   ) => {
-    const getTrendIcon = (direction: "up" | "down" | "neutral") => {
+    const getTrendIcon = (direction: 'up' | 'down' | 'neutral') => {
       switch (direction) {
-        case "up":
+        case 'up':
           return (
             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
               <path
@@ -51,8 +51,8 @@ export const StatsCard = React.forwardRef<HTMLDivElement, StatsCardProps>(
                 clipRule="evenodd"
               />
             </svg>
-          );
-        case "down":
+          )
+        case 'down':
           return (
             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
               <path
@@ -61,8 +61,8 @@ export const StatsCard = React.forwardRef<HTMLDivElement, StatsCardProps>(
                 clipRule="evenodd"
               />
             </svg>
-          );
-        case "neutral":
+          )
+        case 'neutral':
           return (
             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
               <path
@@ -71,32 +71,32 @@ export const StatsCard = React.forwardRef<HTMLDivElement, StatsCardProps>(
                 clipRule="evenodd"
               />
             </svg>
-          );
+          )
       }
-    };
+    }
 
-    const palette = metricPalette[variant];
+    const palette = metricPalette[variant]
     const paletteStyle: React.CSSProperties = {
-      "--metric-surface": cssVar(palette.surface),
-      "--metric-border": cssVar(palette.border),
-      "--metric-accent": cssVar(palette.accent),
-      "--metric-foreground": cssVar(palette.foreground),
-      "--metric-muted": cssVar(palette.muted),
-    };
+      '--metric-surface': cssVar(palette.surface),
+      '--metric-border': cssVar(palette.border),
+      '--metric-accent': cssVar(palette.accent),
+      '--metric-foreground': cssVar(palette.foreground),
+      '--metric-muted': cssVar(palette.muted),
+    }
 
     return (
       <Card
         ref={ref}
         style={{ ...paletteStyle, ...(style as React.CSSProperties) }}
         className={clsx(
-          "transition-all duration-200 hover:shadow-card-hover border border-l-4",
-          "bg-[var(--metric-surface)]",
-          "border-[var(--metric-border)]",
-          "border-l-[var(--metric-accent)]",
-          className,
+          'transition-all duration-200 hover:shadow-card-hover border border-l-4',
+          'bg-[var(--metric-surface)]',
+          'border-[var(--metric-border)]',
+          'border-l-[var(--metric-accent)]',
+          className
         )}
         variant="elevated"
-        padding={size === "sm" ? "sm" : size === "lg" ? "lg" : "md"}
+        padding={size === 'sm' ? 'sm' : size === 'lg' ? 'lg' : 'md'}
         {...props}
       >
         <CardContent className="p-0">
@@ -105,10 +105,10 @@ export const StatsCard = React.forwardRef<HTMLDivElement, StatsCardProps>(
               {/* Icon */}
               {icon && (
                 <div
-                  className={clsx("mb-3 text-[color:var(--metric-muted)]", {
-                    "text-lg": size === "sm",
-                    "text-xl": size === "md",
-                    "text-2xl": size === "lg",
+                  className={clsx('mb-3 text-[color:var(--metric-muted)]', {
+                    'text-lg': size === 'sm',
+                    'text-xl': size === 'md',
+                    'text-2xl': size === 'lg',
                   })}
                 >
                   {icon}
@@ -118,12 +118,12 @@ export const StatsCard = React.forwardRef<HTMLDivElement, StatsCardProps>(
               {/* Main Value */}
               <div
                 className={clsx(
-                  "font-bold leading-none mb-2 text-[color:var(--metric-foreground)]",
+                  'font-bold leading-none mb-2 text-[color:var(--metric-foreground)]',
                   {
-                    "text-2xl": size === "sm",
-                    "text-3xl": size === "md",
-                    "text-4xl": size === "lg",
-                  },
+                    'text-2xl': size === 'sm',
+                    'text-3xl': size === 'md',
+                    'text-4xl': size === 'lg',
+                  }
                 )}
               >
                 {value}
@@ -131,14 +131,11 @@ export const StatsCard = React.forwardRef<HTMLDivElement, StatsCardProps>(
 
               {/* Label */}
               <div
-                className={clsx(
-                  "font-medium text-[color:var(--muted-strong)] mb-1",
-                  {
-                    "text-xs": size === "sm",
-                    "text-sm": size === "md",
-                    "text-base": size === "lg",
-                  },
-                )}
+                className={clsx('font-medium text-[color:var(--muted-strong)] mb-1', {
+                  'text-xs': size === 'sm',
+                  'text-sm': size === 'md',
+                  'text-base': size === 'lg',
+                })}
               >
                 {label}
               </div>
@@ -146,10 +143,10 @@ export const StatsCard = React.forwardRef<HTMLDivElement, StatsCardProps>(
               {/* Subtitle */}
               {subtitle && (
                 <div
-                  className={clsx("text-[color:var(--muted)]", {
-                    "text-xs": size === "sm",
-                    "text-sm": size === "md",
-                    "text-base": size === "lg",
+                  className={clsx('text-[color:var(--muted)]', {
+                    'text-xs': size === 'sm',
+                    'text-sm': size === 'md',
+                    'text-base': size === 'lg',
                   })}
                 >
                   {subtitle}
@@ -160,59 +157,55 @@ export const StatsCard = React.forwardRef<HTMLDivElement, StatsCardProps>(
             {/* Trend Indicator */}
             {trend && (
               <div
-                className={clsx("flex items-center space-x-1 ml-4", {
-                  "text-xs": size === "sm",
-                  "text-sm": size === "md",
-                  "text-base": size === "lg",
+                className={clsx('flex items-center space-x-1 ml-4', {
+                  'text-xs': size === 'sm',
+                  'text-sm': size === 'md',
+                  'text-base': size === 'lg',
                 })}
                 style={{ color: trendPalette[trend.direction] }}
               >
                 {getTrendIcon(trend.direction)}
                 <span className="font-medium">{trend.value}</span>
-                {trend.label && (
-                  <span className="text-[color:var(--muted)]">
-                    ({trend.label})
-                  </span>
-                )}
+                {trend.label && <span className="text-[color:var(--muted)]">({trend.label})</span>}
               </div>
             )}
           </div>
         </CardContent>
       </Card>
-    );
-  },
-);
+    )
+  }
+)
 
-StatsCard.displayName = "StatsCard";
+StatsCard.displayName = 'StatsCard'
 
 export interface StatsGridProps {
   /** Array of stats to display */
-  stats: Array<Omit<StatsCardProps, "size">>;
+  stats: Array<Omit<StatsCardProps, 'size'>>
   /** Grid columns */
-  columns?: 2 | 3 | 4;
+  columns?: 2 | 3 | 4
   /** Size for all cards */
-  size?: "sm" | "md" | "lg";
+  size?: 'sm' | 'md' | 'lg'
   /** Additional CSS classes */
-  className?: string;
+  className?: string
 }
 
 export const StatsGrid: React.FC<StatsGridProps> = ({
   stats,
   columns = 4,
-  size = "md",
+  size = 'md',
   className,
 }) => {
   const gridCols = {
-    2: "grid-cols-1 md:grid-cols-2",
-    3: "grid-cols-1 md:grid-cols-2 lg:grid-cols-3",
-    4: "grid-cols-1 md:grid-cols-2 lg:grid-cols-4",
-  };
+    2: 'grid-cols-1 md:grid-cols-2',
+    3: 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3',
+    4: 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4',
+  }
 
   return (
-    <div className={clsx("grid gap-6", gridCols[columns], className)}>
+    <div className={clsx('grid gap-6', gridCols[columns], className)}>
       {stats.map((stat, index) => (
         <StatsCard key={index} {...stat} size={size} />
       ))}
     </div>
-  );
-};
+  )
+}

@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
 import { XMarkIcon } from '@heroicons/react/24/outline'
+import { logger } from '@/lib/logger'
 
 type Equipment = {
   id: string
@@ -49,7 +50,7 @@ export default function EquipmentPage() {
         setEquipment(data.equipment)
       }
     } catch (error) {
-      console.error('Error loading equipment:', error)
+      logger.error('Error loading equipment:', error)
     } finally {
       setIsLoading(false)
     }
@@ -85,7 +86,7 @@ export default function EquipmentPage() {
         alert('Failed to delete equipment')
       }
     } catch (error) {
-      console.error('Error deleting equipment:', error)
+      logger.error('Error deleting equipment:', error)
       alert('Error deleting equipment')
     }
   }
@@ -118,7 +119,7 @@ export default function EquipmentPage() {
         alert(`Error: ${data.error}`)
       }
     } catch (error) {
-      console.error('Error creating equipment:', error)
+      logger.error('Error creating equipment:', error)
       alert('Error creating equipment')
     }
   }
@@ -146,7 +147,7 @@ export default function EquipmentPage() {
         alert(`Error: ${data.error}`)
       }
     } catch (error) {
-      console.error('Error updating equipment:', error)
+      logger.error('Error updating equipment:', error)
       alert('Error updating equipment')
     }
   }
@@ -169,9 +170,7 @@ export default function EquipmentPage() {
       render: (row) => (
         <span
           className={`px-2 py-1 rounded text-xs font-medium ${
-            row.isActive
-              ? 'bg-green-100 text-green-800'
-              : 'bg-gray-100 text-gray-800'
+            row.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
           }`}
         >
           {row.isActive ? 'Active' : 'Inactive'}
@@ -228,9 +227,7 @@ export default function EquipmentPage() {
                     <label className="block text-sm font-medium mb-2">Description</label>
                     <Textarea
                       value={formData.description}
-                      onChange={(e) =>
-                        setFormData({ ...formData, description: e.target.value })
-                      }
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                       placeholder="Equipment description..."
                       rows={3}
                     />
@@ -285,9 +282,7 @@ export default function EquipmentPage() {
                     <label className="block text-sm font-medium mb-2">Description</label>
                     <Textarea
                       value={formData.description}
-                      onChange={(e) =>
-                        setFormData({ ...formData, description: e.target.value })
-                      }
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                       rows={3}
                     />
                   </div>

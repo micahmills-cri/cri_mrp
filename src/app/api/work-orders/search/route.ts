@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/server/db/client'
 import { getUserFromRequest } from '../../../../lib/auth'
+import { logger } from '@/lib/logger'
 import { z } from 'zod'
 
 const searchSchema = z.object({
-  query: z.string().min(1)
+  query: z.string().min(1),
 })
 
 export async function POST(request: NextRequest) {
@@ -22,29 +23,29 @@ export async function POST(request: NextRequest) {
       where: {
         OR: [
           { number: { contains: query, mode: 'insensitive' } },
-          { hullId: { contains: query, mode: 'insensitive' } }
-        ]
+          { hullId: { contains: query, mode: 'insensitive' } },
+        ],
       },
       include: {
         routingVersion: {
           include: {
             stages: {
               orderBy: { sequence: 'asc' },
-              include: { 
-                workCenter: { 
-                  include: { 
+              include: {
+                workCenter: {
+                  include: {
                     department: true,
                     stations: {
                       where: { isActive: true },
-                      orderBy: { code: 'asc' }
-                    }
-                  } 
-                } 
-              }
-            }
-          }
-        }
-      }
+                      orderBy: { code: 'asc' },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     })
 
     if (!workOrder) {
@@ -58,16 +59,22 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user has access to this stage (department scoped for operators only)
-    if (user.role === 'OPERATOR' && user.departmentId && user.departmentId !== currentStage.workCenter.department.id) {
+    if (
+      user.role === 'OPERATOR' &&
+      user.departmentId &&
+      user.departmentId !== currentStage.workCenter.department.id
+    ) {
       return NextResponse.json({ error: 'Work order not in your department' }, { status: 403 })
     }
 
     // Filter stations for operators only (admin and supervisor see all stations)
-    const availableStations = user.role === 'OPERATOR' 
-      ? currentStage.workCenter.stations.filter(station => 
-          currentStage.workCenter.department.id === user.departmentId || !user.departmentId
-        )
-      : currentStage.workCenter.stations
+    const availableStations =
+      user.role === 'OPERATOR'
+        ? currentStage.workCenter.stations.filter(
+            (station) =>
+              currentStage.workCenter.department.id === user.departmentId || !user.departmentId
+          )
+        : currentStage.workCenter.stations
 
     return NextResponse.json({
       success: true,
@@ -87,14 +94,14 @@ export async function POST(request: NextRequest) {
           workCenter: {
             id: currentStage.workCenter.id,
             name: currentStage.workCenter.name,
-            department: currentStage.workCenter.department.name
-          }
+            department: currentStage.workCenter.department.name,
+          },
         },
-        availableStations
-      }
+        availableStations,
+      },
     })
   } catch (error) {
-    console.error('Search work order error:', error)
+    logger.error('Search work order error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

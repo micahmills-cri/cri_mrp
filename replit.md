@@ -11,6 +11,7 @@ Preferred communication style: Simple, everyday language.
 ## System Architecture
 
 ### Frontend Architecture
+
 - **Framework**: Next.js 14 with App Router and TypeScript
 - **Styling**: Tailwind CSS with shared theme tokens
 - **State Management**: React hooks
@@ -19,6 +20,7 @@ Preferred communication style: Simple, everyday language.
 - **UI/UX Decisions**: Standardized Heroicons, streamlined navigation, count badges for quick visibility, enhanced table views, responsive design.
 
 ### Backend Architecture
+
 - **API Layer**: Next.js API Routes for authentication and work order operations
 - **Database ORM**: Prisma with PostgreSQL
 - **Authentication**: JWT tokens stored in HTTP-only cookies with bcrypt password hashing
@@ -31,6 +33,7 @@ Preferred communication style: Simple, everyday language.
 - **Advanced Features**: Station metrics calculation (weighted average pay rate), work order cost estimation, CSV export system, pay rate history tracking, member/equipment assignment, soft delete pattern for data preservation.
 
 ### Security Implementation
+
 - **Authentication**: JWT with secure cookie storage
 - **Route Protection**: Middleware-based route guarding
 - **Role-Based Access**: Department-scoped data access for operators, role-based API access.
@@ -39,25 +42,30 @@ Preferred communication style: Simple, everyday language.
 ## External Dependencies
 
 ### Core Framework Dependencies
+
 - **Next.js 14**: Full-stack React framework
 - **React 18.3**: Frontend UI library
 - **TypeScript 5.9**: Type safety
 
 ### Database and ORM
+
 - **Prisma 6.16**: Type-safe ORM
 - **PostgreSQL**: Primary database
 
 ### Authentication and Security
+
 - **jsonwebtoken**: JWT token generation and verification
 - **bcryptjs**: Password hashing and verification
 - **zod**: Runtime type validation for API inputs
 
 ### Utilities
+
 - **date-fns**: Date manipulation and formatting
 - **tsx**: TypeScript execution for seed scripts
 - **@heroicons/react/24/solid**: Standardized UI icons.
 
 ### Environment Configuration
+
 - **DATABASE_URL**: PostgreSQL connection string
 - **JWT_SECRET**: Secret key for JWT signing
 - **STORAGE_BUCKET_ID**: Replit object storage bucket ID for file attachments

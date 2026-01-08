@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { DataTable, Column } from '@/components/admin/DataTable'
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog'
+import { logger } from '@/lib/logger'
 
 type Station = {
   id: string
@@ -49,7 +50,7 @@ export default function StationsPage() {
         setStations(data.stations)
       }
     } catch (error) {
-      console.error('Error loading stations:', error)
+      logger.error('Error loading stations:', error)
     } finally {
       setIsLoading(false)
     }
@@ -80,7 +81,7 @@ export default function StationsPage() {
         alert('Failed to delete station')
       }
     } catch (error) {
-      console.error('Error deleting station:', error)
+      logger.error('Error deleting station:', error)
       alert('Error deleting station')
     }
   }
@@ -105,8 +106,7 @@ export default function StationsPage() {
     {
       key: 'defaultPayRate',
       label: 'Default Pay Rate',
-      render: (row) =>
-        row.defaultPayRate ? `$${Number(row.defaultPayRate).toFixed(2)}/hr` : '-',
+      render: (row) => (row.defaultPayRate ? `$${Number(row.defaultPayRate).toFixed(2)}/hr` : '-'),
     },
     {
       key: 'capacity',
@@ -129,9 +129,7 @@ export default function StationsPage() {
       render: (row) => (
         <span
           className={`px-2 py-1 rounded text-xs font-medium ${
-            row.isActive
-              ? 'bg-green-100 text-green-800'
-              : 'bg-gray-100 text-gray-800'
+            row.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
           }`}
         >
           {row.isActive ? 'Active' : 'Inactive'}

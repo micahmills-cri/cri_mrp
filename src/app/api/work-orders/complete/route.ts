@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/server/db/client'
 import { getUserFromRequest } from '../../../../lib/auth'
+import { logger } from '@/lib/logger'
 import { z } from 'zod'
 import { WOStatus, WOEvent } from '@prisma/client'
 
@@ -9,7 +10,7 @@ const completeWOSchema = z.object({
   stationId: z.string(),
   goodQty: z.number().min(0),
   scrapQty: z.number().min(0).optional(),
-  note: z.string().optional()
+  note: z.string().optional(),
 })
 
 export async function POST(request: NextRequest) {
@@ -21,7 +22,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
     const { workOrderId, stationId, goodQty, scrapQty = 0, note } = completeWOSchema.parse(body)
-    
+
     // Get selected department from query params, fallback to user's assigned department
     const { searchParams } = new URL(request.url)
     const selectedDepartmentId = searchParams.get('departmentId') || user.departmentId
@@ -38,11 +39,11 @@ export async function POST(request: NextRequest) {
           include: {
             stages: {
               orderBy: { sequence: 'asc' },
-              include: { workCenter: { include: { department: true } } }
-            }
-          }
-        }
-      }
+              include: { workCenter: { include: { department: true } } },
+            },
+          },
+        },
+      },
     })
 
     if (!workOrder) {
@@ -55,7 +56,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Get only enabled stages
-    const enabledStages = workOrder.routingVersion.stages.filter(s => s.enabled).sort((a, b) => a.sequence - b.sequence)
+    const enabledStages = workOrder.routingVersion.stages
+      .filter((s) => s.enabled)
+      .sort((a, b) => a.sequence - b.sequence)
     const currentStage = enabledStages[workOrder.currentStageIndex]
     if (!currentStage) {
       return NextResponse.json({ error: 'No current stage found' }, { status: 400 })
@@ -71,8 +74,8 @@ export async function POST(request: NextRequest) {
       where: {
         id: stationId,
         workCenterId: currentStage.workCenterId,
-        isActive: true
-      }
+        isActive: true,
+      },
     })
 
     if (!station) {
@@ -89,8 +92,8 @@ export async function POST(request: NextRequest) {
         event: WOEvent.COMPLETE,
         goodQty,
         scrapQty,
-        note: note || null
-      }
+        note: note || null,
+      },
     })
 
     // Check if this is the last enabled stage
@@ -111,19 +114,19 @@ export async function POST(request: NextRequest) {
       where: { id: workOrder.id },
       data: {
         status: newStatus,
-        currentStageIndex: newStageIndex
-      }
+        currentStageIndex: newStageIndex,
+      },
     })
 
-    return NextResponse.json({ 
-      success: true, 
-      message: isLastStage 
-        ? `Completed work order ${workOrder.number}` 
+    return NextResponse.json({
+      success: true,
+      message: isLastStage
+        ? `Completed work order ${workOrder.number}`
         : `Completed stage ${currentStage.name} for ${workOrder.number}`,
-      isComplete: isLastStage
+      isComplete: isLastStage,
     })
   } catch (error) {
-    console.error('Complete work order error:', error)
+    logger.error('Complete work order error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

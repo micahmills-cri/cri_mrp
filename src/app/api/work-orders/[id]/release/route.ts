@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/server/db/client'
 import { getUserFromRequest } from '../../../../../lib/auth'
+import { logger } from '@/lib/logger'
 import { WOStatus, Role, RoutingVersionStatus } from '@prisma/client'
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = getUserFromRequest(request)
     if (!user) {
@@ -31,13 +29,13 @@ export async function POST(
               orderBy: { sequence: 'asc' },
               include: {
                 workCenter: {
-                  include: { department: true }
-                }
-              }
-            }
-          }
-        }
-      }
+                  include: { department: true },
+                },
+              },
+            },
+          },
+        },
+      },
     })
 
     if (!workOrder) {
@@ -46,7 +44,10 @@ export async function POST(
 
     // Check if work order is in PLANNED status
     if (workOrder.status !== WOStatus.PLANNED) {
-      return NextResponse.json({ error: 'Work order must be in PLANNED status to release' }, { status: 400 })
+      return NextResponse.json(
+        { error: 'Work order must be in PLANNED status to release' },
+        { status: 400 }
+      )
     }
 
     // Validate that planned dates are set
@@ -54,9 +55,12 @@ export async function POST(
     const plannedFinishDate = (workOrder as any).plannedFinishDate
 
     if (!plannedStartDate || !plannedFinishDate) {
-      return NextResponse.json({
-        error: 'Cannot release work order without planned start and finish dates'
-      }, { status: 400 })
+      return NextResponse.json(
+        {
+          error: 'Cannot release work order without planned start and finish dates',
+        },
+        { status: 400 }
+      )
     }
 
     // Validate dates are valid
@@ -65,19 +69,25 @@ export async function POST(
     const now = new Date()
 
     if (startDate >= finishDate) {
-      return NextResponse.json({
-        error: 'Planned start date must be before planned finish date'
-      }, { status: 400 })
+      return NextResponse.json(
+        {
+          error: 'Planned start date must be before planned finish date',
+        },
+        { status: 400 }
+      )
     }
 
     // Optional: Check if start date is too far in the past (allow some buffer for same-day releases)
     const yesterday = new Date()
     yesterday.setDate(yesterday.getDate() - 1)
-    
+
     if (startDate < yesterday) {
-      return NextResponse.json({
-        error: 'Planned start date cannot be more than 1 day in the past'
-      }, { status: 400 })
+      return NextResponse.json(
+        {
+          error: 'Planned start date cannot be more than 1 day in the past',
+        },
+        { status: 400 }
+      )
     }
 
     // Create version snapshot before release
@@ -85,7 +95,7 @@ export async function POST(
       // Get latest version number
       const latestVersion = await tx.workOrderVersion.findFirst({
         where: { workOrderId: params.id },
-        orderBy: { versionNumber: 'desc' }
+        orderBy: { versionNumber: 'desc' },
       })
 
       const newVersionNumber = (latestVersion?.versionNumber || 0) + 1
@@ -107,15 +117,15 @@ export async function POST(
           model: workOrder.routingVersion.model,
           trim: workOrder.routingVersion.trim,
           version: workOrder.routingVersion.version,
-          stages: workOrder.routingVersion.stages.map(s => ({
+          stages: workOrder.routingVersion.stages.map((s) => ({
             sequence: s.sequence,
             code: s.code,
             name: s.name,
             enabled: s.enabled,
             workCenterId: s.workCenterId,
-            standardStageSeconds: s.standardStageSeconds
-          }))
-        }
+            standardStageSeconds: s.standardStageSeconds,
+          })),
+        },
       }
 
       // Create version for release
@@ -125,8 +135,8 @@ export async function POST(
           versionNumber: newVersionNumber,
           snapshotData: snapshot,
           reason: 'Work order released',
-          createdBy: user.email || user.userId || user.id
-        }
+          createdBy: user.email || user.userId || user.id,
+        },
       })
     })
 
@@ -136,8 +146,8 @@ export async function POST(
         where: { id: workOrder.routingVersionId },
         data: {
           status: RoutingVersionStatus.RELEASED,
-          releasedAt: new Date()
-        }
+          releasedAt: new Date(),
+        },
       })
     }
 
@@ -147,15 +157,15 @@ export async function POST(
       trim: (workOrder.specSnapshot as any).trim || '',
       features: (workOrder.specSnapshot as any).features || {},
       routingVersionId: workOrder.routingVersionId,
-      stages: workOrder.routingVersion.stages.map(s => ({
+      stages: workOrder.routingVersion.stages.map((s) => ({
         id: s.id,
         code: s.code,
         name: s.name,
         sequence: s.sequence,
         enabled: s.enabled,
         workCenterId: s.workCenterId,
-        standardStageSeconds: s.standardStageSeconds
-      }))
+        standardStageSeconds: s.standardStageSeconds,
+      })),
     }
 
     // Update work order to RELEASED status
@@ -164,8 +174,8 @@ export async function POST(
       data: {
         status: WOStatus.RELEASED,
         currentStageIndex: 0,
-        specSnapshot: specSnapshot
-      }
+        specSnapshot: specSnapshot,
+      },
     })
 
     // Create audit log
@@ -176,8 +186,8 @@ export async function POST(
         modelId: workOrderId,
         action: 'RELEASE',
         before: { status: WOStatus.PLANNED },
-        after: { status: WOStatus.RELEASED, specSnapshot }
-      }
+        after: { status: WOStatus.RELEASED, specSnapshot },
+      },
     })
 
     return NextResponse.json({
@@ -187,11 +197,11 @@ export async function POST(
         id: updatedWorkOrder.id,
         number: updatedWorkOrder.number,
         status: updatedWorkOrder.status,
-        specSnapshot: updatedWorkOrder.specSnapshot
-      }
+        specSnapshot: updatedWorkOrder.specSnapshot,
+      },
     })
   } catch (error) {
-    console.error('Release work order error:', error)
+    logger.error('Release work order error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
