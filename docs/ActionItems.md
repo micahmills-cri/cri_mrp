@@ -63,7 +63,7 @@ This document tracks outstanding tasks, improvements, and technical debt for the
 
 ### CI/CD
 
-- [ ] **Set up GitHub Actions CI pipeline**
+- [DEFERRED] **Set up GitHub Actions CI pipeline**
   - Create `.github/workflows/ci.yml`
   - Run on push and pull requests
   - Steps: install → lint → format:check → test → build
@@ -71,13 +71,15 @@ This document tracks outstanding tasks, improvements, and technical debt for the
   - Cache node_modules for faster runs
   - **Estimated effort**: 1 hour
   - **Agent role**: QA & Release Gate
+  - **Reason for deferral**: One-person operation, local quality checks sufficient for now. Can revisit when team grows or when preparing for production deployment.
 
-- [ ] **Add PR status checks**
+- [DEFERRED] **Add PR status checks**
   - Require CI to pass before merge
   - Require at least 1 approval
   - Configure branch protection for main
   - **Estimated effort**: 15 minutes
   - **Agent role**: QA & Release Gate
+  - **Reason for deferral**: Depends on CI pipeline. Not needed for solo development workflow.
 
 ### Testing
 
