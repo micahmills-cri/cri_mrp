@@ -161,6 +161,11 @@ export default function OperatorConsole() {
   const [isNotesOpen, setIsNotesOpen] = useState(false);
   const [attachmentCount, setAttachmentCount] = useState(0);
   const [notesCount, setNotesCount] = useState(0);
+  const [queueSearchQuery, setQueueSearchQuery] = useState("");
+  const [queueStatusFilter, setQueueStatusFilter] = useState("");
+  const [queuePriorityFilter, setQueuePriorityFilter] = useState("");
+  const [queueSortBy, setQueueSortBy] = useState<string>("priority");
+  const [queueSortDir, setQueueSortDir] = useState<"asc" | "desc">("desc");
   const router = useRouter();
 
   useEffect(() => {
@@ -465,6 +470,75 @@ export default function OperatorConsole() {
       label: `${station.code} — ${station.name}`,
     })) ?? [];
 
+  const priorityOrder: Record<string, number> = { CRITICAL: 4, HIGH: 3, NORMAL: 2, LOW: 1 };
+
+  const filteredAndSortedQueue = queue
+    .filter((wo) => {
+      if (queueStatusFilter && wo.status !== queueStatusFilter) return false;
+      if (queuePriorityFilter && wo.priority !== queuePriorityFilter) return false;
+      if (queueSearchQuery) {
+        const q = queueSearchQuery.toLowerCase();
+        const matchesNumber = wo.number.toLowerCase().includes(q);
+        const matchesHull = wo.hullId.toLowerCase().includes(q);
+        const matchesSku = wo.productSku.toLowerCase().includes(q);
+        const matchesStage = wo.currentStage.name.toLowerCase().includes(q);
+        const matchesWorkCenter = wo.currentStage.workCenter.name.toLowerCase().includes(q);
+        if (!matchesNumber && !matchesHull && !matchesSku && !matchesStage && !matchesWorkCenter) return false;
+      }
+      return true;
+    })
+    .sort((a, b) => {
+      let cmp = 0;
+      switch (queueSortBy) {
+        case "status":
+          cmp = a.status.localeCompare(b.status);
+          break;
+        case "priority":
+          cmp = (priorityOrder[a.priority] || 0) - (priorityOrder[b.priority] || 0);
+          break;
+        case "number":
+          cmp = a.number.localeCompare(b.number);
+          break;
+        case "hullId":
+          cmp = a.hullId.localeCompare(b.hullId);
+          break;
+        case "productSku":
+          cmp = a.productSku.localeCompare(b.productSku);
+          break;
+        case "stage":
+          cmp = a.currentStage.name.localeCompare(b.currentStage.name);
+          break;
+        case "workCenter":
+          cmp = a.currentStage.workCenter.name.localeCompare(b.currentStage.workCenter.name);
+          break;
+        case "lastActivity":
+          const aDate = a.lastEvent ? new Date(a.lastEvent.createdAt).getTime() : 0;
+          const bDate = b.lastEvent ? new Date(b.lastEvent.createdAt).getTime() : 0;
+          cmp = aDate - bDate;
+          break;
+        default:
+          cmp = 0;
+      }
+      return queueSortDir === "asc" ? cmp : -cmp;
+    });
+
+  const handleQueueSort = (column: string) => {
+    if (queueSortBy === column) {
+      setQueueSortDir(queueSortDir === "asc" ? "desc" : "asc");
+    } else {
+      setQueueSortBy(column);
+      setQueueSortDir("asc");
+    }
+  };
+
+  const SortIndicator = ({ column }: { column: string }) => {
+    if (queueSortBy !== column) return null;
+    return <span className="ml-1">{queueSortDir === "asc" ? "▲" : "▼"}</span>;
+  };
+
+  const queueStatuses = Array.from(new Set(queue.map((wo) => wo.status)));
+  const queuePriorities = Array.from(new Set(queue.map((wo) => wo.priority)));
+
   return (
     <div className="min-h-screen bg-[var(--background)] text-[color:var(--foreground)]">
       <div className="border-b border-[var(--border-strong)] bg-[var(--surface)] shadow-sm">
@@ -547,28 +621,86 @@ export default function OperatorConsole() {
               <p className="text-sm text-[color:var(--muted)]">Live updates every 5 seconds</p>
             </div>
             <span className="text-xs uppercase tracking-wide text-[color:var(--muted)]">
-              {queue.length} active
+              {filteredAndSortedQueue.length} of {queue.length} shown
             </span>
           </div>
 
-          {queue.length > 0 ? (
+          <div className="flex flex-wrap items-center gap-3 border-b border-[var(--border)] bg-[var(--surface)] px-6 py-3">
+            <input
+              type="text"
+              placeholder="Search WO#, Hull ID, SKU..."
+              value={queueSearchQuery}
+              onChange={(e) => setQueueSearchQuery(e.target.value)}
+              className="flex-1 min-w-[180px] max-w-[280px] rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[color:var(--foreground)] placeholder:text-[color:var(--muted)] focus:border-[var(--ring)] focus:outline-none focus:ring-1 focus:ring-[var(--ring)]"
+            />
+            <select
+              value={queueStatusFilter}
+              onChange={(e) => setQueueStatusFilter(e.target.value)}
+              className="rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[color:var(--foreground)] focus:border-[var(--ring)] focus:outline-none focus:ring-1 focus:ring-[var(--ring)]"
+            >
+              <option value="">All Statuses</option>
+              {queueStatuses.map((s) => (
+                <option key={s} value={s}>{s === "IN_PROGRESS" ? "In Progress" : s}</option>
+              ))}
+            </select>
+            <select
+              value={queuePriorityFilter}
+              onChange={(e) => setQueuePriorityFilter(e.target.value)}
+              className="rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[color:var(--foreground)] focus:border-[var(--ring)] focus:outline-none focus:ring-1 focus:ring-[var(--ring)]"
+            >
+              <option value="">All Priorities</option>
+              {queuePriorities.map((p) => (
+                <option key={p} value={p}>{p}</option>
+              ))}
+            </select>
+            {(queueSearchQuery || queueStatusFilter || queuePriorityFilter) && (
+              <button
+                onClick={() => {
+                  setQueueSearchQuery("");
+                  setQueueStatusFilter("");
+                  setQueuePriorityFilter("");
+                }}
+                className="rounded-md border border-[var(--border)] bg-[var(--surface-muted)] px-3 py-2 text-sm text-[color:var(--muted-strong)] hover:bg-[var(--surface)] transition-colors"
+              >
+                Clear Filters
+              </button>
+            )}
+          </div>
+
+          {filteredAndSortedQueue.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-[color:var(--border)]">
                 <thead className="bg-[var(--table-header-surface)]">
                   <tr className="text-left text-xs font-medium uppercase tracking-wide text-[color:var(--muted-strong)]">
-                    <th className="px-6 py-3">Status</th>
-                    <th className="px-6 py-3">Priority</th>
-                    <th className="px-6 py-3">WO Number</th>
-                    <th className="px-6 py-3">Hull ID</th>
-                    <th className="px-6 py-3">SKU</th>
-                    <th className="px-6 py-3">Current Stage</th>
-                    <th className="px-6 py-3">Work Center</th>
-                    <th className="px-6 py-3">Last Activity</th>
+                    <th className="px-6 py-3 cursor-pointer select-none hover:bg-[var(--surface-muted)]" onClick={() => handleQueueSort("status")}>
+                      Status<SortIndicator column="status" />
+                    </th>
+                    <th className="px-6 py-3 cursor-pointer select-none hover:bg-[var(--surface-muted)]" onClick={() => handleQueueSort("priority")}>
+                      Priority<SortIndicator column="priority" />
+                    </th>
+                    <th className="px-6 py-3 cursor-pointer select-none hover:bg-[var(--surface-muted)]" onClick={() => handleQueueSort("number")}>
+                      WO Number<SortIndicator column="number" />
+                    </th>
+                    <th className="px-6 py-3 cursor-pointer select-none hover:bg-[var(--surface-muted)]" onClick={() => handleQueueSort("hullId")}>
+                      Hull ID<SortIndicator column="hullId" />
+                    </th>
+                    <th className="px-6 py-3 cursor-pointer select-none hover:bg-[var(--surface-muted)]" onClick={() => handleQueueSort("productSku")}>
+                      SKU<SortIndicator column="productSku" />
+                    </th>
+                    <th className="px-6 py-3 cursor-pointer select-none hover:bg-[var(--surface-muted)]" onClick={() => handleQueueSort("stage")}>
+                      Current Stage<SortIndicator column="stage" />
+                    </th>
+                    <th className="px-6 py-3 cursor-pointer select-none hover:bg-[var(--surface-muted)]" onClick={() => handleQueueSort("workCenter")}>
+                      Work Center<SortIndicator column="workCenter" />
+                    </th>
+                    <th className="px-6 py-3 cursor-pointer select-none hover:bg-[var(--surface-muted)]" onClick={() => handleQueueSort("lastActivity")}>
+                      Last Activity<SortIndicator column="lastActivity" />
+                    </th>
                     <th className="px-6 py-3">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[color:var(--border)]">
-                  {queue.map((wo) => (
+                  {filteredAndSortedQueue.map((wo) => (
                     <tr
                       key={wo.id}
                       className="bg-[var(--surface)] transition-colors hover:bg-[color:var(--table-row-hover)]"
@@ -631,7 +763,9 @@ export default function OperatorConsole() {
             </div>
           ) : (
             <div className="px-6 py-12 text-center text-sm text-[color:var(--muted)]">
-              No work orders in queue
+              {queue.length === 0 
+                ? "No work orders in queue" 
+                : "No work orders match the current filters"}
             </div>
           )}
         </div>
