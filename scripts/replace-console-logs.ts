@@ -76,12 +76,7 @@ async function main() {
     'src/lib/**/!(logger|*.test).ts',
   ]
 
-  const excludePatterns = [
-    '**/node_modules/**',
-    '**/*.test.ts',
-    '**/*.test.tsx',
-    '**/logger.ts',
-  ]
+  const excludePatterns = ['**/node_modules/**', '**/*.test.ts', '**/*.test.tsx', '**/logger.ts']
 
   console.log('🔍 Finding files to process...')
 
