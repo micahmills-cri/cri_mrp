@@ -34,15 +34,12 @@ This document tracks outstanding tasks, improvements, and technical debt for the
   - **Agent role**: QA & Release Gate
   - **Discovered**: 2025-01-16 during ESLint/Prettier setup
 
-- [ ] **Fix exported function in supervisor page component**
-  - File: `src/app/supervisor/page.tsx`
-  - Issue: `buildKanbanColumns` function is exported but shouldn't be
-  - Error: Next.js build fails with "Property 'buildKanbanColumns' is incompatible with index signature"
-  - Fix: Either unexport the function or move it to a separate utility file
+- [ ] **Resolve recurring npm "Unknown env config http-proxy" warning**
+  - Warning appears during `npx prettier@3 --write ...` runs even after prior fix
+  - Investigate environment config still setting `http-proxy` and remove/update source
   - **Estimated effort**: 15 minutes
-  - **Agent role**: UI/UX Implementer
-  - **Discovered**: 2025-01-16 during build verification
-  - **Blocks**: Production builds
+  - **Agent role**: QA & Release Gate
+  - **Discovered**: 2026-01-08 during formatting run
 
 - [ ] **Remove console.log statements from production code**
   - Create structured logging utility in `src/lib/logger.ts`
@@ -96,6 +93,14 @@ This document tracks outstanding tasks, improvements, and technical debt for the
   - **Agent role**: QA & Release Gate
 
 ### Testing
+
+- [ ] **Fix failing supervisor dashboard contract test**
+  - Failure: `src/app/api/__tests__/supervisor.dashboard.test.ts` expects 200 but receives 500
+  - Error log: `TypeError: Cannot read properties of undefined (reading 'findMany')` in `src/app/api/supervisor/dashboard/route.ts:331`
+  - Repro: `npm run test`
+  - **Estimated effort**: 30-45 minutes
+  - **Agent role**: QA & Release Gate
+  - **Discovered**: 2026-01-08 during `npm run test`
 
 - [ ] **Expand API route test coverage**
   - Current: 3 routes tested (supervisor dashboard, product configurations, queues), 31 total routes
@@ -156,6 +161,14 @@ _(All medium priority admin panel UI tasks are complete - moved to Completed Ite
   - **Discovered**: 2025-10-23 while QAing supervisor modal defaults
 
 ### Error Handling & Observability
+
+- [ ] **Update baseline-browser-mapping warning during Vitest runs**
+  - Warning: `[baseline-browser-mapping] The data in this module is over two months old`
+  - Suggested fix: `npm i baseline-browser-mapping@latest -D`
+  - Repro: `npm run test`
+  - **Estimated effort**: 10 minutes
+  - **Agent role**: QA & Release Gate
+  - **Discovered**: 2026-01-08 during Vitest run
 
 - [ ] **Centralize API error handling**
   - Create `src/lib/api-error.ts` with ApiError class
@@ -364,6 +377,16 @@ _(All medium priority admin panel UI tasks are complete - moved to Completed Ite
 ## ✅ Completed Items
 
 _(Items move here when marked complete with `[x]` status)_
+
+### 2026-01-08
+
+- [x] **Fix exported function in supervisor page component** (Agent: Codex - UI/UX Implementer, Completed: 2026-01-08)
+  - File: `src/app/supervisor/page.tsx`
+  - Issue: `buildKanbanColumns` function is exported but shouldn't be
+  - Error: Next.js build fails with "Property 'buildKanbanColumns' is incompatible with index signature"
+  - Fix: Moved the helper into `src/app/supervisor/kanban-utils.ts` and imported it into the page module
+  - **Discovered**: 2025-01-16 during build verification
+  - **Blocks**: Production builds
 
 ### 2026-01-07
 

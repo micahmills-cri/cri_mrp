@@ -10,84 +10,13 @@ import { DataCard, DataGrid } from '../../components/ui/DataCard'
 import { StatusCard, StatusGrid } from '../../components/ui/StatusCard'
 import { Button } from '../../components/ui/Button'
 import { Select } from '../../components/ui/Select'
-import { PaperClipIcon, ChatBubbleLeftIcon, ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/solid'
-
-type WorkOrder = {
-  id: string
-  number: string
-  hullId: string
-  productSku: string
-  status: 'PLANNED' | 'RELEASED' | 'IN_PROGRESS' | 'HOLD' | 'COMPLETED' | 'CLOSED' | 'CANCELLED'
-  qty: number
-  currentStageIndex: number
-  specSnapshot: any
-  createdAt: string
-  plannedStartDate?: string | null
-  plannedFinishDate?: string | null
-  priority?: 'LOW' | 'NORMAL' | 'HIGH' | 'CRITICAL'
-  _count?: {
-    notes: number
-    attachments: number
-  }
-  routingVersion?: {
-    id: string
-    model: string
-    trim: string | null
-    version: number
-    status: string
-  }
-  currentWorkCenterId?: string | null
-  currentWorkCenterName?: string | null
-  currentDepartmentName?: string | null
-  currentStage?: {
-    id: string
-    code: string
-    name: string
-    sequence: number
-    workCenter: {
-      id: string
-      name: string
-    } | null
-    department: {
-      id: string
-      name: string
-    } | null
-    standardSeconds: number
-  }
-  enabledStages?: Array<{
-    id: string
-    code: string
-    name: string
-    sequence: number
-    enabled: boolean
-    workCenter: string
-    department: string
-  }>
-  stageTimeline?: Array<{
-    stageId: string
-    stageName: string
-    stageCode: string
-    workCenter: string
-    events: Array<{
-      id: string
-      event: string
-      createdAt: string
-      station: string
-      stationCode: string
-      user: string
-      goodQty: number
-      scrapQty: number
-      note: string | null
-    }>
-  }>
-  notes?: Array<{
-    note: string
-    event: string
-    stage: string
-    user: string
-    createdAt: string
-  }>
-}
+import {
+  PaperClipIcon,
+  ChatBubbleLeftIcon,
+  ChevronDownIcon,
+  ChevronRightIcon,
+} from '@heroicons/react/24/solid'
+import { buildKanbanColumns, type KanbanWorkCenter, type SupervisorWorkOrder } from './kanban-utils'
 
 type RoutingStage = {
   id?: string
@@ -109,24 +38,9 @@ type RoutingVersion = {
   stages: RoutingStage[]
 }
 
-export type SupervisorWorkOrder = WorkOrder
+type WorkOrder = SupervisorWorkOrder
 
-export type KanbanWorkCenter = {
-  id: string
-  name: string
-  departmentId: string
-  departmentName: string
-  sequence: number
-}
-
-export type KanbanColumn = {
-  key: string
-  label: string
-  workOrders: WorkOrder[]
-  description?: string
-}
-
-export function buildDefaultPlannedWindow() {
+function buildDefaultPlannedWindow() {
   const now = new Date()
   const start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 8, 0, 0, 0)
 
@@ -151,70 +65,6 @@ export function buildDefaultPlannedWindow() {
     plannedStartDate: formatForInput(start),
     plannedFinishDate: formatForInput(finish),
   }
-}
-
-export function buildKanbanColumns(
-  workOrders: WorkOrder[],
-  workCenters: KanbanWorkCenter[]
-): KanbanColumn[] {
-  const backlogStatuses: WorkOrder['status'][] = ['PLANNED', 'RELEASED', 'HOLD']
-  const completedStatuses: WorkOrder['status'][] = ['COMPLETED']
-
-  const backlogOrders = workOrders.filter((wo) => backlogStatuses.includes(wo.status))
-  const completedOrders = workOrders.filter((wo) => completedStatuses.includes(wo.status))
-  const inProgressOrders = workOrders.filter((wo) => wo.status === 'IN_PROGRESS')
-
-  const workCenterBuckets = new Map<string, WorkOrder[]>()
-  const knownWorkCenterIds = new Set(workCenters.map((center) => center.id))
-  const unassigned: WorkOrder[] = []
-
-  for (const wo of inProgressOrders) {
-    if (wo.currentWorkCenterId) {
-      if (!knownWorkCenterIds.has(wo.currentWorkCenterId)) {
-        unassigned.push(wo)
-        continue
-      }
-      if (!workCenterBuckets.has(wo.currentWorkCenterId)) {
-        workCenterBuckets.set(wo.currentWorkCenterId, [])
-      }
-      workCenterBuckets.get(wo.currentWorkCenterId)!.push(wo)
-    } else {
-      unassigned.push(wo)
-    }
-  }
-
-  const columns: KanbanColumn[] = [
-    {
-      key: 'backlog',
-      label: 'Backlog',
-      workOrders: backlogOrders,
-      description: 'Planned, released, or on hold',
-    },
-    ...workCenters.map((center) => ({
-      key: `work-center-${center.id}`,
-      label: center.name,
-      description: center.departmentName,
-      workOrders: workCenterBuckets.get(center.id) ?? [],
-    })),
-  ]
-
-  if (unassigned.length > 0) {
-    columns.push({
-      key: 'unassigned',
-      label: 'Unassigned',
-      description: 'In progress without a workstation',
-      workOrders: unassigned,
-    })
-  }
-
-  columns.push({
-    key: 'completed',
-    label: 'Completed',
-    description: 'Finished work orders',
-    workOrders: completedOrders,
-  })
-
-  return columns
 }
 
 export default function SupervisorView() {
@@ -445,7 +295,16 @@ export default function SupervisorView() {
         }
       }
     },
-    [isInitialLoad, debouncedSearch, statusFilters, priorityFilters, workCenterFilter, modelFilter, sortBy, sortDir]
+    [
+      isInitialLoad,
+      debouncedSearch,
+      statusFilters,
+      priorityFilters,
+      workCenterFilter,
+      modelFilter,
+      sortBy,
+      sortDir,
+    ]
   )
 
   // Reload data when filters change (after initial load)
@@ -453,7 +312,15 @@ export default function SupervisorView() {
     if (!isInitialLoad) {
       loadBoardData({ trigger: 'manual' })
     }
-  }, [debouncedSearch, statusFilters, priorityFilters, workCenterFilter, modelFilter, sortBy, sortDir])
+  }, [
+    debouncedSearch,
+    statusFilters,
+    priorityFilters,
+    workCenterFilter,
+    modelFilter,
+    sortBy,
+    sortDir,
+  ])
 
   // Poll for updates
   useEffect(() => {
@@ -1130,7 +997,9 @@ export default function SupervisorView() {
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     padding: '0.875rem 1rem',
-                    backgroundColor: hasWorkOrders ? 'var(--table-header-surface)' : 'var(--surface)',
+                    backgroundColor: hasWorkOrders
+                      ? 'var(--table-header-surface)'
+                      : 'var(--surface)',
                     border: 'none',
                     cursor: 'pointer',
                     textAlign: 'left',
@@ -1139,20 +1008,42 @@ export default function SupervisorView() {
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                     {isExpanded ? (
-                      <ChevronDownIcon style={{ width: '1.25rem', height: '1.25rem', color: 'var(--muted)', flexShrink: 0 }} />
+                      <ChevronDownIcon
+                        style={{
+                          width: '1.25rem',
+                          height: '1.25rem',
+                          color: 'var(--muted)',
+                          flexShrink: 0,
+                        }}
+                      />
                     ) : (
-                      <ChevronRightIcon style={{ width: '1.25rem', height: '1.25rem', color: 'var(--muted)', flexShrink: 0 }} />
+                      <ChevronRightIcon
+                        style={{
+                          width: '1.25rem',
+                          height: '1.25rem',
+                          color: 'var(--muted)',
+                          flexShrink: 0,
+                        }}
+                      />
                     )}
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <span style={{ fontSize: '1rem', fontWeight: '600', color: 'var(--foreground)' }}>
+                        <span
+                          style={{
+                            fontSize: '1rem',
+                            fontWeight: '600',
+                            color: 'var(--foreground)',
+                          }}
+                        >
                           {column.label}
                         </span>
                         <span
                           style={{
                             fontSize: '0.75rem',
                             fontWeight: '600',
-                            backgroundColor: hasWorkOrders ? 'var(--color-primary-600)' : 'var(--muted)',
+                            backgroundColor: hasWorkOrders
+                              ? 'var(--color-primary-600)'
+                              : 'var(--muted)',
                             color: 'white',
                             padding: '0.125rem 0.5rem',
                             borderRadius: '999px',
@@ -1164,7 +1055,13 @@ export default function SupervisorView() {
                         </span>
                       </div>
                       {column.description && (
-                        <p style={{ margin: '0.125rem 0 0 0', fontSize: '0.8rem', color: 'var(--muted)' }}>
+                        <p
+                          style={{
+                            margin: '0.125rem 0 0 0',
+                            fontSize: '0.8rem',
+                            color: 'var(--muted)',
+                          }}
+                        >
                           {column.description}
                         </p>
                       )}
@@ -1248,7 +1145,9 @@ export default function SupervisorView() {
                               }}
                             >
                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <span style={{ fontWeight: '600', fontSize: '1rem' }}>{wo.number}</span>
+                                <span style={{ fontWeight: '600', fontSize: '1rem' }}>
+                                  {wo.number}
+                                </span>
                                 <span
                                   style={{
                                     fontSize: '0.75rem',
@@ -1277,7 +1176,9 @@ export default function SupervisorView() {
                                       gap: '0.25rem',
                                     }}
                                   >
-                                    <PaperClipIcon style={{ height: '0.75rem', width: '0.75rem' }} />
+                                    <PaperClipIcon
+                                      style={{ height: '0.75rem', width: '0.75rem' }}
+                                    />
                                     <span>{wo._count.attachments}</span>
                                   </span>
                                 )}
@@ -1295,7 +1196,9 @@ export default function SupervisorView() {
                                       gap: '0.25rem',
                                     }}
                                   >
-                                    <ChatBubbleLeftIcon style={{ height: '0.75rem', width: '0.75rem' }} />
+                                    <ChatBubbleLeftIcon
+                                      style={{ height: '0.75rem', width: '0.75rem' }}
+                                    />
                                     <span>{wo._count.notes}</span>
                                   </span>
                                 )}
@@ -1318,10 +1221,22 @@ export default function SupervisorView() {
                             </div>
 
                             {/* Stage & Work Center */}
-                            <div style={{ fontSize: '0.875rem', display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                              <span><strong>Stage:</strong> {stageName}</span>
+                            <div
+                              style={{
+                                fontSize: '0.875rem',
+                                display: 'flex',
+                                flexWrap: 'wrap',
+                                gap: '0.5rem',
+                              }}
+                            >
+                              <span>
+                                <strong>Stage:</strong> {stageName}
+                              </span>
                               <span style={{ color: 'var(--muted)' }}>|</span>
-                              <span><strong>Work Center:</strong> {workCenterLabel}{departmentLabel ? ` • ${departmentLabel}` : ''}</span>
+                              <span>
+                                <strong>Work Center:</strong> {workCenterLabel}
+                                {departmentLabel ? ` • ${departmentLabel}` : ''}
+                              </span>
                             </div>
 
                             {/* Dates */}
@@ -1335,10 +1250,14 @@ export default function SupervisorView() {
                                 }}
                               >
                                 {wo.plannedStartDate && (
-                                  <span>Start: {new Date(wo.plannedStartDate).toLocaleDateString()}</span>
+                                  <span>
+                                    Start: {new Date(wo.plannedStartDate).toLocaleDateString()}
+                                  </span>
                                 )}
                                 {wo.plannedFinishDate && (
-                                  <span>Finish: {new Date(wo.plannedFinishDate).toLocaleDateString()}</span>
+                                  <span>
+                                    Finish: {new Date(wo.plannedFinishDate).toLocaleDateString()}
+                                  </span>
                                 )}
                               </div>
                             )}
@@ -1364,15 +1283,17 @@ export default function SupervisorView() {
                                   Release
                                 </Button>
                               )}
-                              {wo.status !== 'HOLD' && wo.status !== 'COMPLETED' && wo.status !== 'PLANNED' && (
-                                <Button
-                                  size="sm"
-                                  variant="warning"
-                                  onClick={() => holdWorkOrder(wo.id)}
-                                >
-                                  Hold
-                                </Button>
-                              )}
+                              {wo.status !== 'HOLD' &&
+                                wo.status !== 'COMPLETED' &&
+                                wo.status !== 'PLANNED' && (
+                                  <Button
+                                    size="sm"
+                                    variant="warning"
+                                    onClick={() => holdWorkOrder(wo.id)}
+                                  >
+                                    Hold
+                                  </Button>
+                                )}
                               {wo.status === 'HOLD' && (
                                 <Button
                                   size="sm"
@@ -1733,7 +1654,9 @@ export default function SupervisorView() {
                   >
                     <option value="">All Statuses</option>
                     {filterOptions.statuses.map((s) => (
-                      <option key={s} value={s}>{s}</option>
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
                     ))}
                   </select>
 
@@ -1753,7 +1676,9 @@ export default function SupervisorView() {
                   >
                     <option value="">All Priorities</option>
                     {filterOptions.priorities.map((p) => (
-                      <option key={p} value={p}>{p}</option>
+                      <option key={p} value={p}>
+                        {p}
+                      </option>
                     ))}
                   </select>
 
@@ -1773,7 +1698,9 @@ export default function SupervisorView() {
                   >
                     <option value="">All Models</option>
                     {filterOptions.models.map((m) => (
-                      <option key={m} value={m}>{m}</option>
+                      <option key={m} value={m}>
+                        {m}
+                      </option>
                     ))}
                   </select>
 
@@ -1793,12 +1720,18 @@ export default function SupervisorView() {
                   >
                     <option value="">All Work Centers</option>
                     {kanbanWorkCenters.map((wc) => (
-                      <option key={wc.id} value={wc.id}>{wc.name}</option>
+                      <option key={wc.id} value={wc.id}>
+                        {wc.name}
+                      </option>
                     ))}
                   </select>
 
                   {/* Clear Filters Button */}
-                  {(searchQuery || statusFilters.length > 0 || priorityFilters.length > 0 || modelFilter || workCenterFilter) && (
+                  {(searchQuery ||
+                    statusFilters.length > 0 ||
+                    priorityFilters.length > 0 ||
+                    modelFilter ||
+                    workCenterFilter) && (
                     <Button
                       size="sm"
                       variant="secondary"
@@ -1922,7 +1855,8 @@ export default function SupervisorView() {
                             userSelect: 'none',
                           }}
                         >
-                          Planned Start {sortBy === 'plannedStartDate' && (sortDir === 'asc' ? '▲' : '▼')}
+                          Planned Start{' '}
+                          {sortBy === 'plannedStartDate' && (sortDir === 'asc' ? '▲' : '▼')}
                         </th>
                         <th
                           onClick={() => {
@@ -1941,7 +1875,8 @@ export default function SupervisorView() {
                             userSelect: 'none',
                           }}
                         >
-                          Planned Finish {sortBy === 'plannedFinishDate' && (sortDir === 'asc' ? '▲' : '▼')}
+                          Planned Finish{' '}
+                          {sortBy === 'plannedFinishDate' && (sortDir === 'asc' ? '▲' : '▼')}
                         </th>
                         <th
                           style={{
