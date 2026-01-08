@@ -25,15 +25,6 @@ This document tracks outstanding tasks, improvements, and technical debt for the
 
 ### Code Quality & Tooling
 
-- [ ] **Run Prettier to format codebase**
-  - Run `npm run format` to format all 93 files with inconsistent formatting
-  - Address CRLF line ending issues (Windows ␍ characters)
-  - Standardize quotes (single vs double) and semicolons
-  - Commit formatted files as single formatting pass
-  - **Estimated effort**: 15 minutes (+ review time)
-  - **Agent role**: QA & Release Gate
-  - **Discovered**: 2025-01-16 during ESLint/Prettier setup
-
 - [DEFERRED] **Resolve recurring npm "Unknown env config http-proxy" warning**
   - Warning appears during `npx prettier@3 --write ...` runs even after prior fix
   - **Root cause**: Replit platform-level npm proxy configuration uses deprecated `http-proxy` key instead of modern `proxy` key. This is set at infrastructure level, not controllable from project.
@@ -44,14 +35,6 @@ This document tracks outstanding tasks, improvements, and technical debt for the
   - **Estimated effort**: N/A (external dependency)
   - **Agent role**: QA & Release Gate
   - **Discovered**: 2026-01-08 during formatting run
-
-- [ ] **Remove console.log statements from production code**
-  - Create structured logging utility in `src/lib/logger.ts`
-  - Replace console.log/warn/error across API routes, UI components, and server utilities (count needs refresh; exceeds prior "17 files" baseline)
-  - Files affected: API routes, components, server utilities
-  - **Estimated effort**: 2-3 hours
-  - **Agent role**: QA & Release Gate
-  - **Discovered**: 2025-01-16 - ESLint detects 17 console warnings
 
 - [ ] **Set up pre-commit hooks**
   - Install `husky` and `lint-staged`
@@ -97,14 +80,6 @@ This document tracks outstanding tasks, improvements, and technical debt for the
   - **Agent role**: QA & Release Gate
 
 ### Testing
-
-- [ ] **Fix failing supervisor dashboard contract test**
-  - Failure: `src/app/api/__tests__/supervisor.dashboard.test.ts` expects 200 but receives 500
-  - Error log: `TypeError: Cannot read properties of undefined (reading 'findMany')` in `src/app/api/supervisor/dashboard/route.ts:331`
-  - Repro: `npm run test`
-  - **Estimated effort**: 30-45 minutes
-  - **Agent role**: QA & Release Gate
-  - **Discovered**: 2026-01-08 during `npm run test`
 
 - [ ] **Expand API route test coverage**
   - Current: 3 routes tested (supervisor dashboard, product configurations, queues), 31 total routes
@@ -378,10 +353,37 @@ _(Items move here when marked complete with `[x]` status)_
 
 ### 2026-01-08
 
+- [x] **Fix failing supervisor dashboard contract test** (Agent: QA & Release Gate - Claude Sonnet 4.5, Completed: 2026-01-08)
+  - Failure: `src/app/api/__tests__/supervisor.dashboard.test.ts` expects 200 but receives 500
+  - Error log: `TypeError: Cannot read properties of undefined (reading 'findMany')` in `src/app/api/supervisor/dashboard/route.ts:331`
+  - Root cause: Missing `routingVersion.findMany` mock in test
+  - Fix: Added `routingVersionFindManyMock` to vi.hoisted, added to prisma mock object, added to beforeEach reset, and provided mock return value in test
+  - Result: Test now passes, returns 200 status as expected
+  - **Discovered**: 2026-01-08 during `npm run test`
+
+- [x] **Run Prettier to format codebase** (Agent: QA & Release Gate - Claude Sonnet 4.5, Completed: 2026-01-08)
+  - Ran `npm run format` to format all files with inconsistent formatting
+  - Addressed CRLF line ending issues (Windows ␍ characters)
+  - Standardized quotes (single vs double) and semicolons
+  - Results: Formatted 127 files across codebase
+  - Commit: Single formatting pass in Phase 1 commit
+  - **Discovered**: 2025-01-16 during ESLint/Prettier setup
+
+- [x] **Remove console.log statements from production code** (Agent: QA & Release Gate - Claude Sonnet 4.5, Completed: 2026-01-08)
+  - Created structured logging utility in `src/lib/logger.ts`
+  - Features: Log levels (DEBUG, INFO, WARN, ERROR, NONE), environment-based configuration, timestamps, structured context
+  - Replaced 188 console statements across 62 production files:
+    - 49 API route files (all routes now use logger)
+    - 13 component/page/lib/server files
+  - Preserved console statements in `src/db/seed.ts` (script file needs output)
+  - All 24 tests passing after changes
+  - **Discovered**: 2025-01-16 - ESLint detected 17+ console warnings (actual count was 188 across all files)
+
 - [x] **Add LICENSE file** (Agent: Docs & Runbooks, Completed: 2026-01-08)
   - Package.json specifies "ISC" but file is missing
   - Added ISC license text to repo root
   - **Discovered**: 2025-01-16
+
 - [x] **Fix exported function in supervisor page component** (Agent: Codex - UI/UX Implementer, Completed: 2026-01-08)
   - File: `src/app/supervisor/page.tsx`
   - Issue: `buildKanbanColumns` function is exported but shouldn't be
