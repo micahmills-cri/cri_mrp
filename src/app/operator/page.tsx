@@ -563,7 +563,6 @@ export default function OperatorConsole() {
                     <th className="px-6 py-3">SKU</th>
                     <th className="px-6 py-3">Current Stage</th>
                     <th className="px-6 py-3">Work Center</th>
-                    <th className="px-6 py-3">Progress</th>
                     <th className="px-6 py-3">Last Activity</th>
                     <th className="px-6 py-3">Action</th>
                   </tr>
@@ -604,9 +603,6 @@ export default function OperatorConsole() {
                         <div className="text-xs text-[color:var(--muted)]">{wo.currentStage.code}</div>
                       </td>
                       <td className="px-6 py-3 text-sm">{wo.currentStage.workCenter.name}</td>
-                      <td className="px-6 py-3 text-sm">
-                        Stage {wo.currentStageIndex + 1} of {wo.totalEnabledStages}
-                      </td>
                       <td className="px-6 py-3 text-sm">
                         {wo.lastEvent ? (
                           <div className="space-y-1">
