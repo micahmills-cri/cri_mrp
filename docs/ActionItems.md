@@ -34,9 +34,19 @@ This document tracks outstanding tasks, improvements, and technical debt for the
   - **Agent role**: QA & Release Gate
   - **Discovered**: 2025-01-16 during ESLint/Prettier setup
 
+- [ ] **Fix exported function in supervisor page component**
+  - File: `src/app/supervisor/page.tsx`
+  - Issue: `buildKanbanColumns` function is exported but shouldn't be
+  - Error: Next.js build fails with "Property 'buildKanbanColumns' is incompatible with index signature"
+  - Fix: Either unexport the function or move it to a separate utility file
+  - **Estimated effort**: 15 minutes
+  - **Agent role**: UI/UX Implementer
+  - **Discovered**: 2025-01-16 during build verification
+  - **Blocks**: Production builds
+
 - [ ] **Remove console.log statements from production code**
   - Create structured logging utility in `src/lib/logger.ts`
-  - Replace console.log/warn/error in 17 files flagged by ESLint
+  - Replace console.log/warn/error across API routes, UI components, and server utilities (count needs refresh; exceeds prior "17 files" baseline)
   - Files affected: API routes, components, server utilities
   - **Estimated effort**: 2-3 hours
   - **Agent role**: QA & Release Gate
@@ -88,7 +98,7 @@ This document tracks outstanding tasks, improvements, and technical debt for the
 ### Testing
 
 - [ ] **Expand API route test coverage**
-  - Current: 2 routes tested, 31 total routes
+  - Current: 3 routes tested (supervisor dashboard, product configurations, queues), 31 total routes
   - Target: All critical routes (auth, work-orders, queues)
   - Priority routes: `/api/auth/login`, `/api/work-orders/*`, `/api/queues/*`
   - **Estimated effort**: 4-6 hours
@@ -110,16 +120,6 @@ This document tracks outstanding tasks, improvements, and technical debt for the
 _(All medium priority admin panel UI tasks are complete - moved to Completed Items)_
 
 ### Bug Fixes
-
-- [ ] **Fix exported function in supervisor page component**
-  - File: `src/app/supervisor/page.tsx`
-  - Issue: `buildKanbanColumns` function is exported but shouldn't be
-  - Error: Next.js build fails with "Property 'buildKanbanColumns' is incompatible with index signature"
-  - Fix: Either unexport the function or move it to a separate utility file
-  - **Estimated effort**: 15 minutes
-  - **Agent role**: UI/UX Implementer
-  - **Discovered**: 2025-01-16 during build verification
-  - **Blocks**: Production builds
 
 ### Documentation
 
