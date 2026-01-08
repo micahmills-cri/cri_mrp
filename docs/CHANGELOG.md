@@ -2,11 +2,18 @@
 
 > Record every pull request chronologically with the newest entry at the top. Use UTC timestamps in ISO 8601 format.
 
+## 2026-01-08T14:39:03Z - Agent: Codex (role-ui, qa-gate, docs)
+
+- **Summary:** Moved the supervisor Kanban column builder into a shared utility module to avoid invalid named exports in the App Router page component, updated the Kanban unit test imports, and logged the recurring npm `http-proxy` warning in ActionItems.
+- **Reasoning:** App Router pages should not expose arbitrary named exports; relocating the helper keeps the build stable while preserving test coverage, and the npm warning needs follow-up tracking.
+- **Validation:** `npm run test` (fails: supervisor dashboard contract test expects 200 but receives 500; see ActionItems).
+- **Files Modified:** `src/app/supervisor/page.tsx`, `src/app/supervisor/kanban-utils.ts`, `src/app/supervisor/__tests__/kanban-columns.test.ts`, `docs/ActionItems.md`, `docs/CHANGELOG.md`
+
 ## 2026-01-08T14:32:41Z - Agent: Codex (qa-gate, docs)
 
-- **Summary:** Elevated the supervisor build-blocker ActionItem to high priority, updated the logging cleanup scope to reflect broader console usage, and refreshed the API test coverage baseline.  
-- **Reasoning:** Keep ActionItems aligned with current code realities and highlight build-blocking work.  
-- **Validation:** Not run (documentation-only update).  
+- **Summary:** Elevated the supervisor build-blocker ActionItem to high priority, updated the logging cleanup scope to reflect broader console usage, and refreshed the API test coverage baseline.
+- **Reasoning:** Keep ActionItems aligned with current code realities and highlight build-blocking work.
+- **Validation:** Not run (documentation-only update).
 - **Files Modified:** `docs/ActionItems.md`, `docs/CHANGELOG.md`
 
 ## 2026-01-07T19:31:04Z - Agent: Codex (qa-gate, docs)
