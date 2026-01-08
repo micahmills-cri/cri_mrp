@@ -2,6 +2,21 @@
 
 > Record every pull request chronologically with the newest entry at the top. Use UTC timestamps in ISO 8601 format.
 
+## 2026-01-08T14:15:00Z - Agent: Claude (role-ui, qa-gate, docs)
+
+- **Summary:** Added sort/filter/search capabilities to operator Work Orders in Queue table, removed Progress column, added file upload capability to attachments, and investigated npm http-proxy warning marking it as DEFERRED in ActionItems.
+- **Reasoning:** Operators needed the same filtering/sorting functionality available in supervisor dashboard to efficiently find work orders in their queue. File upload enables operators to attach documents directly from the action panel. The http-proxy warning was traced to Replit platform infrastructure and cannot be resolved from project side.
+- **Changes Made:**
+  - Added client-side filtering (status, priority, text search) and sorting to operator queue table
+  - Made all queue table column headers clickable for sorting with visual indicators
+  - Added filter bar with search input, status/priority dropdowns, and clear filters button
+  - Removed Progress column from queue table for cleaner interface
+  - Added file upload button and handler to FileListDisplay component
+  - Updated ActionItems.md to mark npm http-proxy warning as DEFERRED with root cause analysis
+  - Added context to completed 2026-01-07 fix noting recurrence due to infrastructure updates
+- **Validation:** Server workflow running, no build errors
+- **Files Modified:** `src/app/operator/page.tsx`, `src/components/FileListDisplay.tsx`, `docs/ActionItems.md`
+
 ## 2026-01-08T14:39:03Z - Agent: Codex (role-ui, qa-gate, docs)
 
 - **Summary:** Moved the supervisor Kanban column builder into a shared utility module to avoid invalid named exports in the App Router page component, updated the Kanban unit test imports, and logged the recurring npm `http-proxy` warning in ActionItems.
