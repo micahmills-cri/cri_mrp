@@ -83,11 +83,17 @@ This document tracks outstanding tasks, improvements, and technical debt for the
 
 ### Testing
 
-- [ ] **Expand API route test coverage**
-  - Current: 3 routes tested (supervisor dashboard, product configurations, queues), 31 total routes
-  - Target: All critical routes (auth, work-orders, queues)
-  - Priority routes: `/api/auth/login`, `/api/work-orders/*`, `/api/queues/*`
-  - **Estimated effort**: 4-6 hours
+- [WIP] **Expand API route test coverage** (Agent: QA & Release Gate - Claude Sonnet 4.5)
+  - Current: 13 routes tested across 4 test files (auth login, supervisor dashboard, product configurations, queues)
+  - Total routes: 55 API routes (24% coverage)
+  - **Phase 1 Progress**: ✅ Authentication testing complete
+    - ✅ `POST /api/auth/login` - 10 comprehensive tests covering success cases, validation errors, role-based redirects, cookie verification
+    - All tests passing (34 total tests in suite)
+  - **Phase 1 Remaining**: 3 critical routes still needed
+    - `POST /api/work-orders` - Create work order with version snapshot
+    - `PATCH /api/work-orders/[id]` - Update work order with state validation
+    - `POST /api/supervisor/cancel-wo` - Cancel work order with audit trail
+  - **Estimated effort remaining**: 15-22 hours (5-8 hours per route)
   - **Agent role**: QA & Release Gate
 
 - [ ] **Set test coverage thresholds**
