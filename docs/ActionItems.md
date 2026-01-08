@@ -34,10 +34,14 @@ This document tracks outstanding tasks, improvements, and technical debt for the
   - **Agent role**: QA & Release Gate
   - **Discovered**: 2025-01-16 during ESLint/Prettier setup
 
-- [ ] **Resolve recurring npm "Unknown env config http-proxy" warning**
+- [DEFERRED] **Resolve recurring npm "Unknown env config http-proxy" warning**
   - Warning appears during `npx prettier@3 --write ...` runs even after prior fix
-  - Investigate environment config still setting `http-proxy` and remove/update source
-  - **Estimated effort**: 15 minutes
+  - **Root cause**: Replit platform-level npm proxy configuration uses deprecated `http-proxy` key instead of modern `proxy` key. This is set at infrastructure level, not controllable from project.
+  - **Investigation (2026-01-08)**: Confirmed no `.npmrc` in project, no proxy env vars set, no npm config values - issue is purely Replit infrastructure.
+  - **Impact**: Cosmetic warning only - does not affect npm functionality
+  - **Resolution**: Report to Replit support if permanent fix desired; otherwise safe to ignore
+  - **Reason for deferral**: Cannot be fixed from project side; requires Replit platform update
+  - **Estimated effort**: N/A (external dependency)
   - **Agent role**: QA & Release Gate
   - **Discovered**: 2026-01-08 during formatting run
 
@@ -390,7 +394,7 @@ _(Items move here when marked complete with `[x]` status)_
 
 ### 2026-01-07
 
-- [x] **Resolve npm "Unknown env config http-proxy" warning** (Agent: QA & Release Gate, Completed: 2026-01-07) - Replaced deprecated `npm_config_http_proxy` with `npm_config_proxy` in the environment configuration to remove npm warnings while preserving proxy routing.
+- [x] **Resolve npm "Unknown env config http-proxy" warning** (Agent: QA & Release Gate, Completed: 2026-01-07) - Replaced deprecated `npm_config_http_proxy` with `npm_config_proxy` in the environment configuration to remove npm warnings while preserving proxy routing. **Note**: Issue recurred (see DEFERRED item above) - fix was at Replit infrastructure level and did not persist across environment updates.
 
 ### 2025-10-27
 
