@@ -8,11 +8,8 @@ import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
 import { Select } from '@/components/ui/Select'
 import { ConfirmDialog } from '@/components/admin/ConfirmDialog'
-import {
-  TrashIcon,
-  PlusIcon,
-  ArrowLeftIcon,
-} from '@heroicons/react/24/outline'
+import { TrashIcon, PlusIcon, ArrowLeftIcon } from '@heroicons/react/24/outline'
+import { logger } from '@/lib/logger'
 
 type Station = {
   id: string
@@ -154,7 +151,7 @@ export default function StationDetailPage() {
         setAllEquipment(equipData.equipment)
       }
     } catch (error) {
-      console.error('Error loading data:', error)
+      logger.error('Error loading data:', error)
     } finally {
       setIsLoading(false)
     }
@@ -196,7 +193,7 @@ export default function StationDetailPage() {
         alert(`Error: ${data.error}`)
       }
     } catch (error) {
-      console.error('Error saving station:', error)
+      logger.error('Error saving station:', error)
       alert('Error saving station')
     } finally {
       setIsSaving(false)
@@ -222,7 +219,7 @@ export default function StationDetailPage() {
         alert(`Error: ${data.error}`)
       }
     } catch (error) {
-      console.error('Error adding member:', error)
+      logger.error('Error adding member:', error)
       alert('Error adding member')
     }
   }
@@ -246,7 +243,7 @@ export default function StationDetailPage() {
         alert(`Error: ${data.error}`)
       }
     } catch (error) {
-      console.error('Error removing member:', error)
+      logger.error('Error removing member:', error)
       alert('Error removing member')
     }
   }
@@ -270,7 +267,7 @@ export default function StationDetailPage() {
         alert(`Error: ${data.error}`)
       }
     } catch (error) {
-      console.error('Error adding equipment:', error)
+      logger.error('Error adding equipment:', error)
       alert('Error adding equipment')
     }
   }
@@ -294,25 +291,17 @@ export default function StationDetailPage() {
         alert(`Error: ${data.error}`)
       }
     } catch (error) {
-      console.error('Error removing equipment:', error)
+      logger.error('Error removing equipment:', error)
       alert('Error removing equipment')
     }
   }
 
   if (isLoading) {
-    return (
-      <div className="p-8 text-center text-[color:var(--muted-strong)]">
-        Loading...
-      </div>
-    )
+    return <div className="p-8 text-center text-[color:var(--muted-strong)]">Loading...</div>
   }
 
   if (!station) {
-    return (
-      <div className="p-8 text-center text-[color:var(--muted-strong)]">
-        Station not found
-      </div>
-    )
+    return <div className="p-8 text-center text-[color:var(--muted-strong)]">Station not found</div>
   }
 
   const availableUsers = allUsers.filter(
@@ -335,9 +324,7 @@ export default function StationDetailPage() {
             >
               <ArrowLeftIcon className="h-6 w-6" />
             </button>
-            <h1 className="text-2xl font-bold text-[color:var(--foreground)]">
-              {station.name}
-            </h1>
+            <h1 className="text-2xl font-bold text-[color:var(--foreground)]">{station.name}</h1>
           </div>
         </div>
 
@@ -345,7 +332,10 @@ export default function StationDetailPage() {
         <div className="flex gap-4 border-b border-[var(--border)] mb-6">
           {[
             { key: 'details', label: 'Details' },
-            { key: 'members', label: `Members (${station.members.filter((m) => m.isActive).length})` },
+            {
+              key: 'members',
+              label: `Members (${station.members.filter((m) => m.isActive).length})`,
+            },
             { key: 'equipment', label: `Equipment (${station.equipment.length})` },
           ].map((tab) => (
             <button
@@ -491,11 +481,7 @@ export default function StationDetailPage() {
                   ]}
                   className="flex-1"
                 />
-                <Button
-                  onClick={handleAddMember}
-                  disabled={!selectedUserId}
-                  variant="primary"
-                >
+                <Button onClick={handleAddMember} disabled={!selectedUserId} variant="primary">
                   <PlusIcon className="h-4 w-4 mr-2" />
                   Add Member
                 </Button>

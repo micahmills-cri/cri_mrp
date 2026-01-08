@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getUserFromRequest } from '@/lib/auth'
+import { logger } from '@/lib/logger'
 import { updateAllStationMetrics } from '@/lib/metrics/calculateStationMetrics'
 
 // POST /api/admin/metrics/recalculate-all - Recalculate all station metrics
@@ -21,7 +22,7 @@ export async function POST(request: NextRequest) {
       results,
     })
   } catch (error) {
-    console.error('Error recalculating all station metrics:', error)
+    logger.error('Error recalculating all station metrics:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

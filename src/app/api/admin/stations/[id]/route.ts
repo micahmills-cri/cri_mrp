@@ -1,13 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/server/db/client'
 import { getUserFromRequest } from '@/lib/auth'
+import { logger } from '@/lib/logger'
 import { z } from 'zod'
 
 // GET /api/admin/stations/[id] - Get station details
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = getUserFromRequest(request)
     if (!user || user.role !== 'ADMIN') {
@@ -57,7 +55,7 @@ export async function GET(
 
     return NextResponse.json({ success: true, station })
   } catch (error) {
-    console.error('Error fetching station:', error)
+    logger.error('Error fetching station:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -74,10 +72,7 @@ const updateStationSchema = z.object({
   isActive: z.boolean().optional(),
 })
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = getUserFromRequest(request)
     if (!user || user.role !== 'ADMIN') {
@@ -103,10 +98,7 @@ export async function PATCH(
       })
 
       if (codeConflict) {
-        return NextResponse.json(
-          { error: 'Station code already exists' },
-          { status: 400 }
-        )
+        return NextResponse.json({ error: 'Station code already exists' }, { status: 400 })
       }
     }
 
@@ -131,16 +123,13 @@ export async function PATCH(
         { status: 400 }
       )
     }
-    console.error('Error updating station:', error)
+    logger.error('Error updating station:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
 // DELETE /api/admin/stations/[id] - Soft delete station
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = getUserFromRequest(request)
     if (!user || user.role !== 'ADMIN') {
@@ -164,7 +153,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true, message: 'Station deleted' })
   } catch (error) {
-    console.error('Error deleting station:', error)
+    logger.error('Error deleting station:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

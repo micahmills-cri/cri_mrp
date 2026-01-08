@@ -1,37 +1,36 @@
-import React from "react";
-import clsx from "clsx";
+import React from 'react'
+import clsx from 'clsx'
 
 export interface SelectOption {
-  value: string;
-  label: string;
-  disabled?: boolean;
+  value: string
+  label: string
+  disabled?: boolean
 }
 
-export interface SelectProps
-  extends React.SelectHTMLAttributes<HTMLSelectElement> {
+export interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
   /** Select variant */
-  variant?: "default" | "error";
+  variant?: 'default' | 'error'
   /** Full width select */
-  fullWidth?: boolean;
+  fullWidth?: boolean
   /** Label text */
-  label?: string;
+  label?: string
   /** Error message to display */
-  error?: string;
+  error?: string
   /** Helper text */
-  helperText?: string;
+  helperText?: string
   /** Required field indicator */
-  isRequired?: boolean;
+  isRequired?: boolean
   /** Options for the select */
-  options?: SelectOption[];
+  options?: SelectOption[]
   /** Placeholder text */
-  placeholder?: string;
+  placeholder?: string
 }
 
 export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
   (
     {
       className,
-      variant = "default",
+      variant = 'default',
       fullWidth = true,
       label,
       error,
@@ -44,17 +43,17 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
       children,
       ...props
     },
-    ref,
+    ref
   ) => {
-    const generatedId = React.useId();
-    const selectId = id || generatedId;
-    const errorId = `${selectId}-error`;
-    const helperTextId = `${selectId}-helper`;
-    const hasError = variant === "error" || !!error;
-    const isDisabled = disabled;
+    const generatedId = React.useId()
+    const selectId = id || generatedId
+    const errorId = `${selectId}-error`
+    const helperTextId = `${selectId}-helper`
+    const hasError = variant === 'error' || !!error
+    const isDisabled = disabled
 
     return (
-      <div className={clsx("space-y-1", { "w-full": fullWidth }, className)}>
+      <div className={clsx('space-y-1', { 'w-full': fullWidth }, className)}>
         {label && (
           <label
             htmlFor={selectId}
@@ -72,27 +71,26 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
             required={isRequired}
             aria-invalid={hasError}
             aria-describedby={
-              clsx(error && errorId, helperText && !error && helperTextId) ||
-              undefined
+              clsx(error && errorId, helperText && !error && helperTextId) || undefined
             }
             className={clsx(
-              "block appearance-none rounded-md border px-3 py-2 text-sm shadow-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-[var(--ring-offset)]",
-              fullWidth && "w-full",
-              "bg-[var(--surface)] text-[color:var(--foreground)]",
+              'block appearance-none rounded-md border px-3 py-2 text-sm shadow-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-[var(--ring-offset)]',
+              fullWidth && 'w-full',
+              'bg-[var(--surface)] text-[color:var(--foreground)]',
               !hasError &&
                 !isDisabled && [
-                  "border-[var(--border)]",
-                  "hover:border-[var(--border-strong)]",
-                  "focus:border-primary-500",
+                  'border-[var(--border)]',
+                  'hover:border-[var(--border-strong)]',
+                  'focus:border-primary-500',
                 ],
               hasError &&
                 !isDisabled && [
-                  "border-[var(--status-danger-border)] bg-[var(--status-danger-surface)] text-[color:var(--status-danger-foreground)]",
-                  "hover:border-[var(--status-danger-accent)] focus:border-[var(--status-danger-accent)] focus:ring-danger-500",
+                  'border-[var(--status-danger-border)] bg-[var(--status-danger-surface)] text-[color:var(--status-danger-foreground)]',
+                  'hover:border-[var(--status-danger-accent)] focus:border-[var(--status-danger-accent)] focus:ring-danger-500',
                 ],
               isDisabled && [
-                "border-[var(--border)] bg-[var(--surface-muted)] text-[color:var(--input-disabled-foreground)] cursor-not-allowed",
-              ],
+                'border-[var(--border)] bg-[var(--surface-muted)] text-[color:var(--input-disabled-foreground)] cursor-not-allowed',
+              ]
             )}
             disabled={isDisabled}
             {...props}
@@ -106,11 +104,7 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
             {/* Use provided children if available, otherwise use options prop */}
             {children ||
               options.map((option) => (
-                <option
-                  key={option.value}
-                  value={option.value}
-                  disabled={option.disabled}
-                >
+                <option key={option.value} value={option.value} disabled={option.disabled}>
                   {option.label}
                 </option>
               ))}
@@ -123,11 +117,7 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
               stroke="currentColor"
               strokeWidth={1.5}
             >
-              <path
-                d="M6 8l4 4 4-4"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
+              <path d="M6 8l4 4 4-4" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </span>
         </div>
@@ -135,15 +125,8 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
         {(error || helperText) && (
           <div className="space-y-1">
             {error && (
-              <p
-                id={errorId}
-                className="text-xs text-danger-600 flex items-center"
-              >
-                <svg
-                  className="w-3 h-3 mr-1 flex-shrink-0"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
+              <p id={errorId} className="text-xs text-danger-600 flex items-center">
+                <svg className="w-3 h-3 mr-1 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
                   <path
                     fillRule="evenodd"
                     d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
@@ -154,18 +137,15 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
               </p>
             )}
             {helperText && !error && (
-              <p
-                id={helperTextId}
-                className="text-xs text-[color:var(--muted)]"
-              >
+              <p id={helperTextId} className="text-xs text-[color:var(--muted)]">
                 {helperText}
               </p>
             )}
           </div>
         )}
       </div>
-    );
-  },
-);
+    )
+  }
+)
 
-Select.displayName = "Select";
+Select.displayName = 'Select'

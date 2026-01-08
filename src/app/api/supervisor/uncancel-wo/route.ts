@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/server/db/client'
 import { getUserFromRequest } from '../../../../lib/auth'
+import { logger } from '@/lib/logger'
 import { Role } from '@prisma/client'
 
 export async function POST(request: NextRequest) {
@@ -27,10 +28,10 @@ export async function POST(request: NextRequest) {
       include: {
         routingVersion: {
           include: {
-            stages: true
-          }
-        }
-      }
+            stages: true,
+          },
+        },
+      },
     })
 
     if (!currentWorkOrder) {
@@ -39,9 +40,12 @@ export async function POST(request: NextRequest) {
 
     // Check if work order can be uncancelled
     if (currentWorkOrder.status !== 'CANCELLED') {
-      return NextResponse.json({
-        error: 'Only cancelled work orders can be uncancelled'
-      }, { status: 400 })
+      return NextResponse.json(
+        {
+          error: 'Only cancelled work orders can be uncancelled',
+        },
+        { status: 400 }
+      )
     }
 
     // Uncancel work order with version creation and audit log
@@ -49,7 +53,7 @@ export async function POST(request: NextRequest) {
       // Get latest version number
       const latestVersion = await tx.workOrderVersion.findFirst({
         where: { workOrderId },
-        orderBy: { versionNumber: 'desc' }
+        orderBy: { versionNumber: 'desc' },
       })
 
       const newVersionNumber = (latestVersion?.versionNumber || 0) + 1
@@ -71,15 +75,15 @@ export async function POST(request: NextRequest) {
           model: currentWorkOrder.routingVersion.model,
           trim: currentWorkOrder.routingVersion.trim,
           version: currentWorkOrder.routingVersion.version,
-          stages: currentWorkOrder.routingVersion.stages.map(s => ({
+          stages: currentWorkOrder.routingVersion.stages.map((s) => ({
             sequence: s.sequence,
             code: s.code,
             name: s.name,
             enabled: s.enabled,
             workCenterId: s.workCenterId,
-            standardStageSeconds: s.standardStageSeconds
-          }))
-        }
+            standardStageSeconds: s.standardStageSeconds,
+          })),
+        },
       }
 
       // Create version for uncancellation
@@ -89,16 +93,16 @@ export async function POST(request: NextRequest) {
           versionNumber: newVersionNumber,
           snapshotData: snapshot,
           reason: 'Work order uncancelled - returned to PLANNED',
-          createdBy: user.userId
-        }
+          createdBy: user.userId,
+        },
       })
 
       // Update work order status back to PLANNED
       const updated = await tx.workOrder.update({
         where: { id: workOrderId },
         data: {
-          status: 'PLANNED'
-        }
+          status: 'PLANNED',
+        },
       })
 
       // Create audit log
@@ -109,8 +113,8 @@ export async function POST(request: NextRequest) {
           model: 'WorkOrder',
           modelId: workOrderId,
           before: { status: 'CANCELLED' },
-          after: { status: 'PLANNED' }
-        }
+          after: { status: 'PLANNED' },
+        },
       })
 
       return updated
@@ -119,10 +123,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       message: 'Work order uncancelled successfully - returned to PLANNED status',
-      workOrder: uncancelledWorkOrder
+      workOrder: uncancelledWorkOrder,
     })
   } catch (error) {
-    console.error('Uncancel work order error:', error)
+    logger.error('Uncancel work order error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

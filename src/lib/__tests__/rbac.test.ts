@@ -5,7 +5,7 @@ import {
   isOperator,
   canAccessOperatorConsole,
   canAccessSupervisorDashboard,
-  hasRole
+  hasRole,
 } from '../rbac'
 import { Role } from '@prisma/client'
 import type { JwtPayload } from '../auth'
@@ -14,19 +14,19 @@ describe('RBAC', () => {
   const adminUser: JwtPayload = {
     userId: '1',
     role: Role.ADMIN,
-    departmentId: 'dept-1'
+    departmentId: 'dept-1',
   }
 
   const supervisorUser: JwtPayload = {
     userId: '2',
     role: Role.SUPERVISOR,
-    departmentId: 'dept-1'
+    departmentId: 'dept-1',
   }
 
   const operatorUser: JwtPayload = {
     userId: '3',
     role: Role.OPERATOR,
-    departmentId: 'dept-1'
+    departmentId: 'dept-1',
   }
 
   describe('Role Checking', () => {

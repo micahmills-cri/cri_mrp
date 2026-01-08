@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/server/db/client'
 import { getUserFromRequest } from '../../../lib/auth'
 import { getPaginationParams, createPaginatedResponse } from '../../../lib/pagination'
+import { logger } from '@/lib/logger'
 import { z } from 'zod'
 import { WOStatus, Role } from '@prisma/client'
 
@@ -16,7 +17,7 @@ const createWOSchema = z.object({
   routingVersionId: z.string(),
   priority: z.enum(['LOW', 'NORMAL', 'HIGH', 'CRITICAL']).optional().default('NORMAL'),
   plannedStartDate: z.string().datetime().optional().nullable(),
-  plannedFinishDate: z.string().datetime().optional().nullable()
+  plannedFinishDate: z.string().datetime().optional().nullable(),
 })
 
 export async function POST(request: NextRequest) {
@@ -38,24 +39,31 @@ export async function POST(request: NextRequest) {
     if (data.plannedStartDate && data.plannedFinishDate) {
       const startDate = new Date(data.plannedStartDate)
       const finishDate = new Date(data.plannedFinishDate)
-      
+
       if (startDate >= finishDate) {
-        return NextResponse.json({
-          error: 'Planned start date must be before planned finish date'
-        }, { status: 400 })
+        return NextResponse.json(
+          {
+            error: 'Planned start date must be before planned finish date',
+          },
+          { status: 400 }
+        )
       }
 
       // Check if start date is in the future
       const now = new Date()
       if (startDate < now) {
-        return NextResponse.json({
-          error: 'Planned start date must be in the future'
-        }, { status: 400 })
+        return NextResponse.json(
+          {
+            error: 'Planned start date must be in the future',
+          },
+          { status: 400 }
+        )
       }
     }
 
     // Generate work order number if not provided
-    const woNumber = data.number || `WO-${Date.now()}-${Math.random().toString(36).substring(7).toUpperCase()}`
+    const woNumber =
+      data.number || `WO-${Date.now()}-${Math.random().toString(36).substring(7).toUpperCase()}`
 
     // Check if routing version exists
     const routingVersion = await prisma.routingVersion.findUnique({
@@ -63,9 +71,9 @@ export async function POST(request: NextRequest) {
       include: {
         stages: {
           where: { enabled: true },
-          orderBy: { sequence: 'asc' }
-        }
-      }
+          orderBy: { sequence: 'asc' },
+        },
+      },
     })
 
     if (!routingVersion) {
@@ -80,7 +88,7 @@ export async function POST(request: NextRequest) {
         productSku: data.productSku,
         qty: data.qty,
         status: WOStatus.PLANNED,
-        priority: data.priority as any || 'NORMAL',
+        priority: (data.priority as any) || 'NORMAL',
         plannedStartDate: data.plannedStartDate ? new Date(data.plannedStartDate) : null,
         plannedFinishDate: data.plannedFinishDate ? new Date(data.plannedFinishDate) : null,
         routingVersionId: data.routingVersionId,
@@ -90,17 +98,17 @@ export async function POST(request: NextRequest) {
           trim: data.trim,
           features: data.features,
           routingVersionId: data.routingVersionId,
-          stages: routingVersion.stages.map(s => ({
+          stages: routingVersion.stages.map((s) => ({
             id: s.id,
             code: s.code,
             name: s.name,
             sequence: s.sequence,
             enabled: s.enabled,
             workCenterId: s.workCenterId,
-            standardStageSeconds: s.standardStageSeconds
-          }))
-        }
-      }
+            standardStageSeconds: s.standardStageSeconds,
+          })),
+        },
+      },
     })
 
     // Create initial version (Version 1)
@@ -120,15 +128,15 @@ export async function POST(request: NextRequest) {
         model: routingVersion.model,
         trim: routingVersion.trim,
         version: routingVersion.version,
-        stages: routingVersion.stages.map(s => ({
+        stages: routingVersion.stages.map((s) => ({
           sequence: s.sequence,
           code: s.code,
           name: s.name,
           enabled: s.enabled,
           workCenterId: s.workCenterId,
-          standardStageSeconds: s.standardStageSeconds
-        }))
-      }
+          standardStageSeconds: s.standardStageSeconds,
+        })),
+      },
     }
 
     await prisma.workOrderVersion.create({
@@ -137,8 +145,8 @@ export async function POST(request: NextRequest) {
         versionNumber: 1,
         snapshotData: initialSnapshot,
         reason: 'Initial creation',
-        createdBy: user.userId
-      }
+        createdBy: user.userId,
+      },
     })
 
     // Create audit log
@@ -148,8 +156,8 @@ export async function POST(request: NextRequest) {
         model: 'WorkOrder',
         modelId: workOrder.id,
         action: 'CREATE',
-        after: workOrder
-      }
+        after: workOrder,
+      },
     })
 
     return NextResponse.json({
@@ -158,13 +166,16 @@ export async function POST(request: NextRequest) {
         id: workOrder.id,
         number: workOrder.number,
         hullId: workOrder.hullId,
-        status: workOrder.status
-      }
+        status: workOrder.status,
+      },
     })
   } catch (error) {
-    console.error('Create work order error:', error)
+    logger.error('Create work order error:', error)
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Invalid request data', details: error.issues }, { status: 400 })
+      return NextResponse.json(
+        { error: 'Invalid request data', details: error.issues },
+        { status: 400 }
+      )
     }
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
@@ -179,7 +190,7 @@ export async function GET(request: NextRequest) {
 
     const searchParams = request.nextUrl.searchParams
     const id = searchParams.get('id')
-    
+
     if (!id) {
       // Return list of work orders with pagination
       const { cursor, limit } = getPaginationParams(searchParams)
@@ -194,10 +205,10 @@ export async function GET(request: NextRequest) {
           _count: {
             select: {
               notes: true,
-              attachments: true
-            }
-          }
-        }
+              attachments: true,
+            },
+          },
+        },
       })
 
       const paginatedResponse = createPaginatedResponse(workOrders, limit ?? 20)
@@ -215,22 +226,22 @@ export async function GET(request: NextRequest) {
               include: {
                 workCenter: {
                   include: {
-                    department: true
-                  }
-                }
-              }
-            }
-          }
+                    department: true,
+                  },
+                },
+              },
+            },
+          },
         },
         woStageLogs: {
           orderBy: { createdAt: 'desc' },
           include: {
             routingStage: true,
             station: true,
-            user: true
-          }
-        }
-      }
+            user: true,
+          },
+        },
+      },
     })
 
     if (!workOrder) {
@@ -239,9 +250,9 @@ export async function GET(request: NextRequest) {
 
     // Check department scoping for non-admin users
     if (user.role !== Role.ADMIN && user.departmentId) {
-      const enabledStages = workOrder.routingVersion.stages.filter(s => s.enabled)
+      const enabledStages = workOrder.routingVersion.stages.filter((s) => s.enabled)
       const currentStage = enabledStages[workOrder.currentStageIndex]
-      
+
       if (currentStage && currentStage.workCenter.department.id !== user.departmentId) {
         return NextResponse.json({ error: 'Work order not in your department' }, { status: 403 })
       }
@@ -249,7 +260,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ workOrder })
   } catch (error) {
-    console.error('Get work order error:', error)
+    logger.error('Get work order error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

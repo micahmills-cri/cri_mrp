@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/server/db/client'
 import { getUserFromRequest } from '@/lib/auth'
+import { logger } from '@/lib/logger'
 import { z } from 'zod'
 
 // GET /api/admin/stations - List all stations
@@ -47,7 +48,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ success: true, stations })
   } catch (error) {
-    console.error('Error fetching stations:', error)
+    logger.error('Error fetching stations:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -79,10 +80,7 @@ export async function POST(request: NextRequest) {
     })
 
     if (existing) {
-      return NextResponse.json(
-        { error: 'Station code already exists' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Station code already exists' }, { status: 400 })
     }
 
     // Create station
@@ -108,7 +106,7 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
-    console.error('Error creating station:', error)
+    logger.error('Error creating station:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

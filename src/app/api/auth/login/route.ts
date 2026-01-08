@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/server/db/client'
 import { verifyPassword, signJWT } from '../../../../lib/auth'
+import { logger } from '@/lib/logger'
 import { z } from 'zod'
 
 const loginSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(1)
+  password: z.string().min(1),
 })
 
 export async function POST(request: NextRequest) {
@@ -16,30 +17,24 @@ export async function POST(request: NextRequest) {
     // Find user by email
     const user = await prisma.user.findUnique({
       where: { email },
-      include: { department: true }
+      include: { department: true },
     })
 
     if (!user) {
-      return NextResponse.json(
-        { ok: false, error: 'Invalid email or password' },
-        { status: 401 }
-      )
+      return NextResponse.json({ ok: false, error: 'Invalid email or password' }, { status: 401 })
     }
 
     // Verify password
     const isValidPassword = await verifyPassword(password, user.passwordHash)
     if (!isValidPassword) {
-      return NextResponse.json(
-        { ok: false, error: 'Invalid email or password' },
-        { status: 401 }
-      )
+      return NextResponse.json({ ok: false, error: 'Invalid email or password' }, { status: 401 })
     }
 
     // Generate JWT
     const token = signJWT({
       userId: user.id,
       role: user.role,
-      departmentId: user.departmentId || undefined
+      departmentId: user.departmentId || undefined,
     })
 
     // Determine redirect based on role
@@ -54,8 +49,8 @@ export async function POST(request: NextRequest) {
         email: user.email,
         role: user.role,
         departmentId: user.departmentId,
-        departmentName: user.department?.name
-      }
+        departmentName: user.department?.name,
+      },
     })
 
     // Set httpOnly cookie
@@ -64,15 +59,12 @@ export async function POST(request: NextRequest) {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       path: '/',
-      maxAge: 604800 // 7 days
+      maxAge: 604800, // 7 days
     })
 
     return response
   } catch (error) {
-    console.error('Login error:', error)
-    return NextResponse.json(
-      { ok: false, error: 'Internal server error' },
-      { status: 500 }
-    )
+    logger.error('Login error:', error)
+    return NextResponse.json({ ok: false, error: 'Internal server error' }, { status: 500 })
   }
 }

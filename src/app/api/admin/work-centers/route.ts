@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/server/db/client'
 import { getUserFromRequest } from '@/lib/auth'
+import { logger } from '@/lib/logger'
 import { z } from 'zod'
 
 // GET /api/admin/work-centers - List all work centers
@@ -31,7 +32,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ success: true, workCenters })
   } catch (error) {
-    console.error('Error fetching work centers:', error)
+    logger.error('Error fetching work centers:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -58,10 +59,7 @@ export async function POST(request: NextRequest) {
     })
 
     if (existing) {
-      return NextResponse.json(
-        { error: 'Work center name already exists' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Work center name already exists' }, { status: 400 })
     }
 
     // Check if department exists
@@ -93,7 +91,7 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
-    console.error('Error creating work center:', error)
+    logger.error('Error creating work center:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

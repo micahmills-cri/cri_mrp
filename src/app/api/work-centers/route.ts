@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/server/db/client'
 import { getUserFromRequest } from '../../../lib/auth'
+import { logger } from '@/lib/logger'
 import { Role } from '@prisma/client'
 
 export async function GET(request: NextRequest) {
@@ -18,24 +19,20 @@ export async function GET(request: NextRequest) {
     // Get all work centers with their departments
     const workCenters = await prisma.workCenter.findMany({
       where: {
-        isActive: true
+        isActive: true,
       },
       include: {
-        department: true
+        department: true,
       },
-      orderBy: [
-        { department: { name: 'asc' } },
-        { name: 'asc' }
-      ]
+      orderBy: [{ department: { name: 'asc' } }, { name: 'asc' }],
     })
 
     return NextResponse.json({
       success: true,
-      workCenters: workCenters
+      workCenters: workCenters,
     })
-
   } catch (error) {
-    console.error('Work centers API error:', error)
+    logger.error('Work centers API error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

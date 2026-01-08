@@ -1,13 +1,13 @@
-import "./globals.css";
-import React from "react";
-import type { Metadata } from "next";
-import { ThemeProvider } from "@/components/ThemeProvider";
-import { ThemeToggle } from "@/components/ThemeToggle";
+import './globals.css'
+import React from 'react'
+import type { Metadata } from 'next'
+import { ThemeProvider } from '@/components/ThemeProvider'
+import { ThemeToggle } from '@/components/ThemeToggle'
 
 export const metadata: Metadata = {
-  title: "Boat Factory Operations",
-  description: "Operations MVP for high-mix, low-volume boat factory",
-};
+  title: 'Boat Factory Operations',
+  description: 'Operations MVP for high-mix, low-volume boat factory',
+}
 
 const themeInitScript = `
 (function() {
@@ -23,13 +23,9 @@ const themeInitScript = `
     document.documentElement.style.colorScheme = theme;
   } catch (e) {}
 })();
-`;
+`
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -44,5 +40,5 @@ export default function RootLayout({
         </ThemeProvider>
       </body>
     </html>
-  );
+  )
 }

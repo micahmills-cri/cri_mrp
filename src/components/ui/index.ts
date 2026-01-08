@@ -1,5 +1,12 @@
 // Button Components
-export { Button, ActionButton, StartButton, PauseButton, StopButton, SecondaryButton } from './Button'
+export {
+  Button,
+  ActionButton,
+  StartButton,
+  PauseButton,
+  StopButton,
+  SecondaryButton,
+} from './Button'
 export { IconButton } from './IconButton'
 export { ButtonGroup } from './ButtonGroup'
 

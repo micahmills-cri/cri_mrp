@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/server/db/client'
 import { getUserFromRequest, hashPassword } from '@/lib/auth'
+import { logger } from '@/lib/logger'
 import { z } from 'zod'
 import { Role } from '@prisma/client'
 
@@ -40,7 +41,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ success: true, users })
   } catch (error) {
-    console.error('Error fetching users:', error)
+    logger.error('Error fetching users:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -71,10 +72,7 @@ export async function POST(request: NextRequest) {
     })
 
     if (existing) {
-      return NextResponse.json(
-        { error: 'Email already exists' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Email already exists' }, { status: 400 })
     }
 
     // Hash password
@@ -128,7 +126,7 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
-    console.error('Error creating user:', error)
+    logger.error('Error creating user:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

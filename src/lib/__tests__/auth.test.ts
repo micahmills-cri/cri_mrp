@@ -12,7 +12,7 @@ describe('Auth', () => {
     const payload = {
       userId: 'test-user-id',
       role: Role.OPERATOR,
-      departmentId: 'dept-1'
+      departmentId: 'dept-1',
     }
 
     const token = signToken(payload)
@@ -32,7 +32,7 @@ describe('Auth', () => {
     const payload = {
       userId: 'test-user-id',
       role: Role.SUPERVISOR,
-      departmentId: 'test-dept'
+      departmentId: 'test-dept',
     }
 
     const token = signToken(payload)
@@ -45,7 +45,7 @@ describe('Auth', () => {
     const payload = {
       userId: 'test-user-id',
       role: Role.ADMIN,
-      departmentId: null
+      departmentId: null,
     }
 
     const token = signToken(payload)

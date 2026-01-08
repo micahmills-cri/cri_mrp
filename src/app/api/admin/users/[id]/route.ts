@@ -1,14 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/server/db/client'
 import { getUserFromRequest, hashPassword } from '@/lib/auth'
+import { logger } from '@/lib/logger'
 import { z } from 'zod'
 import { Role } from '@prisma/client'
 
 // GET /api/admin/users/[id] - Get user details
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const adminUser = getUserFromRequest(request)
     if (!adminUser || adminUser.role !== 'ADMIN') {
@@ -58,7 +56,7 @@ export async function GET(
 
     return NextResponse.json({ success: true, user })
   } catch (error) {
-    console.error('Error fetching user:', error)
+    logger.error('Error fetching user:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -73,10 +71,7 @@ const updateUserSchema = z.object({
   shiftSchedule: z.any().optional().nullable(),
 })
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const adminUser = getUserFromRequest(request)
     if (!adminUser || adminUser.role !== 'ADMIN') {
@@ -102,10 +97,7 @@ export async function PATCH(
       })
 
       if (emailConflict) {
-        return NextResponse.json(
-          { error: 'Email already exists' },
-          { status: 400 }
-        )
+        return NextResponse.json({ error: 'Email already exists' }, { status: 400 })
       }
     }
 
@@ -167,16 +159,13 @@ export async function PATCH(
         { status: 400 }
       )
     }
-    console.error('Error updating user:', error)
+    logger.error('Error updating user:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
 // DELETE /api/admin/users/[id] - Delete user (soft delete by deactivating)
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const adminUser = getUserFromRequest(request)
     if (!adminUser || adminUser.role !== 'ADMIN') {
@@ -185,10 +174,7 @@ export async function DELETE(
 
     // Prevent self-deletion
     if (adminUser.userId === params.id) {
-      return NextResponse.json(
-        { error: 'Cannot delete your own account' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Cannot delete your own account' }, { status: 400 })
     }
 
     // Check if user exists
@@ -215,7 +201,7 @@ export async function DELETE(
       message: 'User deactivated (station memberships removed)',
     })
   } catch (error) {
-    console.error('Error deleting user:', error)
+    logger.error('Error deleting user:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

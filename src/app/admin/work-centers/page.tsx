@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { XMarkIcon } from '@heroicons/react/24/outline'
+import { logger } from '@/lib/logger'
 
 type WorkCenter = {
   id: string
@@ -59,7 +60,7 @@ export default function WorkCentersPage() {
         setWorkCenters(data.workCenters)
       }
     } catch (error) {
-      console.error('Error loading work centers:', error)
+      logger.error('Error loading work centers:', error)
     } finally {
       setIsLoading(false)
     }
@@ -74,7 +75,7 @@ export default function WorkCentersPage() {
         setDepartments(data.departments)
       }
     } catch (error) {
-      console.error('Error loading departments:', error)
+      logger.error('Error loading departments:', error)
     }
   }
 
@@ -108,7 +109,7 @@ export default function WorkCentersPage() {
         alert('Failed to delete work center')
       }
     } catch (error) {
-      console.error('Error deleting work center:', error)
+      logger.error('Error deleting work center:', error)
       alert('Error deleting work center')
     }
   }
@@ -138,7 +139,7 @@ export default function WorkCentersPage() {
         alert(`Error: ${data.error}`)
       }
     } catch (error) {
-      console.error('Error creating work center:', error)
+      logger.error('Error creating work center:', error)
       alert('Error creating work center')
     }
   }
@@ -163,7 +164,7 @@ export default function WorkCentersPage() {
         alert(`Error: ${data.error}`)
       }
     } catch (error) {
-      console.error('Error updating work center:', error)
+      logger.error('Error updating work center:', error)
       alert('Error updating work center')
     }
   }
@@ -191,9 +192,7 @@ export default function WorkCentersPage() {
       render: (row) => (
         <span
           className={`px-2 py-1 rounded text-xs font-medium ${
-            row.isActive
-              ? 'bg-green-100 text-green-800'
-              : 'bg-gray-100 text-gray-800'
+            row.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
           }`}
         >
           {row.isActive ? 'Active' : 'Inactive'}
@@ -247,14 +246,10 @@ export default function WorkCentersPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Department *
-                    </label>
+                    <label className="block text-sm font-medium mb-2">Department *</label>
                     <Select
                       value={formData.departmentId}
-                      onChange={(e) =>
-                        setFormData({ ...formData, departmentId: e.target.value })
-                      }
+                      onChange={(e) => setFormData({ ...formData, departmentId: e.target.value })}
                       options={[
                         { value: '', label: 'Select department...' },
                         ...departments.map((d) => ({ value: d.id, label: d.name })),
@@ -311,14 +306,10 @@ export default function WorkCentersPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Department *
-                    </label>
+                    <label className="block text-sm font-medium mb-2">Department *</label>
                     <Select
                       value={formData.departmentId}
-                      onChange={(e) =>
-                        setFormData({ ...formData, departmentId: e.target.value })
-                      }
+                      onChange={(e) => setFormData({ ...formData, departmentId: e.target.value })}
                       options={[
                         { value: '', label: 'Select department...' },
                         ...departments.map((d) => ({ value: d.id, label: d.name })),

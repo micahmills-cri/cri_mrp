@@ -53,9 +53,7 @@ export default function AdminDashboard() {
     <div className="p-8">
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-[color:var(--foreground)]">
-            Admin Dashboard
-          </h1>
+          <h1 className="text-3xl font-bold text-[color:var(--foreground)]">Admin Dashboard</h1>
           <p className="mt-2 text-[color:var(--muted-strong)]">
             Configure and manage your factory operations
           </p>
@@ -66,10 +64,7 @@ export default function AdminDashboard() {
             const Icon = section.icon
             return (
               <Link key={section.title} href={section.href}>
-                <Card
-                  interactive
-                  className="h-full hover:shadow-lg transition-shadow"
-                >
+                <Card interactive className="h-full hover:shadow-lg transition-shadow">
                   <CardContent className="p-6">
                     <div className="flex items-start gap-4">
                       <div className={`p-3 rounded-lg bg-[var(--muted-weak)] ${section.color}`}>

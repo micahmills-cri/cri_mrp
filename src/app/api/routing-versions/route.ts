@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/server/db/client'
 import { getUserFromRequest } from '../../../lib/auth'
+import { logger } from '@/lib/logger'
 import { Role } from '@prisma/client'
 
 export async function GET(request: NextRequest) {
@@ -38,26 +39,21 @@ export async function GET(request: NextRequest) {
           include: {
             workCenter: {
               include: {
-                department: true
-              }
-            }
-          }
-        }
+                department: true,
+              },
+            },
+          },
+        },
       },
-      orderBy: [
-        { model: 'asc' },
-        { trim: 'asc' },
-        { version: 'desc' }
-      ]
+      orderBy: [{ model: 'asc' }, { trim: 'asc' }, { version: 'desc' }],
     })
 
     return NextResponse.json({
       success: true,
-      routingVersions: routingVersions
+      routingVersions: routingVersions,
     })
-
   } catch (error) {
-    console.error('Routing versions API error:', error)
+    logger.error('Routing versions API error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

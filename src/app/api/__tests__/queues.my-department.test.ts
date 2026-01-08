@@ -45,7 +45,11 @@ describe('GET /api/queues/my-department', () => {
   })
 
   it('returns 400 when no department can be resolved', async () => {
-    getUserFromRequestMock.mockReturnValue({ userId: 'user-1', role: 'OPERATOR', departmentId: null })
+    getUserFromRequestMock.mockReturnValue({
+      userId: 'user-1',
+      role: 'OPERATOR',
+      departmentId: null,
+    })
 
     const response = await GET(buildRequest('https://example.com/api/queues/my-department'))
 
@@ -84,9 +88,7 @@ describe('GET /api/queues/my-department', () => {
                 id: 'wc-1',
                 name: 'Cutting Center',
                 department: { id: departmentId, name: 'Cutting' },
-                stations: [
-                  { id: 'station-1', code: 'CUT-1', name: 'Saw 1', isActive: true },
-                ],
+                stations: [{ id: 'station-1', code: 'CUT-1', name: 'Saw 1', isActive: true }],
               },
             },
           ],
@@ -121,9 +123,7 @@ describe('GET /api/queues/my-department', () => {
                 id: 'wc-2',
                 name: 'Painting Center',
                 department: { id: 'dept-2', name: 'Paint' },
-                stations: [
-                  { id: 'station-2', code: 'PAINT-1', name: 'Booth 1', isActive: true },
-                ],
+                stations: [{ id: 'station-2', code: 'PAINT-1', name: 'Booth 1', isActive: true }],
               },
             },
           ],

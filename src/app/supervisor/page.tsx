@@ -17,6 +17,7 @@ import {
   ChevronRightIcon,
 } from '@heroicons/react/24/solid'
 import { buildKanbanColumns, type KanbanWorkCenter, type SupervisorWorkOrder } from './kanban-utils'
+import { logger } from '@/lib/logger'
 
 type RoutingStage = {
   id?: string
@@ -193,7 +194,7 @@ export default function SupervisorView() {
         )
       }
     } catch (error) {
-      console.error('Error loading work centers:', error)
+      logger.error('Error loading work centers:', error)
       // Fallback to empty array if API fails
       setWorkCenters([])
     }
@@ -423,7 +424,7 @@ export default function SupervisorView() {
         setAvailableRoutingVersions(result.routingVersions)
       }
     } catch (error) {
-      console.error('Error loading routing versions:', error)
+      logger.error('Error loading routing versions:', error)
     }
     setLoadingRoutings(false)
   }
@@ -688,7 +689,7 @@ export default function SupervisorView() {
         setVersionHistory(data.versions || [])
       }
     } catch (err) {
-      console.error('Error loading version history:', err)
+      logger.error('Error loading version history:', err)
     }
   }
 

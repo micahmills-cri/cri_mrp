@@ -1,17 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/server/db/client'
 import { getUserFromRequest } from '../../../../../lib/auth'
+import { logger } from '@/lib/logger'
 import { z } from 'zod'
 import { WOStatus, Role } from '@prisma/client'
 
 const holdSchema = z.object({
-  reason: z.string().min(1)
+  reason: z.string().min(1),
 })
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const user = getUserFromRequest(request)
     if (!user) {
@@ -29,7 +27,7 @@ export async function POST(
 
     // Get work order
     const workOrder = await prisma.workOrder.findUnique({
-      where: { id: workOrderId }
+      where: { id: workOrderId },
     })
 
     if (!workOrder) {
@@ -47,7 +45,7 @@ export async function POST(
     // Update work order status to HOLD
     const updatedWorkOrder = await prisma.workOrder.update({
       where: { id: workOrderId },
-      data: { status: WOStatus.HOLD }
+      data: { status: WOStatus.HOLD },
     })
 
     // Create audit log with reason
@@ -58,8 +56,8 @@ export async function POST(
         modelId: workOrderId,
         action: 'HOLD',
         before: { status: previousStatus },
-        after: { status: WOStatus.HOLD, reason, previousStatus }
-      }
+        after: { status: WOStatus.HOLD, reason, previousStatus },
+      },
     })
 
     return NextResponse.json({
@@ -69,11 +67,11 @@ export async function POST(
         id: updatedWorkOrder.id,
         number: updatedWorkOrder.number,
         status: updatedWorkOrder.status,
-        previousStatus
-      }
+        previousStatus,
+      },
     })
   } catch (error) {
-    console.error('Hold work order error:', error)
+    logger.error('Hold work order error:', error)
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: 'Reason is required' }, { status: 400 })
     }

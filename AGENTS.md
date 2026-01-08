@@ -1,6 +1,7 @@
 # Agent Playbook
 
 ## Executive Summary — Follow These First
+
 1. **Check action items first.** Review `docs/ActionItems.md` before starting work to understand priorities, avoid duplicate efforts, and claim items you're working on. Update pertinent items and statuses as you progress.
 2. **Respect the architecture.** This is a Next.js 14 App Router app on Node 20+/TypeScript 5.9 with Prisma 6.16 + Postgres. Keep server-only code under `src/server/**`, rely on the `@/` alias, and never create ad-hoc Prisma clients.
 3. **Preserve domain invariants.** Work Orders move sequentially from `PLANNED` → … → `CLOSED`, `CANCELLED` remains available, and every mutation must write both a `WorkOrderVersion` snapshot and an `AuditLog` entry.
@@ -10,6 +11,7 @@
 7. **Document ALL discoveries.** When you discover bugs, test failures, build errors, security issues, technical debt, or improvement opportunities during ANY work—testing, building, analyzing, or implementing—you MUST immediately add them to `docs/ActionItems.md` with priority, context, and "Discovered: YYYY-MM-DD" tag. This is non-negotiable.
 
 ## Purpose & Context
+
 One file that tells agents (and humans) how this MVP works, who owns what, how handoffs occur, and what “done” means—aligned to this repo.
 
 - **Domain:** High-mix/low-volume boat factory operations managing the full Work Order (WO) lifecycle with routing versioning.
@@ -19,6 +21,7 @@ One file that tells agents (and humans) how this MVP works, who owns what, how h
 - **Seeds & persistence:** `backup-data.ts` is the canonical dataset. Reseeds delete runtime records; keep long-lived fixtures mirrored there.
 
 ## Stack & Runtime Guardrails
+
 - Next.js 14 App Router, TypeScript 5.9, Node.js 20+, default port `5000`.
 - Prisma 6.16 with Postgres; middleware logs audit metadata.
 - Vitest with test files under `src/**/__tests__/`.
@@ -30,6 +33,7 @@ One file that tells agents (and humans) how this MVP works, who owns what, how h
 - Formatting: run Prettier 3 (`npx prettier@3 --write <files>`) on touched files.
 
 ## Domain Rules & Invariants
+
 - **Work Orders:**
   - Status pipeline includes `PLANNED` through closure plus `CANCELLED`.
   - Stage progression is sequential; operators only see work scoped to their department.
@@ -51,12 +55,14 @@ One file that tells agents (and humans) how this MVP works, who owns what, how h
   - Never log secrets. JWT stays cookie-only. Enforce RBAC and department scoping in every handler. Only Supervisors can edit routing while a WO is `PLANNED`. All denied writes should produce audit attempts.
 
 ## Data Management Workflow
+
 1. Update `prisma/schema.prisma` first, then run `npm run prisma:migrate` followed by `npm run prisma:generate`.
 2. Sync fixtures in `src/db/seed.ts` and persist reference data in `backup-data.ts`.
 3. Use `npm run seed:dry` to preview and `npm run seed` to apply deterministic seeds.
 4. Include model/trim coverage (e.g., LX24 Base/Sport/Luxury; LX26 Base/Sport/Luxury/Premium) and sample WOs across statuses.
 
 ## Testing Expectations
+
 - **Baseline:** `npm run test` must pass before submission.
 - **Contract tests:** Add/update Vitest contract suites for any touched API route.
 - **Unit tests:** Cover validators, snapshot writers, routing logic, etc.
@@ -65,6 +71,7 @@ One file that tells agents (and humans) how this MVP works, who owns what, how h
 - **Document test failures:** If tests fail during your work, you MUST add each failure as a separate action item in `docs/ActionItems.md` with root cause analysis, affected files, and reproduction steps. Mark test failures as High Priority if they block development.
 
 ## Documentation & Change Management
+
 - **Action Items Workflow:**
   - **Before starting**: Consult `docs/ActionItems.md` to check for related tasks, understand priorities, and avoid duplicate efforts.
   - **During work**: Update item status to `[WIP]` with your agent role.
@@ -87,6 +94,7 @@ One file that tells agents (and humans) how this MVP works, who owns what, how h
 - Keep ADRs under `docs/adr/` current; add new ones when architecture decisions shift.
 
 ## Operational Protocol
+
 - **Task Spec Template**
   ```yaml
   task: "Routing defaults & validation"
@@ -118,6 +126,7 @@ One file that tells agents (and humans) how this MVP works, who owns what, how h
 - **Handoffs:** When passing work, summarize progress, outstanding risks, and relevant test results. Reference the task spec in your PR description.
 
 ## Role Playbook & Ownership Labels
+
 For multi-agent efforts, align work with the primary owner. Solo agents should still follow the expectations for each area they touch.
 
 **IMPORTANT**: ALL agents, regardless of role, MUST document discovered issues in ActionItems.md. When you find bugs, failures, warnings, or technical debt in your domain, add them immediately with priority, context, and discovery date.
@@ -147,6 +156,7 @@ For multi-agent efforts, align work with the primary owner. Solo agents should s
     - Keeps documentation in sync: `AGENTS.md`, `API_CONTRACT.md`, `MIGRATIONS.md`, `docs/ONBOARDING.md`, `docs/CHANGELOG.md`, `docs/ActionItems.md`. Maintains ActionItems.md by updating statuses, moving completed items to the "Completed Items" section, and adding new items discovered during work. Done when docs updated alongside code.
 
 ## PR Checklist
+
 - ☐ Prettier 3 run on touched files.
 - ☐ `npm run prisma:migrate` (if schema changed) and `npm run prisma:generate` succeed.
 - ☐ Seeds updated (`src/db/seed.ts`) and `backup-data.ts` adjusted if reference data changed.
@@ -161,6 +171,7 @@ For multi-agent efforts, align work with the primary owner. Solo agents should s
 - ☐ Performance/accessibility baselines still met; call out deviations in the PR.
 
 ## Core Flows to Validate Before Shipping
+
 - Supervisor creates `PLANNED` WO → selects Default/New/Saved routing → saves version → releases.
 - Operator dashboard: pick `READY` WO → `START`/`PAUSE`/`COMPLETE` → add note and file (department scoped).
 - Board (Kanban) and Table views share headers; `Create Work Order` button accessible.
@@ -170,11 +181,13 @@ For multi-agent efforts, align work with the primary owner. Solo agents should s
 - File management: upload → list/search → bulk delete using `user.userId`.
 
 ## Ready-Made Prompts (Repo-Aware)
+
 - “Fix routing validation end-to-end” — Add `zod` schemas for routing payloads, enforce 11 departments with active work centers in `POST /api/work-orders`, surface actionable UI errors, and cover with contract/unit/UI tests.
 - “Unify notes & timeline” — Migrate to single `Note` model, build timeline union (notes/status/files), remove legacy paths, and test contract/unit/UI flows.
 - “Snapshot writer & audit” — Ensure snapshots on WO create/update/status change include `schema_hash` and `versionNumber`. Cover with unit + contract tests.
 
 ## Definition of Done
+
 - Code, migrations, and seeds merged without regressions.
 - API contracts verified with Vitest suites and remain backwards compatible.
 - Seeds and `backup-data.ts` updated to reflect new truths.
