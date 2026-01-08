@@ -45,6 +45,7 @@ export default function FileListDisplay({
 }: FileListDisplayProps) {
   const [attachments, setAttachments] = useState<FileAttachment[]>([])
   const [loading, setLoading] = useState(false)
+  const [uploading, setUploading] = useState(false)
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set())
   const [searchQuery, setSearchQuery] = useState('')
   const [filterType, setFilterType] = useState<string>('all')
@@ -95,6 +96,43 @@ export default function FileListDisplay({
       }
     } catch (err) {
       onError?.('Network error deleting attachment')
+    }
+  }
+
+  // Upload file
+  const uploadFile = async (file: File) => {
+    setUploading(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const response = await fetch(`/api/work-orders/${workOrderId}/attachments`, {
+        method: 'POST',
+        credentials: 'include',
+        body: formData
+      })
+
+      if (response.ok) {
+        const newAttachment = await response.json()
+        setAttachments(prev => [newAttachment, ...prev])
+        onSuccess?.(`File ${file.name} uploaded successfully`)
+      } else {
+        const error = await response.json()
+        onError?.(error.message || 'Failed to upload file')
+      }
+    } catch (err) {
+      onError?.('Network error uploading file')
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  // Handle file input change
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files
+    if (files && files.length > 0) {
+      uploadFile(files[0])
+      event.target.value = '' // Reset input for repeat uploads
     }
   }
 
@@ -287,21 +325,45 @@ export default function FileListDisplay({
         <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '600' }}>
           Attachments ({filteredAttachments.length})
         </h3>
-        <button
-          onClick={loadAttachments}
-          disabled={loading}
-          style={{
-            padding: '0.5rem 1rem',
-            backgroundColor: 'transparent',
-            color: 'var(--status-info-accent)',
-            border: '1px solid var(--status-info-accent)',
-            borderRadius: '4px',
-            cursor: loading ? 'not-allowed' : 'pointer',
-            fontSize: '0.875rem'
-          }}
-        >
-          {loading ? 'Refreshing...' : 'Refresh'}
-        </button>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          {!readOnly && (
+            <label style={{
+              padding: '0.5rem 1rem',
+              backgroundColor: 'var(--status-success-accent)',
+              color: 'var(--status-success-foreground)',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: uploading ? 'not-allowed' : 'pointer',
+              fontSize: '0.875rem',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.25rem'
+            }}>
+              {uploading ? 'Uploading...' : 'Add File'}
+              <input
+                type="file"
+                onChange={handleFileChange}
+                disabled={uploading}
+                style={{ display: 'none' }}
+              />
+            </label>
+          )}
+          <button
+            onClick={loadAttachments}
+            disabled={loading}
+            style={{
+              padding: '0.5rem 1rem',
+              backgroundColor: 'transparent',
+              color: 'var(--status-info-accent)',
+              border: '1px solid var(--status-info-accent)',
+              borderRadius: '4px',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              fontSize: '0.875rem'
+            }}
+          >
+            {loading ? 'Refreshing...' : 'Refresh'}
+          </button>
+        </div>
       </div>
 
       {/* Search and Filter Bar */}
