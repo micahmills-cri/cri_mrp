@@ -98,14 +98,6 @@ This document tracks outstanding tasks, improvements, and technical debt for the
 
 ### Testing
 
-- [ ] **Fix failing supervisor dashboard contract test**
-  - Failure: `src/app/api/__tests__/supervisor.dashboard.test.ts` expects 200 but receives 500
-  - Error log: `TypeError: Cannot read properties of undefined (reading 'findMany')` in `src/app/api/supervisor/dashboard/route.ts:331`
-  - Repro: `npm run test`
-  - **Estimated effort**: 30-45 minutes
-  - **Agent role**: QA & Release Gate
-  - **Discovered**: 2026-01-08 during `npm run test`
-
 - [ ] **Expand API route test coverage**
   - Current: 3 routes tested (supervisor dashboard, product configurations, queues), 31 total routes
   - Target: All critical routes (auth, work-orders, queues)
@@ -377,6 +369,12 @@ _(All medium priority admin panel UI tasks are complete - moved to Completed Ite
 _(Items move here when marked complete with `[x]` status)_
 
 ### 2026-01-08
+
+- [x] **Fix failing supervisor dashboard contract test** (Agent: QA & Release Gate, Completed: 2026-01-08)
+  - Failure: `src/app/api/__tests__/supervisor.dashboard.test.ts` expects 200 but receives 500
+  - Error log: `TypeError: Cannot read properties of undefined (reading 'findMany')` in `src/app/api/supervisor/dashboard/route.ts:331`
+  - Fix: Mocked `prisma.routingVersion.findMany` in the supervisor dashboard contract test.
+  - **Discovered**: 2026-01-08 during `npm run test`
 
 - [x] **Add LICENSE file** (Agent: Docs & Runbooks, Completed: 2026-01-08)
   - Package.json specifies "ISC" but file is missing

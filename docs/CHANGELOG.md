@@ -2,6 +2,13 @@
 
 > Record every pull request chronologically with the newest entry at the top. Use UTC timestamps in ISO 8601 format.
 
+## 2026-01-08T15:37:27Z - Agent: Codex (qa-gate, docs)
+
+- **Summary:** Mocked the routing version query in the supervisor dashboard contract test to prevent the 500 response and marked the action item complete.
+- **Reasoning:** The test suite failed because `prisma.routingVersion.findMany` was undefined in the mocked client; adding the mock keeps contract coverage stable and removes the blocking failure.
+- **Validation:** `npm run test`
+- **Files Modified:** `src/app/api/__tests__/supervisor.dashboard.test.ts`, `docs/ActionItems.md`, `docs/CHANGELOG.md`
+
 ## 2026-01-08T15:11:13Z - Agent: Codex (docs)
 
 - **Summary:** Added the missing ISC LICENSE file and marked the ActionItems task complete.
