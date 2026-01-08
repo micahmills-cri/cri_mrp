@@ -2,6 +2,13 @@
 
 > Record every pull request chronologically with the newest entry at the top. Use UTC timestamps in ISO 8601 format.
 
+## 2026-01-08T14:32:41Z - Agent: Codex (qa-gate, docs)
+
+- **Summary:** Elevated the supervisor build-blocker ActionItem to high priority, updated the logging cleanup scope to reflect broader console usage, and refreshed the API test coverage baseline.  
+- **Reasoning:** Keep ActionItems aligned with current code realities and highlight build-blocking work.  
+- **Validation:** Not run (documentation-only update).  
+- **Files Modified:** `docs/ActionItems.md`, `docs/CHANGELOG.md`
+
 ## 2026-01-07T19:31:04Z - Agent: Codex (qa-gate, docs)
 
 - **Summary:** Removed the deprecated npm `http-proxy` environment config, replacing it with `npm_config_proxy`, and marked the warning resolution complete in ActionItems.
