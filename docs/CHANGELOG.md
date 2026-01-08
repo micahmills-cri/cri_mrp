@@ -2,6 +2,13 @@
 
 > Record every pull request chronologically with the newest entry at the top. Use UTC timestamps in ISO 8601 format.
 
+## 2026-01-08T15:11:13Z - Agent: Codex (docs)
+
+- **Summary:** Added the missing ISC LICENSE file and marked the ActionItems task complete.
+- **Reasoning:** Align repository contents with the package.json license declaration and close the outstanding documentation task.
+- **Validation:** Not run (documentation-only update).
+- **Files Modified:** `LICENSE`, `docs/ActionItems.md`, `docs/CHANGELOG.md`
+
 ## 2026-01-08T14:15:00Z - Agent: Claude (role-ui, qa-gate, docs)
 
 - **Summary:** Added sort/filter/search capabilities to operator Work Orders in Queue table, removed Progress column, added file upload capability to attachments, and investigated npm http-proxy warning marking it as DEFERRED in ActionItems.

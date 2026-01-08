@@ -132,12 +132,6 @@ _(All medium priority admin panel UI tasks are complete - moved to Completed Ite
 
 ### Documentation
 
-- [ ] **Add LICENSE file**
-  - Package.json specifies "ISC" but file is missing
-  - Add ISC license text to repo root
-  - **Estimated effort**: 10 minutes
-  - **Agent role**: Docs & Runbooks
-
 - [ ] **Create CONTRIBUTING.md**
   - Development setup process
   - Branch naming conventions (feature/, fix/, docs/)
@@ -384,6 +378,10 @@ _(Items move here when marked complete with `[x]` status)_
 
 ### 2026-01-08
 
+- [x] **Add LICENSE file** (Agent: Docs & Runbooks, Completed: 2026-01-08)
+  - Package.json specifies "ISC" but file is missing
+  - Added ISC license text to repo root
+  - **Discovered**: 2025-01-16
 - [x] **Fix exported function in supervisor page component** (Agent: Codex - UI/UX Implementer, Completed: 2026-01-08)
   - File: `src/app/supervisor/page.tsx`
   - Issue: `buildKanbanColumns` function is exported but shouldn't be
