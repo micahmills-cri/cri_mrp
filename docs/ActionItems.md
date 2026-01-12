@@ -84,16 +84,15 @@ This document tracks outstanding tasks, improvements, and technical debt for the
 ### Testing
 
 - [WIP] **Expand API route test coverage** (Agent: QA & Release Gate - Claude Sonnet 4.5)
-  - Current: 15 routes tested across 6 test files
-  - Total routes: 55 API routes (27% coverage)
-  - All tests passing: **64 total tests** (up from 24 initially)
-  - **Phase 1 Progress**: 3 of 4 critical routes complete (75%)
+  - Current: 16 routes tested across 7 test files
+  - Total routes: 55 API routes (29% coverage)
+  - All tests passing: **79 total tests** (up from 24 initially, +229% increase)
+  - **Phase 1 Complete**: ✅ All 4 critical routes tested (100%)
     - ✅ `POST /api/auth/login` - 10 tests (auth, validation, role-based redirects, cookies)
     - ✅ `POST /api/work-orders` - 13 tests (RBAC, routing validation, date validation, version snapshots, audit logs)
     - ✅ `PATCH /api/work-orders/[id]` - 17 tests (state-dependent editability, version increments, schema_hash, transaction atomicity)
-  - **Phase 1 Remaining**: 1 critical route still needed
-    - `POST /api/supervisor/cancel-wo` - Cancel work order with audit trail
-  - **Estimated effort remaining**: 5-8 hours
+    - ✅ `POST /api/supervisor/cancel-wo` - 15 tests (status validation, version snapshots, audit trail, transaction atomicity)
+  - **Next Steps**: Phase 2-5 available (41 routes remaining)
   - **Agent role**: QA & Release Gate
 
 - [ ] **Set test coverage thresholds**
