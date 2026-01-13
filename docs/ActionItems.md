@@ -84,15 +84,20 @@ This document tracks outstanding tasks, improvements, and technical debt for the
 ### Testing
 
 - [WIP] **Expand API route test coverage** (Agent: QA & Release Gate - Claude Sonnet 4.5)
-  - Current: 16 routes tested across 7 test files
-  - Total routes: 55 API routes (29% coverage)
-  - All tests passing: **79 total tests** (up from 24 initially, +229% increase)
+  - Current: 20 routes tested across 11 test files
+  - Total routes: 55 API routes (36% coverage)
+  - All tests passing: **141 total tests** (up from 24 initially, +488% increase)
   - **Phase 1 Complete**: ✅ All 4 critical routes tested (100%)
     - ✅ `POST /api/auth/login` - 10 tests (auth, validation, role-based redirects, cookies)
     - ✅ `POST /api/work-orders` - 13 tests (RBAC, routing validation, date validation, version snapshots, audit logs)
     - ✅ `PATCH /api/work-orders/[id]` - 17 tests (state-dependent editability, version increments, schema_hash, transaction atomicity)
     - ✅ `POST /api/supervisor/cancel-wo` - 15 tests (status validation, version snapshots, audit trail, transaction atomicity)
-  - **Next Steps**: Phase 2-5 available (41 routes remaining)
+  - **Phase 2 Complete**: ✅ All 4 work order state transition routes tested (100%)
+    - ✅ `POST /api/work-orders/start` - 15 tests (department scoping, RELEASED→IN_PROGRESS transition, station validation, HOLD checks)
+    - ✅ `POST /api/work-orders/complete` - 19 tests (stage completion, quality tracking, stage advancement, final stage→COMPLETED)
+    - ✅ `POST /api/work-orders/[id]/hold` - 14 tests (RBAC SUPERVISOR/ADMIN, reason validation, previous status preservation, audit logs)
+    - ✅ `POST /api/work-orders/[id]/unhold` - 14 tests (status restoration from audit log, default to RELEASED, HOLD verification)
+  - **Next Steps**: Phase 3-5 available (35 routes remaining)
   - **Agent role**: QA & Release Gate
 
 - [ ] **Set test coverage thresholds**
