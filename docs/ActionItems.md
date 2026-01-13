@@ -23,6 +23,15 @@ This document tracks outstanding tasks, improvements, and technical debt for the
 
 ## 🔴 High Priority (Do First)
 
+### PLM Integration
+
+- [ ] **Plan MRP ↔ PLM integration and deprecation path** (Agent: Docs & Runbooks)
+  - Draft integration plan and checklist in `docs/PLMProject.md`
+  - Define phased rollout, auth needs, and deprecation candidates for product data storage
+  - **Estimated effort**: 2-4 hours (planning + review)
+  - **Agent role**: Docs & Runbooks
+  - **Discovered**: 2026-01-13
+
 ### Code Quality & Tooling
 
 - [DEFERRED] **Resolve recurring npm "Unknown env config http-proxy" warning**
