@@ -7,8 +7,10 @@ Next.js 14 operations platform supporting a high-mix, low-volume boat factory. T
 ### Operator Console
 
 - Real-time queue of READY and IN_PROGRESS work orders scoped to the operator's department, refreshed every five seconds.
-- Search across work orders by number or hull ID and open any result directly from the queue.
+- Search, filter, and sort capabilities across work orders by number, hull ID, SKU, status, and priority with visual indicators.
 - Guided action panel for the active stage with persisted station selection, quantity capture, and Start/Pause/Complete controls.
+- Notes management with timeline view showing all activity for the selected work order.
+- File attachment viewing and uploading directly from the action panel.
 - Department picker for multi-skilled operators, backed by role-aware authentication and redirects.
 
 ### Supervisor Workspace
@@ -34,7 +36,9 @@ Next.js 14 operations platform supporting a high-mix, low-volume boat factory. T
 - JWT-backed authentication with httpOnly cookies and role-based redirects between operator, supervisor, and admin experiences.
 - Prisma/PostgreSQL data layer with audit history, notes, and attachments for end-to-end traceability.
 - Department-aware stage gating so only the current enabled stage is actionable and recorded.
+- Structured logging system with configurable log levels (DEBUG, INFO, WARN, ERROR) replacing raw console statements.
 - Shared component library for stats, data grids, notes timelines, and file management to keep UI patterns consistent.
+- Replit Object Storage integration for file attachments with inline viewing.
 
 ## Getting Started
 
@@ -63,10 +67,13 @@ Follow `docs/ONBOARDING.md` for environment prerequisites and secrets management
 
 ## Testing
 
-- Run the Vitest suite before opening a pull request:
-  ```bash
-  npm run test
-  ```
+Run the Vitest suite before opening a pull request:
+
+```bash
+npm run test
+```
+
+Current test coverage: **220 tests** across 20 test files, covering 26 of 55 API routes (47% coverage).
 
 ## Reference Accounts
 
@@ -77,7 +84,24 @@ Follow `docs/ONBOARDING.md` for environment prerequisites and secrets management
 
 ## Documentation & Change Tracking
 
-- Developer onboarding instructions live in `docs/ONBOARDING.md`.
-- Admin panel implementation details in `docs/ADMIN_PANEL_IMPLEMENTATION.md`.
-- Each agent must append their work to `docs/CHANGELOG.md` with a timestamp, summary, and reasoning.
-- Track action items and technical debt in `docs/ActionItems.md`.
+| Document | Purpose |
+|----------|---------|
+| `docs/ONBOARDING.md` | Developer onboarding and environment setup |
+| `docs/ADMIN_PANEL_IMPLEMENTATION.md` | Admin panel implementation details |
+| `docs/ActionItems.md` | Task tracking, priorities, and technical debt |
+| `docs/CHANGELOG.md` | Chronological record of all changes with timestamps |
+| `docs/PLMProject.md` | PLM integration planning (in progress) |
+| `AGENTS.md` | Multi-agent collaboration playbook and coding standards |
+
+## Multi-Agent Development
+
+This project uses a multi-agent development workflow with Codex, ClaudeCode, and Replit agents collaborating on features. See `AGENTS.md` for the complete playbook including:
+
+- Role definitions and ownership areas
+- Documentation requirements
+- PR checklist and Definition of Done
+- Domain rules and invariants
+
+## License
+
+ISC
