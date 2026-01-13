@@ -28,6 +28,11 @@ const fallbackEnums = {
     COMPLETE: 'COMPLETE',
     RESUME: 'RESUME',
   } as const,
+  RoutingVersionStatus: {
+    DRAFT: 'DRAFT',
+    RELEASED: 'RELEASED',
+    ARCHIVED: 'ARCHIVED',
+  } as const,
 }
 
 vi.mock('@prisma/client', async () => {
@@ -42,11 +47,13 @@ vi.mock('@prisma/client', async () => {
         WOStatus: actual.Prisma?.WOStatus ?? fallbackEnums.WOStatus,
         WOPriority: actual.Prisma?.WOPriority ?? fallbackEnums.WOPriority,
         WOEvent: actual.Prisma?.WOEvent ?? fallbackEnums.WOEvent,
+        RoutingVersionStatus: actual.Prisma?.RoutingVersionStatus ?? fallbackEnums.RoutingVersionStatus,
       },
       Role: actual.Role ?? fallbackEnums.Role,
       WOStatus: actual.WOStatus ?? fallbackEnums.WOStatus,
       WOPriority: actual.WOPriority ?? fallbackEnums.WOPriority,
       WOEvent: actual.WOEvent ?? fallbackEnums.WOEvent,
+      RoutingVersionStatus: actual.RoutingVersionStatus ?? fallbackEnums.RoutingVersionStatus,
     }
   } catch (error) {
     return {
@@ -62,11 +69,13 @@ vi.mock('@prisma/client', async () => {
         WOStatus: fallbackEnums.WOStatus,
         WOPriority: fallbackEnums.WOPriority,
         WOEvent: fallbackEnums.WOEvent,
+        RoutingVersionStatus: fallbackEnums.RoutingVersionStatus,
       },
       Role: fallbackEnums.Role,
       WOStatus: fallbackEnums.WOStatus,
       WOPriority: fallbackEnums.WOPriority,
       WOEvent: fallbackEnums.WOEvent,
+      RoutingVersionStatus: fallbackEnums.RoutingVersionStatus,
     }
   }
 })
