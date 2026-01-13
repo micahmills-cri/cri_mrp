@@ -63,7 +63,7 @@ This document tracks outstanding tasks, improvements, and technical debt for the
 
 ### CI/CD
 
-- [ ] **Set up GitHub Actions CI pipeline**
+- [DEFERRED] **Set up GitHub Actions CI pipeline**
   - Create `.github/workflows/ci.yml`
   - Run on push and pull requests
   - Steps: install → lint → format:check → test → build
@@ -71,21 +71,33 @@ This document tracks outstanding tasks, improvements, and technical debt for the
   - Cache node_modules for faster runs
   - **Estimated effort**: 1 hour
   - **Agent role**: QA & Release Gate
+  - **Reason for deferral**: One-person operation, local quality checks sufficient for now. Can revisit when team grows or when preparing for production deployment.
 
-- [ ] **Add PR status checks**
+- [DEFERRED] **Add PR status checks**
   - Require CI to pass before merge
   - Require at least 1 approval
   - Configure branch protection for main
   - **Estimated effort**: 15 minutes
   - **Agent role**: QA & Release Gate
+  - **Reason for deferral**: Depends on CI pipeline. Not needed for solo development workflow.
 
 ### Testing
 
-- [ ] **Expand API route test coverage**
-  - Current: 3 routes tested (supervisor dashboard, product configurations, queues), 31 total routes
-  - Target: All critical routes (auth, work-orders, queues)
-  - Priority routes: `/api/auth/login`, `/api/work-orders/*`, `/api/queues/*`
-  - **Estimated effort**: 4-6 hours
+- [WIP] **Expand API route test coverage** (Agent: QA & Release Gate - Claude Sonnet 4.5)
+  - Current: 20 routes tested across 11 test files
+  - Total routes: 55 API routes (36% coverage)
+  - All tests passing: **141 total tests** (up from 24 initially, +488% increase)
+  - **Phase 1 Complete**: ✅ All 4 critical routes tested (100%)
+    - ✅ `POST /api/auth/login` - 10 tests (auth, validation, role-based redirects, cookies)
+    - ✅ `POST /api/work-orders` - 13 tests (RBAC, routing validation, date validation, version snapshots, audit logs)
+    - ✅ `PATCH /api/work-orders/[id]` - 17 tests (state-dependent editability, version increments, schema_hash, transaction atomicity)
+    - ✅ `POST /api/supervisor/cancel-wo` - 15 tests (status validation, version snapshots, audit trail, transaction atomicity)
+  - **Phase 2 Complete**: ✅ All 4 work order state transition routes tested (100%)
+    - ✅ `POST /api/work-orders/start` - 15 tests (department scoping, RELEASED→IN_PROGRESS transition, station validation, HOLD checks)
+    - ✅ `POST /api/work-orders/complete` - 19 tests (stage completion, quality tracking, stage advancement, final stage→COMPLETED)
+    - ✅ `POST /api/work-orders/[id]/hold` - 14 tests (RBAC SUPERVISOR/ADMIN, reason validation, previous status preservation, audit logs)
+    - ✅ `POST /api/work-orders/[id]/unhold` - 14 tests (status restoration from audit log, default to RELEASED, HOLD verification)
+  - **Next Steps**: Phase 3-5 available (35 routes remaining)
   - **Agent role**: QA & Release Gate
 
 - [ ] **Set test coverage thresholds**
