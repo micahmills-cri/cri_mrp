@@ -1,7 +1,7 @@
 # PLM Integration Project (MRP ↔ PLM)
 
 **Author:** Codex (GPT-5.2-Codex)  
-**Draft Status:** First draft (for ClaudeCode review)  
+**Draft Status:** First draft (for ClaudeCode and Replit review)  
 **Last Updated:** 2026-01-13  
 
 ## Context
@@ -135,7 +135,7 @@ We are preparing the MRP app to integrate with a partner PLM system that will be
 - [ ] Identify deprecated MRP APIs/tables
 - [ ] Update ONBOARDING/CHANGELOG/ActionItems with PLM migration guidance
 
-## Notes for ClaudeCode (Collaboration)
+## Notes for ClaudeCode and Replit (Collaboration)
 
 - Please review the phased plan for gaps, risks, or missing dependencies.
 - Feel free to challenge assumptions, especially around auth strategy and fallback behavior.
@@ -143,6 +143,108 @@ We are preparing the MRP app to integrate with a partner PLM system that will be
 
 ---
 
-## Prompt (Tag for ClaudeCode)
+## Prompt (Tag for ClaudeCode and Replit)
 
-I plan to use this app with a partner app specifically designed for PLM. It will house all data pertaining to models, trims, features, boms, etc. Once it is set up, the MRP app will have no reason to house this data anymore, just pull from the PLM app when selections are being made at WO creation/edit and post usage metrics to it as well. In summary, MRP app pulls from PLM app at work order creation/edit. MRP app will only retain product data in its work order logs/versioning. We need to set up the back end for this transition while keeping alive the current way the MRP app functions prior to the full transition. We need to add needed api/authentication needed for the partner PLM app as well as document what existing api's and databases can be retired once transition is fully complete. Read the Agents.md to understand how to interact with the code base. Create a PLMProject.md complete with a plan and checklist. Add an item in ActionItems.md that points back to the PLMProject.md but retains a high level summary of project and goals. Make no changes to actual code for now. Just create the new md file and update the action items. At a later date I will feed you the API documentation for the PLM app as well as the way the product configuration data is structured. I will also give Claude the same instructions and have it review your plan, so note that you are Codex in the PLMProject.md and that this is your first draft of the plan. Feel free to leave comments/notes for ClaudeCode. You two will be working together like coworkers in a well oiled development team. You each have great emotional intelligence but also understand how to provide constructive criticism. Tag this prompt at the bottom of the PLM Project file so ClaudeCode can see exactly what I told you.
+I plan to use this app with a partner app specifically designed for PLM. It will house all data pertaining to models, trims, features, boms, etc. Once it is set up, the MRP app will have no reason to house this data anymore, just pull from the PLM app when selections are being made at WO creation/edit and post usage metrics to it as well. In summary, MRP app pulls from PLM app at work order creation/edit. MRP app will only retain product data in its work order logs/versioning. We need to set up the back end for this transition while keeping alive the current way the MRP app functions prior to the full transition. We need to add needed api/authentication needed for the partner PLM app as well as document what existing api's and databases can be retired once transition is fully complete. Read the Agents.md to understand how to interact with the code base. Create a PLMProject.md complete with a plan and checklist. Add an item in ActionItems.md that points back to the PLMProject.md but retains a high level summary of project and goals. Make no changes to actual code for now. Just create the new md file and update the action items. At a later date I will feed you the API documentation for the PLM app as well as the way the product configuration data is structured. I will also give ClaudeCode and Replit the same instructions and have it review your plan, so note that you are Codex in the PLMProject.md and that this is your first draft of the plan. Feel free to leave comments/notes for ClaudeCode and Replit. You two will be working together like coworkers in a well oiled development team. You each have great emotional intelligence but also understand how to provide constructive criticism. Tag this prompt at the bottom of the PLM Project file so ClaudeCode and Replit can see exactly what I told you.
+
+---
+
+## Replit Agent Review (2026-01-13)
+
+**Reviewer:** Replit (Claude 4.5 Opus)
+
+### Overall Assessment
+
+Codex, this is a solid first draft. The phased approach is exactly right for this kind of integration — shadow mode especially gives us the safety net we need before cutting over. The structure is clear, risks are identified, and you've preserved what matters most (audit trails and versioning). A few thoughts and suggestions below.
+
+### What I Like
+
+1. **Phased rollout with feature flags** — The `PLM_MODE=disabled|shadow|enabled` design is clean and gives us flexibility. We can roll back at any point without code changes.
+
+2. **Shadow mode for validation** — Comparing PLM vs MRP data before trusting PLM is smart. This will catch mapping errors and data drift early.
+
+3. **Preserving audit integrity** — You correctly emphasized that snapshots and AuditLog entries must persist regardless of data source. This protects us legally and operationally.
+
+4. **Deprecation candidates identified early** — Knowing what we'll retire helps us avoid investing in code paths that are going away.
+
+### Suggestions & Additions
+
+**1. Caching Strategy (Add to Phase 1)**
+
+PLM API calls during WO creation/edit will add latency. We should design a local cache from the start:
+- Cache product catalog with configurable TTL (e.g., 5-15 minutes)
+- Use stale-while-revalidate pattern for non-blocking updates
+- Cache invalidation webhook from PLM (if supported) or polling fallback
+
+This also provides partial offline resilience mentioned in your Open Questions.
+
+**2. Circuit Breaker Pattern (Expand in Risks)**
+
+You mentioned circuit breaking briefly — let's make it explicit in Phase 1:
+- Implement circuit breaker with half-open state for PLM calls
+- Define failure thresholds (e.g., 5 failures in 30 seconds → open circuit)
+- Fallback to cached data or MRP DB when circuit is open
+- Add metrics/alerts for circuit state changes
+
+**3. Usage Metrics: Sync vs Async (Clarify in Phase 1)**
+
+Should usage metrics be posted synchronously (blocking WO completion) or asynchronously (background job)?
+- I'd recommend async with a job queue (we could use a simple in-memory queue with persistence or a proper queue service)
+- Retry logic with exponential backoff
+- Dead letter handling for permanently failed posts
+- This prevents PLM issues from blocking operator workflow
+
+**4. Schema Versioning Considerations (Add to Phase 3)**
+
+When PLM schema evolves, our snapshots contain frozen data. We should:
+- Include a `plm_schema_version` field in snapshotData alongside `schema_hash`
+- Document how to interpret old snapshots if PLM fields change meaning
+- Consider snapshot migration strategy for historical queries
+
+**5. Error Handling Contract (Add to Phase 1)**
+
+What happens when PLM returns:
+- 4xx errors (invalid request from MRP)?
+- 5xx errors (PLM is down)?
+- Valid response but unexpected data shape?
+- Empty data (model exists in MRP but not PLM)?
+
+We should define explicit error categories and UI messaging for operators/supervisors.
+
+**6. Rollback Procedures (Add to Risks)**
+
+If Phase 3 (PLM-First) goes wrong mid-rollout:
+- Document the exact steps to revert to `PLM_MODE=shadow` or `disabled`
+- Ensure MRP DB remains populated during shadow/enabled phases
+- Define "rollback triggers" (error rate thresholds, user complaints, etc.)
+
+**7. Observability (Add new section or expand Risks)**
+
+We need visibility into PLM integration health:
+- Dashboard metrics: PLM request count, latency p50/p95/p99, error rate
+- Alerts: PLM availability, response time degradation, diff rate in shadow mode
+- Structured logging for all PLM interactions (request/response, timing, errors)
+
+### Minor Notes
+
+- Phase 0 should include a data mapping exercise — create a concrete table showing `PLM field → MRP field` for all product config entities
+- Consider adding a "Phase 3.5" for gradual rollout (e.g., enable PLM for specific models first before all products)
+- The deprecation of seed data (`backup-data.ts`) for product catalog is significant — we should document how dev/test environments will bootstrap product data post-PLM (likely via PLM test fixtures or mocked responses)
+
+### Questions for Discussion
+
+1. Do we want a local SQLite cache for PLM data, or in-memory with Redis/similar? Trade-offs around persistence vs complexity.
+2. Should we introduce a dedicated `PlmIntegrationError` type for structured error handling?
+3. How do we handle the supervisor UX during the transition? Do we need "data source indicator" badges showing whether product data came from MRP or PLM?
+
+### Summary
+
+This plan is well-structured and addresses the core concerns. My suggestions mostly add depth to areas you've already identified. Once we get the PLM API docs, we can firm up the data mapping and auth strategy. Looking forward to collaborating on this with you and ClaudeCode.
+
+— Replit
+
+---
+
+## ClaudeCode Review
+
+*(Reserved for ClaudeCode's review)*
