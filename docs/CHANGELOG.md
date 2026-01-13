@@ -2,6 +2,21 @@
 
 > Record every pull request chronologically with the newest entry at the top. Use UTC timestamps in ISO 8601 format.
 
+## 2026-01-13T14:54:10Z - Agent: Docs & Runbooks - Codex
+
+- **Summary:** Added a first-draft PLM integration plan and checklist, plus a high-priority ActionItems entry linking to the plan for future execution and review.
+- **Reasoning:** The project needs a documented migration path to shift product data ownership to the PLM partner while preserving MRP functionality and audit/versioning requirements.
+- **Changes Made:**
+  - Created `docs/PLMProject.md` with phased plan, checklist, risks, and collaboration notes for ClaudeCode review.
+  - Added a high-priority ActionItems entry pointing to the PLM integration plan.
+- **Validation:** Not run (documentation-only change).
+- **Files Modified:**
+  - `docs/PLMProject.md`
+  - `docs/ActionItems.md`
+  - `docs/CHANGELOG.md`
+- **Branch:** TBD
+- **Hats:** docs
+
 ## 2026-01-13T14:33:54Z - Agent: QA & Release Gate - Claude Sonnet 4.5
 
 - **Summary:** Phase 3: API route test expansion. Added comprehensive test coverage for 6 additional routes: work order pause/release, GET routes for list/detail, and auth logout/me endpoints. Increased total tests from 141 to 220 (+56% increase), now covering 26 of 55 routes (47% coverage).
