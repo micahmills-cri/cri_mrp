@@ -2,6 +2,35 @@
 
 > Record every pull request chronologically with the newest entry at the top. Use UTC timestamps in ISO 8601 format.
 
+## 2026-01-13T14:33:54Z - Agent: QA & Release Gate - Claude Sonnet 4.5
+
+- **Summary:** Phase 3: API route test expansion. Added comprehensive test coverage for 6 additional routes: work order pause/release, GET routes for list/detail, and auth logout/me endpoints. Increased total tests from 141 to 220 (+56% increase), now covering 26 of 55 routes (47% coverage).
+- **Reasoning:** Continuing systematic API route test expansion per ActionItems.md Phase 3 plan. These routes represent critical state transitions (pause, release), data retrieval (list, detail), and authentication flows (logout, me) that are essential for application stability. Testing these routes ensures proper RBAC enforcement, department scoping, pagination, and authentication security.
+- **Changes Made:**
+  - **Test Files Created** (6 new files):
+    - `src/app/api/__tests__/work-orders.pause.test.ts` - 17 tests for POST /api/work-orders/pause
+    - `src/app/api/__tests__/work-orders.release.test.ts` - 15 tests for POST /api/work-orders/[id]/release
+    - `src/app/api/__tests__/work-orders.list.test.ts` - 11 tests for GET /api/work-orders
+    - `src/app/api/__tests__/work-orders.detail.test.ts` - 15 tests for GET /api/work-orders/[id]
+    - `src/app/api/__tests__/auth.logout.test.ts` - 8 tests for POST /api/auth/logout
+    - `src/app/api/__tests__/auth.me.test.ts` - 13 tests for GET /api/auth/me
+  - **Test Setup Enhancement:** Added `RoutingVersionStatus` enum to `vitest.setup.ts` fallbackEnums to support release route tests
+  - **Coverage Details:**
+    - Pause route: Tests PAUSE event logging without status change, department scoping, HOLD checks, station validation, optional notes
+    - Release route: Tests RBAC (SUPERVISOR/ADMIN only), PLANNED→RELEASED transition, date validation past/future, version snapshots, routing version status updates, transaction handling
+    - List route: Tests pagination with cursor support, default/custom limits, hasMore indicator, ordering by createdAt desc, includes (routing version, counts), all roles
+    - Detail route: Tests department scoping (operators restricted, supervisors/admin unrestricted), current stage info, enabled stages list, nested includes, stage timeline
+    - Logout route: Tests cookie clearing with maxAge=0, httpOnly/secure/sameSite flags, idempotent behavior, works without auth
+    - Me route: Tests token verification, returns user info (userId/role/departmentId), all roles, error handling for missing/invalid/expired tokens, security (no sensitive info in errors)
+  - **Documentation:** Updated `docs/ActionItems.md` with Phase 3 completion status showing 26 routes tested (47% coverage), 220 tests passing
+- **Validation:** `npm test` - all 220 tests passing across 20 test files (up from 141 tests in 14 files)
+- **Files Modified:**
+  - New test files: 6 files in `src/app/api/__tests__/`
+  - Test setup: `vitest.setup.ts`
+  - Documentation: `docs/ActionItems.md`, `docs/CHANGELOG.md`
+- **Branch:** `claude/api-route-tests-eUqoF`
+- **Hats:** qa-gate, docs
+
 ## 2026-01-08T16:35:00Z - Agent: QA & Release Gate - Claude Sonnet 4.5
 
 - **Summary:** Phase 1: Critical fixes and code quality improvements. Fixed failing supervisor dashboard test, formatted entire codebase with Prettier (127 files), and implemented structured logging system replacing 188 console statements across 62 production files.

@@ -84,9 +84,9 @@ This document tracks outstanding tasks, improvements, and technical debt for the
 ### Testing
 
 - [WIP] **Expand API route test coverage** (Agent: QA & Release Gate - Claude Sonnet 4.5)
-  - Current: 20 routes tested across 11 test files
-  - Total routes: 55 API routes (36% coverage)
-  - All tests passing: **141 total tests** (up from 24 initially, +488% increase)
+  - Current: 26 routes tested across 17 test files
+  - Total routes: 55 API routes (47% coverage)
+  - All tests passing: **220 total tests** (up from 141, +56% increase; up from 24 initially, +817% increase)
   - **Phase 1 Complete**: ✅ All 4 critical routes tested (100%)
     - ✅ `POST /api/auth/login` - 10 tests (auth, validation, role-based redirects, cookies)
     - ✅ `POST /api/work-orders` - 13 tests (RBAC, routing validation, date validation, version snapshots, audit logs)
@@ -97,7 +97,14 @@ This document tracks outstanding tasks, improvements, and technical debt for the
     - ✅ `POST /api/work-orders/complete` - 19 tests (stage completion, quality tracking, stage advancement, final stage→COMPLETED)
     - ✅ `POST /api/work-orders/[id]/hold` - 14 tests (RBAC SUPERVISOR/ADMIN, reason validation, previous status preservation, audit logs)
     - ✅ `POST /api/work-orders/[id]/unhold` - 14 tests (status restoration from audit log, default to RELEASED, HOLD verification)
-  - **Next Steps**: Phase 3-5 available (35 routes remaining)
+  - **Phase 3 Complete**: ✅ All 6 additional state/auth routes tested (100%)
+    - ✅ `POST /api/work-orders/pause` - 17 tests (PAUSE event logging, no status change, department scoping, HOLD checks, station validation)
+    - ✅ `POST /api/work-orders/[id]/release` - 15 tests (RBAC SUPERVISOR/ADMIN, PLANNED→RELEASED transition, date validation, version snapshots, routing version status update)
+    - ✅ `GET /api/work-orders` - 11 tests (list with pagination, cursor support, ordering, includes, all roles)
+    - ✅ `GET /api/work-orders/[id]` - 15 tests (detail view, department scoping for operators, routing/stage includes, stage timeline)
+    - ✅ `POST /api/auth/logout` - 8 tests (cookie clearing, httpOnly, secure flag, sameSite, idempotent)
+    - ✅ `GET /api/auth/me` - 13 tests (token verification, user info, all roles, error handling, security)
+  - **Next Steps**: Phase 4-5 available (29 routes remaining)
   - **Agent role**: QA & Release Gate
 
 - [ ] **Set test coverage thresholds**
