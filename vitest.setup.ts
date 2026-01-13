@@ -22,6 +22,12 @@ const fallbackEnums = {
     HIGH: 'HIGH',
     CRITICAL: 'CRITICAL',
   } as const,
+  WOEvent: {
+    START: 'START',
+    PAUSE: 'PAUSE',
+    COMPLETE: 'COMPLETE',
+    RESUME: 'RESUME',
+  } as const,
 }
 
 vi.mock('@prisma/client', async () => {
@@ -35,10 +41,12 @@ vi.mock('@prisma/client', async () => {
         Role: actual.Prisma?.Role ?? fallbackEnums.Role,
         WOStatus: actual.Prisma?.WOStatus ?? fallbackEnums.WOStatus,
         WOPriority: actual.Prisma?.WOPriority ?? fallbackEnums.WOPriority,
+        WOEvent: actual.Prisma?.WOEvent ?? fallbackEnums.WOEvent,
       },
       Role: actual.Role ?? fallbackEnums.Role,
       WOStatus: actual.WOStatus ?? fallbackEnums.WOStatus,
       WOPriority: actual.WOPriority ?? fallbackEnums.WOPriority,
+      WOEvent: actual.WOEvent ?? fallbackEnums.WOEvent,
     }
   } catch (error) {
     return {
@@ -53,10 +61,12 @@ vi.mock('@prisma/client', async () => {
         Role: fallbackEnums.Role,
         WOStatus: fallbackEnums.WOStatus,
         WOPriority: fallbackEnums.WOPriority,
+        WOEvent: fallbackEnums.WOEvent,
       },
       Role: fallbackEnums.Role,
       WOStatus: fallbackEnums.WOStatus,
       WOPriority: fallbackEnums.WOPriority,
+      WOEvent: fallbackEnums.WOEvent,
     }
   }
 })
