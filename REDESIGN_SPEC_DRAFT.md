@@ -31,7 +31,7 @@ The redesign prioritizes:
 - **Data Required:**
   - Order number
   - Hull ID
-  - Product SKU (model + trim + options)
+  - Product SKU (model + trim + options) [USER NOTE]:"Needs to be model+trim+modelyear. We track models by the model year. Save the options for the build specifcation"
   - Quantity
   - Customer information (reference only)
   - Build specification (JSON snapshot)
@@ -52,7 +52,7 @@ Operators at each station must be able to:
 - **See their queue:** Only work assigned to their station/department
 - **View build sheet:** Product specs, notes, attachments for current order
 - **Clock on/off:** Start and complete tasks for their station
-- **Record quantities:** Good parts and scrap
+- **Record quantities:** Good parts and scrap [USER NOTE]:"Not every department would need this. Make it a toggle at the department table for Admins to turn on and off for each department, with the standard being off."
 - **Add notes:** Issues, observations, questions
 - **Upload photos:** Damage reports, progress photos, etc.
 
@@ -61,16 +61,16 @@ Operators at each station must be able to:
 ## User Roles & Permissions
 
 ### Admin
-- **Full access** to all configuration
+- **Full access** to all configurations [USER NOTE]:"They need to be able to see all views (Supervisor and Operator) unscoped. For example if an operator is having an issue, the Admin should be able to go to their task and view it as they do and make changes to help get them unstuck"
 - **Manage:** Departments, stations, routes, users, equipment
 - **View:** All work orders, all departments
 - **Cannot:** Clock time to work orders (not a floor role)
 
 ### Supervisor
-- **Department-scoped:** Only sees their department's work (unless admin flag set)
+- **Department-scoped:** Only sees their department's work (unless admin flag set) [USER NOTE]:"No they need to be able to see AAAAALLL department work. These are not department managers but Operations Supervisors responsible for the flow of the whole build."
 - **Manage:** Work order scheduling, routing, holds, releases
 - **Edit:** Notes, attachments, work routes
-- **View:** All stages of work orders in their scope
+- **View:** All stages of work orders in their scope [USER NOTE]:"Again, their scope is all work orders."
 - **Cannot:** Modify system configuration (departments, stations, etc.)
 
 ### Operator
@@ -114,7 +114,7 @@ Operators at each station must be able to:
 - version (integer, immutable once released)
 ```
 
-**Route Steps**
+**Route Steps** [USER NOTE]:"Need to be able to add attachments to steps. Some work instructions would benefit from having an image attached or video linked for a visual."
 ```
 - id
 - route_id (FK)
@@ -145,10 +145,10 @@ Operators at each station must be able to:
 - id
 - order_number (unique, e.g., "WO-2024-0001")
 - hull_id (unique identifier for the boat)
-- product_sku (model-trim-options)
+- product_sku (model-trim-options) [USER NOTE]:"Again this should be model-trim-modelyear instead."
 - build_spec (JSONB, immutable snapshot from quoting tool)
 - route_id (FK, assigned route)
-- quantity (integer, typically 1 for boats)
+- quantity (integer, typically 1 for boats) [USER NOTE]:"Remove. Each boat needs its own WO. If someone orders 3 boats then we will have 3 separat work orders in the queue."
 - status (PENDING_REVIEW | RELEASED | IN_PROGRESS | ON_HOLD | COMPLETED | CANCELLED)
 - priority (LOW | NORMAL | HIGH | URGENT)
 - planned_start_date (date)
@@ -156,7 +156,7 @@ Operators at each station must be able to:
 - actual_start_date (timestamp, when first started)
 - actual_finish_date (timestamp, when completed)
 - current_step_id (FK to route_steps, tracks progress)
-- created_at (timestamp)
+- created_at (timestamp) [USER NOTE]:"Make sure all time stamps are done in EST. We are in the eastern side of the state of Georgia."
 - created_by (FK to users)
 - updated_at (timestamp)
 ```
@@ -235,7 +235,7 @@ Operators at each station must be able to:
 
 ### Supporting Tables
 
-**Equipment** (Optional: Track tools/machines)
+**Equipment** (Optional: Track tools/machines) [USER NOTE]:"Remove. Not needed at this stage."
 ```
 - id
 - name
@@ -271,20 +271,20 @@ Operators at each station must be able to:
 - CSV export on all list views
 
 ### Supervisor Workspace
-**Layout:** Single page application with tabs
+**Layout:** Single page application with tabs [USER NOTE]:"I'd prefer the Admin Panel and the Supervisor workspace both utilize sidebar navigation with sections rather than tabs for a clean and consistent UI/UX experience between the two roles since Admins will be able to see all the sections Supervisors see, but supervisors wont be able to see all an admin sees."
 
 **Tab 1: Queue (Default View)**
 - Table of work orders in "Pending Review" status
 - Columns: Order #, Hull ID, SKU, Priority, Received Date
 - Actions: Review (opens detail modal)
 
-**Tab 2: Schedule**
+**Tab 2: Schedule** [USER NOTE]:"They need to also have an option to bring up the WO detail modal when clicking an icon on the calendar or timeline item"
 - Calendar or timeline view
 - Drag-and-drop to adjust planned dates
 - Filter by: Status, Priority, Date range
 - Color-coded by status
 
-**Tab 3: Active Work**
+**Tab 3: Active Work** 
 - Real-time dashboard of IN_PROGRESS work orders
 - Shows current station, operator, time elapsed
 - Quick actions: Hold, Add Note, View Details
@@ -294,7 +294,7 @@ Operators at each station must be able to:
 - Advanced search/filter
 - Full audit trail access
 
-**Work Order Detail Modal:**
+**Work Order Detail Modal:** [USER NOTE]:"Notes & Attachments, and Change History need to be collapsible with a default to collapsed.
 - Header: Order #, Hull ID, Status, Priority
 - Section 1: Build Spec (product details)
 - Section 2: Route (editable before release)
@@ -324,7 +324,7 @@ Operators at each station must be able to:
 - Middle: Build instructions, notes, attachments
 - Bottom: Time tracking
   - Big "Clock On" button (or "Clock Off" if already started)
-  - Good/Scrap quantity inputs
+  - Good/Scrap quantity inputs [USER NOTE]:"Again, this should be turned off by default by in the admin configuration. Only departments that have this checked on by the admin should see this, and an answer should not be enforced if it is not enabled."
   - "Complete Step" button
 - Sidebar: Quick add note, upload photo
 
@@ -356,14 +356,14 @@ Operators at each station must be able to:
 {
   "orderNumber": "WO-2026-0123",
   "hullId": "HULL-24-789",
-  "productSku": "LX24-SPORT-PKG3",
+  "productSku": "LX24-SPORT-PKG3", [USER NOTE]:"A better example would be LX24-SPORT-2026"
   "buildSpec": {
     "model": "LX24",
     "trim": "Sport",
-    "options": { ... }
+    "options": { ... } [USERNOTE]:"The nomenclature will likely come as feautures not options"
   },
   "quantity": 1,
-  "customerRef": "ORDER-12345"
+  "customerRef": "ORDER-12345" 
 }
 ```
 
@@ -372,21 +372,21 @@ Operators at each station must be able to:
 2. Reviews build spec, customer requirements
 3. Adds notes (e.g., "Customer wants custom graphics")
 4. Uploads attachments (e.g., graphics file)
-5. Modifies route if needed (add/remove/reorder steps)
+5. Modifies route if needed (add/remove/reorder steps) [USER NOTE]:"Some steps are done in parallel. Others are not dependant or have no dependants, just need to be completed at some point before release. Make sure the UI/UX is easy to configure the flow (including independent steps outside critical path)."
 6. Sets planned start/finish dates
 7. Clicks "Release to Production"
 8. Status changes: PENDING_REVIEW → RELEASED
-9. Work order appears in operator queues (for first station)
+9. Work order appears in operator queues (for first station) [USER NOTE]:"Only shows as Upcoming or Planned for the Operator. They can review it, but not begin work till the planned start date."
 10. Change logged with supervisor ID and timestamp
 
 ### Workflow 3: Operator Executes Work
-1. Operator logs in, sees their queue
+1. Operator logs in, sees their queue [USER NOTE]:"With Avalable WOs at the top and Planned/Upcoming WOs displayed as well jsut without the option to action on them. All should be sorted by first come first serve, but priority flags clearly visible."
 2. Selects work order, clicks "Start Work"
 3. System creates time entry with started_at timestamp
 4. Operator performs work (lamination, rigging, etc.)
-5. Operator records good/scrap quantities
+5. Operator records good/scrap quantities [USER NOTE]:"If applicable. See prior notes."
 6. Operator adds notes if needed (e.g., "Minor gelcoat repair needed")
-7. Operator clicks "Complete Step"
+7. Operator clicks "Complete Step" [USER NOTE]:"Needs a PAUSE STEP option. Show a record of the amount of time paused. Sometimes people don't finish a job before they go home and they complete it the next day. We don't want this to skew labor records for costing. It would be nice to see TOTAL TIME and ACTIVE TIME to differentiate between how long something was in a stage and how long it was actively being worked for."
 8. System prompts: "Clock Off?"
 9. Operator confirms, time entry closed with ended_at
 10. Work order step marked COMPLETED
@@ -530,7 +530,7 @@ DELETE /api/admin/departments/[id]
 
 ---
 
-## Migration Strategy (If Needed)
+## Migration Strategy (If Needed) [USER NOTE]:"Not needed. We will start froms cratch."
 
 If migrating from current system:
 1. **Export existing data** to CSV/JSON
@@ -675,7 +675,7 @@ LOG_LEVEL=INFO|DEBUG|ERROR
    - **Lesson:** This is for the QUOTING tool, not the MRP system
    - **Action:** MRP only needs the final SKU and a JSON snapshot, not the full config system
 
-3. ❌ **Routing editor in supervisor UI** - Complex inline editing of stages
+3. ❌ **Routing editor in supervisor UI** - Complex inline editing of stages [USER NOTE]:"See my user note from ealier concerning this. Admins and Supervisors need to be able to create/copy/modify these."
    - **Lesson:** Route creation should be admin function, supervisors should only SELECT routes
    - **Action:** Admins create routes, supervisors pick from dropdown (with option to clone)
 
@@ -683,7 +683,7 @@ LOG_LEVEL=INFO|DEBUG|ERROR
    - **Lesson:** Consistent patterns reduce cognitive load
    - **Action:** Define state management pattern upfront (Context? Zustand? Keep it simple)
 
-5. ❌ **Polling every 5 seconds** - Chatty, not scalable
+5. ❌ **Polling every 5 seconds** - Chatty, not scalable [USER NOTE]:"Why not start with web sockets if that's where we will end up?"
    - **Lesson:** Polling is OK for MVP, but plan for WebSockets
    - **Action:** Start with polling, add "Refresh" button, migrate to WebSockets later
 
@@ -691,7 +691,7 @@ LOG_LEVEL=INFO|DEBUG|ERROR
    - **Lesson:** This is reporting/analytics, not core MRP functionality
    - **Action:** Defer to Phase 2, focus on time tracking first (can calculate later)
 
-7. ❌ **Work instruction versions** - Separate versioning for instructions per stage
+7. ❌ **Work instruction versions** - Separate versioning for instructions per stage [USER NOTE]:"As long as the path is logged in the work order history I'm ok with this. I'd like at least some backing up eventually in case they all get deleted or currupted, but no need to see who changed what when."
    - **Lesson:** Over-engineered for current needs
    - **Action:** Simple markdown instructions field on route steps, no versioning unless needed
 
@@ -757,97 +757,97 @@ LOG_LEVEL=INFO|DEBUG|ERROR
 
 1. **Work Order Quantity:**
    - Current system allows qty > 1, but boats are custom (qty should always be 1?)
-   - **Question:** Can a single work order ever have qty > 1, or is it always 1 boat = 1 work order?
+   - **Question:** Can a single work order ever have qty > 1, or is it always 1 boat = 1 work order? [USER NOTE]:"Always 1 boat = 1 workorder."
 
 2. **Multi-department Operators:**
    - Current system has department picker for operators who work in multiple departments
-   - **Question:** How common is this? Should we support it in MVP, or can operators be assigned to one department with admin reassigning if needed?
+   - **Question:** How common is this? Should we support it in MVP, or can operators be assigned to one department with admin reassigning if needed? [USER NOTE]:"Actual operators should only see the department they are assigned. That feature with the dropdown was just so we could easily switch between departments to test the UI/UX. Only the admin and supervisors should be able to switch departments in the operator view."
 
 3. **Station Assignment:**
    - Current system tracks which users are assigned to which stations
-   - **Question:** Do operators work at ONE station all day, or move between stations frequently? (Affects UI design)
+   - **Question:** Do operators work at ONE station all day, or move between stations frequently? (Affects UI design) [USER NOTE]:"It is uncommon for them to switch between workstations in a day, but the admin should be able to flag every workstation a user can operate. Most will only ever work one station."
 
 4. **Route Modification After Release:**
    - Current system allows supervisors to enable/disable stages mid-production
-   - **Question:** Is this common? Or should route modifications require "holding" the work order first?
+   - **Question:** Is this common? Or should route modifications require "holding" the work order first? [USER NOTE]:"Should require a hold to keep further work from happening until the change is made. At that point, Supervisor should have to pick which stage to resume work at."
 
 5. **Scrap Tracking:**
    - Current system tracks scrap qty per step
-   - **Question:** What happens with scrap data? Is it just for reporting, or does it trigger any actions (reorder parts, quality alerts, etc.)?
+   - **Question:** What happens with scrap data? Is it just for reporting, or does it trigger any actions (reorder parts, quality alerts, etc.)? [USER NOTE]:"Currently nothing. Will not really be implemented in the MVP. We can save for a later phase once we get on our feet."
 
 6. **Priority System:**
    - Current system has LOW/NORMAL/HIGH/CRITICAL priorities
-   - **Question:** Who sets priority? Does it affect queue ordering? Does it have any other effects (alerts, SLA tracking)?
+   - **Question:** Who sets priority? Does it affect queue ordering? Does it have any other effects (alerts, SLA tracking)? [USER NOTE]:"Supervisor does. Not quoting. This won't come in the payload from the Quoter. There may be a note in the payload that indicates some importance via a text field, but ultimately the supervisor decides the production priority."
 
 7. **Completion Criteria:**
    - Current system auto-advances to next step when current step is completed
-   - **Question:** What if multiple operators work on the same step (e.g., two riggers)? How does completion work?
+   - **Question:** What if multiple operators work on the same step (e.g., two riggers)? How does completion work? [USER NOTE]:"Good question. Each station will only have one tablet, so if multiple people are working the same job we need to be able to flag that 2 people are working that task. Maybe when the operator hits start they have to enter the number of workers starting that step, with it defaulted to 1 but that default can be change in the route step configuration? We want to avoid having to use multiple devices or multiple people signing in to complete one task."
 
 8. **Hold Reasons:**
    - Current system requires a reason when holding a work order
-   - **Question:** Should there be a predefined list of hold reasons (Missing Parts, Quality Issue, Customer Change, etc.) or free text?
+   - **Question:** Should there be a predefined list of hold reasons (Missing Parts, Quality Issue, Customer Change, etc.) or free text? [USER NOTE]:"Predefined list that defaults to Other. You have to select from the predefined list AND add details in a separate free text field."
 
 ### User Experience Questions
 
-9. **Operator Queue Sorting:**
-   - **Question:** How should operator queues be sorted by default? Priority? Planned start date? FIFO?
+9. **Operator Queue Sorting:** 
+   - **Question:** How should operator queues be sorted by default? Priority? Planned start date? FIFO? [USER NOTE]:"First in, first out. They can select any that are available to them (at their stage and on/past start date), but the default display order is FIFO. They need to see on the card priorities and date info though."
 
 10. **Supervisor Notifications:**
-    - **Question:** Should supervisors get alerts when work orders are held, completed, or have issues? Email? In-app? SMS?
+    - **Question:** Should supervisors get alerts when work orders are held, completed, or have issues? Email? In-app? SMS? [USER NOTE]:"Not at this stage. Add this to the list of future improvements."
 
 11. **Time Tracking Granularity:**
     - Current system has separate clock-on/clock-off events
-    - **Question:** Do operators work on one order at a time, or can they pause one and start another (multi-tasking)?
+    - **Question:** Do operators work on one order at a time, or can they pause one and start another (multi-tasking)? [USER NOTE]:"They can pause one and start another but can't be actively working both at the same time. If they try to start one while the clock is running already on another, they need to get an error message that explains what work order they are currently clocked into."
 
 12. **Mobile vs Desktop:**
-    - **Question:** What devices do operators use on the floor? Tablets? Phones? Desktop PCs? (Affects responsive design priorities)
+    - **Question:** What devices do operators use on the floor? Tablets? Phones? Desktop PCs? (Affects responsive design priorities) [USER NOTE]:"Tablets."
 
 13. **Attachment Preview:**
     - Current system shows inline previews for images
-    - **Question:** Are most attachments photos, or also PDFs, CAD files, etc.? (Affects viewer requirements)
+    - **Question:** Are most attachments photos, or also PDFs, CAD files, etc.? (Affects viewer requirements) [USER NOTE]:"most will be photos, pdfs, text files, or video links (not actual videos)"
 
 14. **Search Capabilities:**
-    - **Question:** What do users search for most often? Order number? Hull ID? Customer name? Date range? (Affects search UI design)
+    - **Question:** What do users search for most often? Order number? Hull ID? Customer name? Date range? (Affects search UI design) [USER NOTE]:"Hull ID and Work Order number are co-equivalent. Office uses Work Order, floor uses Hull ID. The reason is the hull may be used on a different work order if the original work order gets scrapped for some reason like a cancelation of an order. We don't throw out the hull, we just refit it for a different options loadout."
 
 ### Integration Questions
 
 15. **PLM/Quoting Tool API:**
-    - **Question:** What format does the external tool send data in? REST API? JSON file drop? CSV import? Real-time or batch?
+    - **Question:** What format does the external tool send data in? REST API? JSON file drop? CSV import? Real-time or batch? [USER NOTE]:"Not sure yet. Its in progress. Hopefully JSON payload via API. Thats what I'm pushing the developer for."
 
 16. **PLM Error Handling:**
-    - **Question:** If PLM integration fails, should MRP have a manual entry form as fallback? Or is PLM mandatory?
+    - **Question:** If PLM integration fails, should MRP have a manual entry form as fallback? Or is PLM mandatory? [USER NOTE]:"Yes. This will be useful for testing too while we wait on the PLM/Quoting tool to be stood up."
 
 17. **ERP Integration (Future):**
-    - **Question:** Will MRP need to send data TO other systems (ERP, accounting, inventory)? If so, what data and when?
+    - **Question:** Will MRP need to send data TO other systems (ERP, accounting, inventory)? If so, what data and when? [USER NOTE]:"Part data lies in MRPeasy. We are developing a BOM management tool that will consume part data from MRPeasy and labor data from this MRP tool to estimate costing per stage. We will need to be able to send out labor data for how long the boat was worked on at each stage. We will also need to be able to communicate out work order status and details for the CRM tool."
 
 ### Reporting & Analytics Questions
 
 18. **Standard Reports:**
-    - **Question:** What are the top 3-5 reports users need? (Work order status, labor hours by station, completion rate, etc.?)
+    - **Question:** What are the top 3-5 reports users need? (Work order status, labor hours by station, completion rate, etc.?) [USER NOTE]:"We can start with these and define more after MVP."
 
 19. **Historical Data Access:**
     - Current system has version history and change logs
-    - **Question:** How often do users need to look back at historical data? Weekly? Monthly? Only for issues?
+    - **Question:** How often do users need to look back at historical data? Weekly? Monthly? Only for issues? [USER NOTE]:"Mostly only for issues."
 
 20. **Performance Metrics:**
-    - **Question:** What KPIs matter most? On-time completion? Labor hours vs estimate? Scrap rate? First-pass quality?
+    - **Question:** What KPIs matter most? On-time completion? Labor hours vs estimate? Scrap rate? First-pass quality? [USER NOTE]:"On time completion, # Released this week, # Completed this Week, # In Progress, Labor Hourse Vs Estimate, # Past planned completion date."
 
 ### Technical Questions
 
 21. **Concurrent Users:**
-    - **Question:** How many operators will use the system simultaneously? 10? 50? 100? (Affects scaling decisions)
+    - **Question:** How many operators will use the system simultaneously? 10? 50? 100? (Affects scaling decisions) [USER NOTE]:"15-20"
 
 22. **Database Size:**
-    - **Question:** How many work orders per year? 100? 1,000? 10,000? How long to retain data? (Affects archival strategy)
+    - **Question:** How many work orders per year? 100? 1,000? 10,000? How long to retain data? (Affects archival strategy) [USER NOTE]:"500"
 
 23. **Backup & Disaster Recovery:**
-    - **Question:** What's acceptable downtime if system fails? 1 hour? 4 hours? 1 day? (Affects backup frequency, infrastructure)
+    - **Question:** What's acceptable downtime if system fails? 1 hour? 4 hours? 1 day? (Affects backup frequency, infrastructure) [USER NOTE]:"1 day"
 
 24. **Single Sign-On (SSO):**
-    - **Question:** Does the factory use Active Directory, LDAP, or other SSO? Or is standalone auth OK?
+    - **Question:** Does the factory use Active Directory, LDAP, or other SSO? Or is standalone auth OK? [USER NOTE]:"stand alone auth"
 
 25. **Localization:**
-    - **Question:** Is the factory US-only, or multi-country? Need multiple languages? (Affects i18n decisions)
+    - **Question:** Is the factory US-only, or multi-country? Need multiple languages? (Affects i18n decisions) [USER NOTE]:"US only but we have a fair number of spanish speaking operators."
 
 ---
 
