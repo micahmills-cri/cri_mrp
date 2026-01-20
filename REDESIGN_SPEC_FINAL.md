@@ -2175,12 +2175,17 @@ Listed in priority order based on user needs:
 - Set up test framework (Vitest, Playwright)
 - Implement role-based middleware
 - Build basic layout components (header, sidebar, footer)
+- **Create project workflow documentation:**
+  - `ChangeLog.md` - Track all changes chronologically with agent roles and timestamps
+  - `ActionItems.md` - Manage tasks with priorities, status tracking, and agent assignments
+  - `Agents.md` - Define agent roles, responsibilities, and workflow protocols
 
 **Deliverables:**
 - Working login/logout
 - Role-based routing (admin, supervisor, operator redirects)
 - Database fully migrated
 - Test data seeded
+- Project workflow documentation in place
 
 ### Phase 2: Admin Panel (Week 3-4)
 
@@ -2415,6 +2420,447 @@ How we'll measure if the redesign is successful:
 3. **Auditability**
    - Can answer "what happened to this boat?" in < 2 minutes
    - Change history is clear and complete
+
+---
+
+## Project Workflow Documentation
+
+To ensure smooth development and maintain clear accountability throughout the implementation, create and maintain three core workflow documentation files. These files should be created in Phase 1 and updated continuously throughout the project lifecycle.
+
+### ChangeLog.md
+
+**Purpose:** Record every significant change chronologically with the newest entry at the top. This provides a complete audit trail of all development work.
+
+**Location:** `docs/ChangeLog.md`
+
+**Format:**
+
+```markdown
+# Agent Change Log
+
+> Record every pull request chronologically with the newest entry at the top. Use UTC timestamps in ISO 8601 format.
+
+## YYYY-MM-DDTHH:MM:SSZ - Agent: [Agent Role/Name]
+
+- **Summary:** Brief description of what was accomplished
+- **Reasoning:** Why this work was necessary
+- **Changes Made:**
+  - Bullet list of specific changes
+  - Include file paths when relevant
+  - Group by category (Features, Fixes, Tests, Documentation)
+- **Validation:** What tests/checks were run (e.g., "npm test - all 220 tests passing")
+- **Files Modified:**
+  - List of files changed
+  - Use relative paths from project root
+- **Branch:** Git branch name
+- **Hats:** Agent roles worn (for solo agents handling multiple roles)
+```
+
+**Example Entry:**
+
+```markdown
+## 2026-01-20T15:30:00Z - Agent: UI/UX Implementer - Claude Sonnet 4.5
+
+- **Summary:** Implemented operator console with mobile-first design and bilingual support (English/Spanish)
+- **Reasoning:** Operators needed tablet-optimized interface to execute work orders efficiently on the factory floor. Spanish language support critical for 60% of operator workforce.
+- **Changes Made:**
+  - Created operator queue view with available/upcoming work sections
+  - Implemented active work view with time tracking (clock on/off/pause/resume)
+  - Added bilingual translation files (en.json, es.json) using next-intl
+  - Built large touch targets and high-contrast UI for tablet use
+  - Implemented worker count selector and quantity tracking (conditional)
+  - Added photo upload and note-taking functionality
+- **Validation:**
+  - npm test - all 85 tests passing
+  - Manual testing on iPad (portrait/landscape)
+  - Spanish translation review with native speaker
+- **Files Modified:**
+  - New files: `src/app/operator/page.tsx`, `src/app/operator/active-work.tsx`, `src/locales/en.json`, `src/locales/es.json`
+  - Updated: `src/app/api/work-orders/[id]/steps/[stepId]/start/route.ts`
+  - Tests: `src/app/operator/__tests__/queue.test.tsx`
+- **Branch:** `claude/operator-console-implementation-Xk9pL`
+- **Hats:** ui-ux, api-contract, qa-gate
+```
+
+**Maintenance:**
+- Add entry AFTER completing and testing work, BEFORE creating PR
+- Always use UTC timestamps in ISO 8601 format
+- Be specific about validation performed
+- Include branch name for traceability
+- Keep entries concise but comprehensive
+
+---
+
+### ActionItems.md
+
+**Purpose:** Track all outstanding tasks, bugs, improvements, and technical debt. Serves as the single source of truth for what needs to be done.
+
+**Location:** `docs/ActionItems.md`
+
+**Structure:**
+
+```markdown
+# Action Items
+
+## How to Use This File
+
+1. **Before starting work**: Review to understand priorities and avoid duplicate work
+2. **When planning features**: Check if related items exist
+3. **During development**: Update status as you progress ([ ] → [WIP] → [x])
+4. **After completing work**: Mark done, add completion date, document in CHANGELOG.md
+5. **When discovering new work**: Add items with appropriate priority and context
+6. **MANDATORY for ALL agents**: Document ANY issues discovered during work (testing, building, analyzing)
+
+**Status Indicators:**
+- `[ ]` - Not started
+- `[WIP]` - Work in progress (include agent role if applicable)
+- `[x]` - Completed (include completion date)
+- `[BLOCKED]` - Blocked (include blocker description)
+- `[DEFERRED]` - Intentionally postponed (include reason)
+
+---
+
+## 🔴 High Priority (Do First)
+
+### [Category Name]
+
+- [ ] **Task Title**
+  - Description of what needs to be done
+  - Technical details or context
+  - **Estimated effort**: X hours/days
+  - **Agent role**: [Primary agent role]
+  - **Discovered**: YYYY-MM-DD (if applicable)
+  - **Blocks**: [What this blocks, if critical]
+
+---
+
+## 🟡 Medium Priority (Do Soon)
+
+[Same format as High Priority]
+
+---
+
+## 🟢 Low Priority (Nice to Have)
+
+[Same format as High Priority]
+
+---
+
+## 🔵 Backlog (Future Considerations)
+
+- [ ] Brief description without full details
+- [ ] Another backlog item
+
+---
+
+## ✅ Completed Items
+
+_(Items move here when marked complete)_
+
+### YYYY-MM-DD
+
+- [x] **Task Title** (Agent: Role Name, Completed: YYYY-MM-DD)
+  - Brief description of what was completed
+  - Include key results or metrics
+  - **Discovered**: YYYY-MM-DD (if applicable)
+```
+
+**Priority Guidelines:**
+
+- **🔴 High Priority**: Security issues, blocking bugs, critical features, code quality issues affecting development
+- **🟡 Medium Priority**: Important improvements, non-blocking bugs, maintainability enhancements
+- **🟢 Low Priority**: Nice-to-have features, minor optimizations, polish items
+- **🔵 Backlog**: Ideas for future consideration, not currently scheduled
+
+**Example Entries:**
+
+```markdown
+## 🔴 High Priority (Do First)
+
+### Security
+
+- [ ] **Implement rate limiting for auth endpoints**
+  - Add rate limiting to `/api/v1/auth/login` (5 attempts per 15 minutes)
+  - Protect file upload endpoints (20 requests per minute)
+  - Use Upstash Redis integration or `@upstash/ratelimit`
+  - Add rate limit headers to responses
+  - **Estimated effort**: 1-2 hours
+  - **Agent role**: Security & Permissions
+
+### Testing
+
+- [WIP] **Expand API route test coverage** (Agent: QA & Release Gate - Claude Sonnet 4.5)
+  - Current: 26 routes tested (47% coverage)
+  - Total routes: 55 API routes
+  - All tests passing: 220 total tests
+  - **Phase 1 Complete**: ✅ All 4 critical routes tested
+  - **Phase 2 In Progress**: Work order state transitions
+  - **Agent role**: QA & Release Gate
+  - **Discovered**: 2026-01-16
+
+## ✅ Completed Items
+
+### 2026-01-20
+
+- [x] **Implement operator console with bilingual support** (Agent: UI/UX Implementer, Completed: 2026-01-20)
+  - Created operator queue and active work views
+  - Added English/Spanish translations
+  - Implemented time tracking with pause/resume
+  - Mobile-first design with large touch targets
+  - All operator workflow tests passing
+```
+
+**Maintenance:**
+- Update status in real-time as work progresses
+- Mark items complete IMMEDIATELY after finishing
+- Move completed items to "Completed Items" section with date
+- Add new discoveries AS SOON AS FOUND with proper context
+- Review weekly to reprioritize and remove stale items
+
+**CRITICAL**: All agents MUST document discovered issues immediately:
+- Test failures (unit, integration, E2E)
+- Build errors or warnings
+- Security vulnerabilities
+- Performance bottlenecks
+- Bugs in existing code
+- Technical debt
+- Missing documentation
+- Configuration issues
+
+---
+
+### Agents.md
+
+**Purpose:** Define agent roles, responsibilities, and development workflow. Serves as the rulebook for how the team operates.
+
+**Location:** `AGENTS.md` (project root)
+
+**Structure:**
+
+```markdown
+# Agent Playbook
+
+## Executive Summary — Follow These First
+
+1. **Check action items first.** Review `docs/ActionItems.md` before starting work
+2. **Respect the architecture.** [List key architectural decisions]
+3. **Preserve domain invariants.** [List critical business rules]
+4. **Keep data deterministic.** [Explain data management approach]
+5. **Validate and test.** [Testing requirements]
+6. **Document the change.** [Documentation requirements]
+7. **Document ALL discoveries.** [Discovery documentation requirements]
+
+## Purpose & Context
+
+Brief description of the project, domain, and key systems.
+
+## Stack & Runtime Guardrails
+
+- Framework and version
+- Key dependencies
+- Port numbers and environment
+- Mandatory conventions (path aliases, imports, etc.)
+- Code organization rules
+
+## Domain Rules & Invariants
+
+List all critical business rules that must never be violated:
+- Work order state transitions
+- Data integrity requirements
+- Audit logging requirements
+- Security rules
+
+## Data Management Workflow
+
+Step-by-step process for database changes:
+1. Update schema
+2. Create migration
+3. Update seed data
+4. Sync backup data
+5. Test migration up/down
+
+## Testing Expectations
+
+- Minimum test coverage requirements
+- Types of tests required (unit, integration, E2E)
+- When to add tests
+- Test documentation requirements
+- **Document test failures**: All failures must be added to ActionItems.md
+
+## Documentation & Change Management
+
+- When to update each documentation file
+- How to structure changelog entries
+- When to create ADRs (Architecture Decision Records)
+- **CRITICAL**: Document ALL discoveries in ActionItems.md
+
+## Operational Protocol
+
+- Task specification template
+- Handoff procedures
+- Solo agent guidelines
+
+## Role Playbook & Ownership Labels
+
+Define each agent role with:
+
+1. **[Role Name]** (`label-tag`)
+   - **Responsibilities**: What this agent owns
+   - **Outputs**: What artifacts they produce
+   - **Done criteria**: How to know work is complete
+   - **Discovery requirements**: What issues they should watch for
+
+[Repeat for each role]
+```
+
+**Example Agent Roles for Boat Factory MRP:**
+
+```markdown
+## Role Playbook & Ownership Labels
+
+**IMPORTANT**: ALL agents, regardless of role, MUST document discovered issues in ActionItems.md.
+
+1. **Product Architect** (`product-architect`)
+   - **Responsibilities**: Domain modeling, architectural decisions, technical strategy
+   - **Outputs**: Architecture Decision Records (ADRs), technical specifications, data models
+   - **Done criteria**: ADR merged, schema approved, no architectural blockers
+   - **Discoveries**: Document architectural inconsistencies, scalability concerns, design flaws
+
+2. **DB Migration & Versioning** (`db-migration`)
+   - **Responsibilities**: Database schema evolution, migrations, data integrity
+   - **Outputs**: Prisma schema updates, migration files, seed scripts
+   - **Done criteria**: Migrations succeed up/down, seed data aligned, rollback tested
+   - **Discoveries**: Document schema conflicts, migration failures, data integrity issues
+
+3. **API & Contracts** (`api-contract`)
+   - **Responsibilities**: REST API endpoints, request/response contracts, validation
+   - **Outputs**: API route handlers, Zod schemas, API documentation
+   - **Done criteria**: Contract tests pass, Zod validation complete, error handling consistent
+   - **Discoveries**: Document API inconsistencies, validation gaps, security issues
+
+4. **UI/UX Implementer** (`ui-ux`)
+   - **Responsibilities**: User interface implementation, component development, accessibility
+   - **Outputs**: React components, page layouts, styling, responsive design
+   - **Done criteria**: UI matches design spec, accessibility standards met, responsive on target devices
+   - **Discoveries**: Document UX issues, accessibility violations, rendering bugs
+
+5. **QA & Release Gate** (`qa-gate`)
+   - **Responsibilities**: Test coverage, code quality, release readiness
+   - **Outputs**: Test suites (unit, integration, E2E), test reports, quality metrics
+   - **Done criteria**: Test coverage meets threshold, all tests pass, no critical bugs
+   - **Discoveries**: Document test failures, coverage gaps, quality issues, build problems
+
+6. **Security & Permissions** (`security`)
+   - **Responsibilities**: Authentication, authorization, security hardening
+   - **Outputs**: Auth middleware, RBAC implementation, security documentation
+   - **Done criteria**: Security audit complete, no vulnerabilities, RBAC enforced
+   - **Discoveries**: Document security vulnerabilities, auth issues, permission gaps
+
+7. **Docs & Runbooks** (`docs`)
+   - **Responsibilities**: Documentation, onboarding guides, troubleshooting
+   - **Outputs**: README updates, ONBOARDING.md, API docs, runbooks
+   - **Done criteria**: Documentation complete, setup tested by new user, examples work
+   - **Discoveries**: Document documentation gaps, outdated guides, setup issues
+```
+
+**Maintenance:**
+- Update when roles change or new roles are added
+- Keep architectural decisions current
+- Review quarterly to ensure guidelines remain relevant
+- Add new domain rules as they're discovered
+
+---
+
+### Workflow Integration
+
+**Daily Development Cycle:**
+
+1. **Morning**: Check `docs/ActionItems.md` for priorities and updates
+2. **Start Work**:
+   - Claim item by marking `[WIP]` with your agent role
+   - Create feature branch following naming convention
+3. **During Work**:
+   - Update ActionItems.md status as you progress
+   - **Document ANY issues discovered** (bugs, test failures, warnings)
+   - Write tests as you implement features
+4. **Complete Work**:
+   - Run full test suite (`npm test`)
+   - Update ActionItems.md: mark `[x]` with completion date
+   - Move completed item to "Completed Items" section
+   - Add entry to `docs/ChangeLog.md` with full details
+   - Create PR with reference to completed ActionItems
+5. **PR Review**: Reference both ActionItems and ChangeLog in PR description
+
+**Discovery Protocol (CRITICAL):**
+
+When you discover ANY issue during work:
+1. **Stop** and document it immediately
+2. **Add to ActionItems.md** with:
+   - Clear description
+   - Reproduction steps (if applicable)
+   - Priority level (🔴/🟡/🟢)
+   - Estimated effort
+   - Agent role best suited to fix it
+   - Discovery date
+3. **Continue** with your current work
+4. **Include** discovered items in your ChangeLog entry
+
+**Example Discovery:**
+
+```markdown
+## During Implementation
+
+While implementing the operator console, discovered 3 issues:
+
+1. **API Rate Limiting Missing** → Added to ActionItems.md (🔴 High Priority)
+   - Auth endpoints have no rate limiting
+   - Security vulnerability allowing brute force
+   - Added to Security section
+
+2. **Test Coverage Gap** → Added to ActionItems.md (🟡 Medium Priority)
+   - No E2E tests for operator time tracking
+   - Added to Testing section
+
+3. **Performance Issue** → Added to ActionItems.md (🟡 Medium Priority)
+   - Operator queue loads slowly with >50 work orders
+   - Needs pagination or virtual scrolling
+   - Added to Performance section
+```
+
+---
+
+### Templates
+
+#### New ChangeLog Entry Template
+
+```markdown
+## YYYY-MM-DDTHH:MM:SSZ - Agent: [Role] - [Name]
+
+- **Summary:** [One sentence description]
+- **Reasoning:** [Why was this work necessary?]
+- **Changes Made:**
+  - [Specific change 1]
+  - [Specific change 2]
+  - [Specific change 3]
+- **Validation:** [What tests/checks were run?]
+- **Files Modified:**
+  - [File path 1]
+  - [File path 2]
+- **Branch:** `[branch-name]`
+- **Hats:** [Roles worn if solo agent]
+```
+
+#### New ActionItem Template
+
+```markdown
+- [ ] **[Task Title]**
+  - [Description of what needs to be done]
+  - [Technical context or requirements]
+  - **Estimated effort**: [X hours/days]
+  - **Agent role**: [Primary agent role]
+  - **Discovered**: YYYY-MM-DD (if applicable)
+  - **Blocks**: [What this blocks, if critical]
+```
 
 ---
 
