@@ -20,40 +20,115 @@
 
 ## Design System
 
-### Color Palette
+### Theme Architecture
 
-**Primary Colors:**
-```
-Primary Blue:      #2563EB  (Buttons, links, active states)
-Primary Dark:      #1E40AF  (Hover states)
-Primary Light:     #DBEAFE  (Backgrounds)
+**CRITICAL: All colors MUST use CSS variables for theme swapping. Never hardcode hex values in components.**
+
+### CSS Variable System
+
+**Color variables are defined in `globals.css` and automatically switch between light/dark themes:**
+
+```css
+/* Base theme variables - defined in :root and :root.dark */
+--background       /* Main page background */
+--foreground       /* Primary text color */
+--surface          /* Card/panel backgrounds */
+--surface-hover    /* Hover state for surfaces */
+--border           /* Border colors */
+--border-hover     /* Hover state for borders */
+--muted            /* Muted text/elements */
+--muted-foreground /* Text on muted backgrounds */
+
+/* Semantic color variables */
+--primary          /* Primary actions (buttons, links) */
+--primary-hover    /* Primary hover states */
+--primary-foreground /* Text on primary backgrounds */
+
+--secondary        /* Secondary actions */
+--secondary-hover  /* Secondary hover states */
+--secondary-foreground /* Text on secondary backgrounds */
+
+--success          /* Success states, completed */
+--success-foreground /* Text on success backgrounds */
+
+--warning          /* Warnings, in-progress */
+--warning-foreground /* Text on warning backgrounds */
+
+--danger           /* Errors, urgent, holds */
+--danger-foreground  /* Text on danger backgrounds */
+
+--info             /* Informational states */
+--info-foreground  /* Text on info backgrounds */
 ```
 
-**Status Colors:**
+### Light Theme Values (Reference Only - Use Variables)
+
+**These hex values are for design reference. Implementation MUST use CSS variables.**
+
 ```
-Success Green:     #10B981  (Completed, success messages)
-Warning Yellow:    #F59E0B  (In Progress, warnings)
-Danger Red:        #EF4444  (Holds, errors, urgent priority)
-Info Blue:         #3B82F6  (Released, info messages)
-Gray:              #6B7280  (Disabled, secondary text)
+Primary Blue:      #2563EB  → var(--primary)
+Primary Dark:      #1E40AF  → var(--primary-hover)
+Primary Light:     #DBEAFE  → var(--primary-light)
+
+Success Green:     #10B981  → var(--success)
+Warning Yellow:    #F59E0B  → var(--warning)
+Danger Red:        #EF4444  → var(--danger)
+Info Blue:         #3B82F6  → var(--info)
+Gray:              #6B7280  → var(--muted)
+
+Background:        #FFFFFF  → var(--background)
+Foreground:        #0F172A  → var(--foreground)
+Surface:           #FFFFFF  → var(--surface)
+Border:            #E2E8F0  → var(--border)
 ```
 
-**Priority Colors:**
+### Dark Theme Values (Reference Only - Use Variables)
+
+**Dark mode is INCLUDED in MVP. These values are for reference. Implementation MUST use CSS variables.**
+
 ```
-LOW:               #9CA3AF  (Gray)
-NORMAL:            #3B82F6  (Blue)
-HIGH:              #F59E0B  (Orange)
-URGENT:            #EF4444  (Red)
+Primary Blue:      #3B82F6  → var(--primary) [in dark mode]
+Primary Hover:     #60A5FA  → var(--primary-hover) [in dark mode]
+Primary Light:     #1E3A8A  → var(--primary-light) [in dark mode]
+
+Success Green:     #10B981  → var(--success) [adjusted for dark]
+Warning Yellow:    #FBBF24  → var(--warning) [brighter for contrast]
+Danger Red:        #F87171  → var(--danger) [adjusted for dark]
+Info Blue:         #60A5FA  → var(--info) [adjusted for dark]
+Gray:              #9CA3AF  → var(--muted) [adjusted for dark]
+
+Background:        #0F172A  → var(--background) [in dark mode]
+Foreground:        #F1F5F9  → var(--foreground) [in dark mode]
+Surface:           #1E293B  → var(--surface) [in dark mode]
+Border:            #334155  → var(--border) [in dark mode]
 ```
 
-**Status Badge Colors:**
+### Implementation Rules
+
+1. **Always use CSS variables**: `bg-[var(--surface)]`, `text-[var(--foreground)]`, `border-[var(--border)]`
+2. **Never hardcode hex colors** in component markup
+3. **Use semantic variables**: `var(--success)` not `var(--green-500)`
+4. **Test both themes**: Verify UI works in light AND dark mode
+5. **Maintain contrast**: WCAG AA (4.5:1) in both themes
+
+### Priority Color Mapping
+
 ```
-PENDING_REVIEW:    #F59E0B  (Orange)
-RELEASED:          #3B82F6  (Blue)
-IN_PROGRESS:       #10B981  (Green)
-ON_HOLD:           #EF4444  (Red)
-COMPLETED:         #10B981  (Green)
-CANCELLED:         #6B7280  (Gray)
+LOW:     var(--muted)
+NORMAL:  var(--info)
+HIGH:    var(--warning)
+URGENT:  var(--danger)
+```
+
+### Status Badge Color Mapping
+
+```
+PENDING_REVIEW:  var(--warning)
+RELEASED:        var(--info)
+IN_PROGRESS:     var(--success)
+ON_HOLD:         var(--danger)
+COMPLETED:       var(--success)
+CANCELLED:       var(--muted)
 ```
 
 ### Typography
@@ -135,11 +210,12 @@ Primary buttons:   64px height
 └──────────────────────────────────────────────────────────┘
 
 NOTES:
-- Centered on page, clean white background
-- Form card has subtle shadow
-- Login button: Primary blue, full width
-- Forgot password link: Small text, blue
+- Centered on page, background uses var(--background)
+- Form card: var(--surface) with subtle shadow
+- Login button: var(--primary), white text (var(--primary-foreground)), full width
+- Forgot password link: Small text, var(--primary)
 - Language dropdown: For operators (EN/ES)
+- Theme adapts automatically for light/dark mode
 ```
 
 ---
@@ -171,10 +247,11 @@ NOTES:
 └────────────┴─────────────────────────────────────────────────────────┘
 
 NOTES:
-- Sidebar: 240px wide, dark background (#1F2937)
-- Active section: Highlighted with primary blue background
-- Content area: White background, padding 24px
-- Header: 64px height, white background, shadow
+- Sidebar: 240px wide, var(--surface) with darker shade or custom --sidebar-bg
+- Active section: Highlighted with var(--primary) background
+- Content area: var(--background), padding 24px
+- Header: 64px height, var(--surface), shadow
+- Adapts to light/dark theme automatically
 ```
 
 ### Dashboard View
@@ -1427,11 +1504,12 @@ NOTES:
 
 ELEMENTS:
 - Logo: 40px height, clickable to dashboard
-- Page Title: 24px, semibold
+- Page Title: 24px, semibold, var(--foreground)
 - Notification icon (future): Badge with count
-- User dropdown: Profile, Settings, Logout
+- User dropdown: Profile, Settings, Theme Toggle, Logout
 - Height: 64px
-- Background: White with bottom shadow
+- Background: var(--surface) with bottom shadow
+- Adapts to light/dark theme
 ```
 
 ### Sidebar Navigation (Admin & Supervisor)
@@ -1454,11 +1532,12 @@ ELEMENTS:
 
 STYLING:
 - Width: 240px
-- Background: Dark gray (#1F2937)
-- Text: White
-- Active section: Primary blue background (#2563EB)
-- Hover: Slight highlight
-- Divider: Darker gray line
+- Background: var(--sidebar-bg) or var(--surface-dark)
+- Text: var(--foreground)
+- Active section: var(--primary) background with var(--primary-foreground) text
+- Hover: var(--surface-hover)
+- Divider: var(--border)
+- Adapts to light/dark theme
 ```
 
 ### Data Table Component
@@ -1484,18 +1563,22 @@ FEATURES:
 - Action icons: Edit (✎), View (👁), Delete (╳)
 - Pagination: Numbers + next/previous
 - Export: Downloads filtered results as CSV
-- Hover: Highlight row
+- Hover: Highlight row with var(--surface-hover)
+- Background: var(--surface)
+- Borders: var(--border)
+- Text: var(--foreground)
+- Adapts to light/dark theme
 ```
 
 ### Status Badge Component
 
 ```
-[PENDING_REVIEW]  - Orange background, white text
-[RELEASED]        - Blue background, white text
-[IN_PROGRESS]     - Green background, white text
-[ON_HOLD]         - Red background, white text
-[COMPLETED]       - Green background, white text
-[CANCELLED]       - Gray background, white text
+[PENDING_REVIEW]  - Background: var(--warning), Text: var(--warning-foreground)
+[RELEASED]        - Background: var(--info), Text: var(--info-foreground)
+[IN_PROGRESS]     - Background: var(--success), Text: var(--success-foreground)
+[ON_HOLD]         - Background: var(--danger), Text: var(--danger-foreground)
+[COMPLETED]       - Background: var(--success), Text: var(--success-foreground)
+[CANCELLED]       - Background: var(--muted), Text: var(--muted-foreground)
 
 STYLING:
 - Border radius: 4px
@@ -1503,19 +1586,21 @@ STYLING:
 - Font size: 12px
 - Font weight: Semibold
 - Uppercase
+- Automatically adapts to light/dark theme
 ```
 
 ### Priority Badge Component
 
 ```
-[LOW]      - Gray background
-[NORMAL]   - Blue background
-[HIGH]     - Orange background
-[URGENT]   - Red background
+[LOW]      - Background: var(--muted), Text: var(--muted-foreground)
+[NORMAL]   - Background: var(--info), Text: var(--info-foreground)
+[HIGH]     - Background: var(--warning), Text: var(--warning-foreground)
+[URGENT]   - Background: var(--danger), Text: var(--danger-foreground)
 
 STYLING:
 - Same as status badge
 - Used in tables, cards, headers
+- Theme-aware colors
 ```
 
 ### Button Component
@@ -1523,33 +1608,33 @@ STYLING:
 **Primary Button:**
 ```
 ┌─────────────────┐
-│   Button Text   │  - Blue background (#2563EB)
-└─────────────────┘  - White text
-                      - Hover: Darker blue (#1E40AF)
+│   Button Text   │  - Background: var(--primary)
+└─────────────────┘  - Text: var(--primary-foreground)
+                      - Hover: var(--primary-hover)
 ```
 
 **Secondary Button:**
 ```
 ┌─────────────────┐
-│   Button Text   │  - White background
-└─────────────────┘  - Blue outline
-                      - Blue text
-                      - Hover: Light blue background
+│   Button Text   │  - Background: var(--surface)
+└─────────────────┘  - Border: var(--border)
+                      - Text: var(--foreground)
+                      - Hover: var(--surface-hover)
 ```
 
 **Danger Button:**
 ```
 ┌─────────────────┐
-│   Button Text   │  - Red background (#EF4444)
-└─────────────────┘  - White text
-                      - Hover: Darker red
+│   Button Text   │  - Background: var(--danger)
+└─────────────────┘  - Text: var(--danger-foreground)
+                      - Hover: darker var(--danger)
 ```
 
 **Disabled Button:**
 ```
 ┌─────────────────┐
-│   Button Text   │  - Gray background (#9CA3AF)
-└─────────────────┘  - Gray text
+│   Button Text   │  - Background: var(--muted)
+└─────────────────┘  - Text: var(--muted-foreground)
                       - Cursor: not-allowed
 ```
 
@@ -1579,11 +1664,13 @@ SIZING:
 STYLING:
 - Centered on screen
 - Max width: 600px (default), 90% on mobile
-- White background
+- Background: var(--surface)
+- Text: var(--foreground)
 - Shadow: Large, prominent
-- Overlay: Semi-transparent black (40% opacity)
-- Close button (×): Top right
+- Overlay: var(--overlay) or semi-transparent (40% opacity)
+- Close button (×): Top right, var(--foreground)
 - Footer buttons: Right-aligned
+- Adapts to light/dark theme
 ```
 
 ### Card Component
@@ -1599,12 +1686,14 @@ STYLING:
 └───────────────────────────────┘
 
 STYLING:
-- White background
-- Border: 1px solid gray
+- Background: var(--surface)
+- Border: 1px solid var(--border)
 - Border radius: 8px
 - Shadow: Subtle (elevation)
 - Padding: 16px
-- Hover: Slightly darker shadow (if clickable)
+- Text: var(--foreground)
+- Hover: var(--surface-hover) and slightly darker shadow (if clickable)
+- Adapts to light/dark theme
 ```
 
 ### Loading Spinner
@@ -1613,26 +1702,29 @@ STYLING:
      ⟳
 
 Large, animated spinner
-Blue color (#2563EB)
+Color: var(--primary)
 Centered on page or within container
+Works in both light and dark mode
 ```
 
 ### Toast Notification (Success)
 
 ```
 ┌────────────────────────────────────┐
-│ ✓  Operation completed successfully│  - Green background
-└────────────────────────────────────┘  - White text
+│ ✓  Operation completed successfully│  - Background: var(--success)
+└────────────────────────────────────┘  - Text: var(--success-foreground)
                                          - Auto-dismiss after 3s
+                                         - Works in both themes
 ```
 
 ### Toast Notification (Error)
 
 ```
 ┌────────────────────────────────────┐
-│ ✗  Error: Something went wrong     │  - Red background
-└────────────────────────────────────┘  - White text
+│ ✗  Error: Something went wrong     │  - Background: var(--danger)
+└────────────────────────────────────┘  - Text: var(--danger-foreground)
                                          - Manual dismiss
+                                         - Works in both themes
 ```
 
 ---
@@ -1657,11 +1749,14 @@ Desktop:    > 1024px
 
 ## Accessibility
 
-- **Color Contrast:** WCAG 2.1 AA standard (4.5:1 for text)
+- **Color Contrast:** WCAG 2.1 AA standard (4.5:1 for text) in BOTH light and dark themes
+- **Theme-Aware Contrast:** All color combinations must pass contrast checks in both modes
 - **Touch Targets:** Minimum 44px × 44px (operator console: 56px+)
 - **Keyboard Navigation:** All interactive elements focusable via Tab
 - **Screen Reader:** Proper ARIA labels on all components
-- **Focus Indicators:** Clear blue outline on focused elements
+- **Focus Indicators:** Clear focus ring using var(--primary) on focused elements
+- **Theme Toggle Accessibility:** Keyboard accessible with clear indication of current theme
+- **High Contrast Mode:** Consider additional high-contrast option for accessibility needs
 
 ---
 
@@ -1675,6 +1770,111 @@ Desktop:    > 1024px
 - **Loading States:** Spinner fade in after 300ms (avoid flash on fast loads)
 
 **Keep animations subtle - performance and usability over flashiness.**
+
+---
+
+## Theme System Architecture
+
+### CSS Variable Naming Conventions
+
+**All theme variables follow this pattern:**
+
+```css
+--{semantic-name}           /* Base variable */
+--{semantic-name}-hover     /* Hover state variant */
+--{semantic-name}-foreground /* Text color on that background */
+```
+
+**Examples:**
+```css
+--primary           /* Primary color */
+--primary-hover     /* Primary hover state */
+--primary-foreground /* Text on primary background */
+
+--surface          /* Card/panel background */
+--surface-hover    /* Surface hover state */
+--surface-dark     /* Darker surface (sidebar, etc.) */
+```
+
+### Theme Variables Reference
+
+**Complete list of required theme variables:**
+
+```css
+/* Layout */
+--background           /* Page background */
+--foreground          /* Primary text */
+--surface             /* Cards, panels, modals */
+--surface-hover       /* Hover state for surfaces */
+--surface-dark        /* Darker variant (sidebar, header) */
+--overlay             /* Modal/dialog overlay */
+
+/* Borders & Dividers */
+--border              /* Default borders */
+--border-hover        /* Border hover state */
+
+/* Semantic Colors */
+--primary             /* Primary actions */
+--primary-hover       /* Primary hover */
+--primary-foreground  /* Text on primary */
+--primary-light       /* Light variant */
+
+--secondary           /* Secondary actions */
+--secondary-hover     /* Secondary hover */
+--secondary-foreground /* Text on secondary */
+
+--success             /* Success states */
+--success-foreground  /* Text on success */
+
+--warning             /* Warning states */
+--warning-foreground  /* Text on warning */
+
+--danger              /* Error/danger states */
+--danger-foreground   /* Text on danger */
+
+--info                /* Info states */
+--info-foreground     /* Text on info */
+
+--muted               /* Muted elements */
+--muted-foreground    /* Text on muted */
+
+/* Component-Specific (Optional) */
+--sidebar-bg          /* Sidebar background */
+--sidebar-text        /* Sidebar text */
+--sidebar-active      /* Sidebar active item */
+
+--input-bg            /* Input backgrounds */
+--input-border        /* Input borders */
+--input-text          /* Input text */
+```
+
+### Implementation Checklist
+
+**For every new component:**
+
+- [ ] Uses only CSS variables for colors (no hardcoded hex/rgb)
+- [ ] Tested in both light and dark mode
+- [ ] Passes WCAG AA contrast in both themes
+- [ ] Hover states use appropriate -hover variables
+- [ ] Text colors use appropriate -foreground variables
+- [ ] Border colors use --border variables
+- [ ] No inline styles with hardcoded colors
+- [ ] Tailwind classes use var() syntax: `bg-[var(--primary)]`
+
+### Code Review Checklist
+
+**Reject PRs that:**
+- Use hardcoded color values (#hex, rgb(), hsl())
+- Use Tailwind color classes without CSS variables (e.g., `bg-blue-500`)
+- Don't test dark mode
+- Have poor contrast in either theme
+- Add new colors without updating theme variable system
+
+**Approve PRs that:**
+- Use only CSS variables for all colors
+- Include dark mode screenshots/tests
+- Update theme documentation when adding new semantic colors
+- Maintain consistent naming conventions
 
 ---
 
@@ -1716,13 +1916,70 @@ Desktop:    > 1024px
 
 ---
 
-## Dark Mode (Future Enhancement)
+## Dark Mode Implementation (INCLUDED IN MVP)
 
-Not in MVP, but architecture should support:
-- CSS custom properties for colors
-- Toggle in user settings
-- Preference stored in database
-- Operator console: Dark mode ideal for factory lighting conditions
+Dark mode is a core feature, not a future enhancement. The theme system must be implemented from day one.
+
+### Implementation Requirements
+
+1. **CSS Variable Architecture:**
+   - All colors defined as CSS custom properties in `globals.css`
+   - Variables defined in both `:root` (light mode) and `:root.dark` (dark mode)
+   - Components MUST use CSS variables, never hardcoded colors
+
+2. **Theme Toggle:**
+   - User preference stored in database (users.preferred_theme: 'light' | 'dark' | 'system')
+   - Toggle available in user settings/profile dropdown
+   - System preference: Respects OS/browser preference when set to 'system'
+   - Preference persists across sessions
+
+3. **Theme Application:**
+   - Apply `.dark` class to `<html>` element when dark mode active
+   - CSS variables automatically change based on `.dark` class
+   - No JavaScript color manipulation needed
+
+4. **Operator Console Optimization:**
+   - Dark mode is IDEAL for factory floor with bright overhead lighting
+   - Consider defaulting operators to dark mode
+   - High contrast mode option for accessibility
+
+5. **Testing Requirements:**
+   - Every component MUST be tested in both light and dark mode
+   - Verify WCAG AA contrast ratios (4.5:1) in both themes
+   - Automated visual regression tests for theme switching
+
+### Example Implementation
+
+```css
+/* globals.css */
+:root {
+  --background: #ffffff;
+  --foreground: #0f172a;
+  --primary: #2563eb;
+  --primary-foreground: #ffffff;
+  /* ... more variables */
+}
+
+:root.dark {
+  --background: #0f172a;
+  --foreground: #f1f5f9;
+  --primary: #3b82f6;
+  --primary-foreground: #ffffff;
+  /* ... more variables */
+}
+```
+
+```tsx
+// Component example - CORRECT
+<button className="bg-[var(--primary)] text-[var(--primary-foreground)]">
+  Click Me
+</button>
+
+// Component example - WRONG (hardcoded)
+<button className="bg-blue-600 text-white">
+  Click Me
+</button>
+```
 
 ---
 
@@ -1739,17 +1996,29 @@ For printing work orders, change logs, etc:
 
 These wireframes provide a visual reference for implementing the redesigned Boat Factory MRP system. Key design principles:
 
-1. **Simplicity:** Clean layouts, clear hierarchy, minimal clutter
-2. **Touch-Friendly:** Large targets for operator console (tablets)
-3. **Role-Specific:** Each interface optimized for its user
-4. **Real-Time:** Live updates via WebSockets
-5. **Accessible:** WCAG AA compliance, bilingual support
-6. **Consistent:** Shared components, predictable patterns
+1. **Theme-First Architecture:** All colors use CSS variables for seamless light/dark mode switching
+2. **Simplicity:** Clean layouts, clear hierarchy, minimal clutter
+3. **Touch-Friendly:** Large targets for operator console (tablets)
+4. **Role-Specific:** Each interface optimized for its user
+5. **Real-Time:** Live updates via WebSockets
+6. **Accessible:** WCAG AA compliance in both themes, bilingual support
+7. **Consistent:** Shared components, predictable patterns
+
+### Critical Implementation Requirements
+
+**NEVER hardcode colors.** All color values must use CSS variables:
+- ✅ Correct: `className="bg-[var(--primary)] text-[var(--primary-foreground)]"`
+- ❌ Wrong: `className="bg-blue-600 text-white"` or `style={{background: '#2563EB'}}`
+
+**Always test in both themes.** Every component must work perfectly in light and dark mode.
+
+**Maintain contrast.** Verify WCAG AA (4.5:1) contrast ratios in both themes.
 
 Use these wireframes as a blueprint during development, adjusting as needed based on real-world testing and user feedback.
 
 ---
 
 **Prepared by:** Claude Code
-**Version:** 1.0
+**Version:** 2.0 (Theme-Aware)
 **Status:** Ready for Development
+**Last Updated:** 2026-01-20 - Added comprehensive theme system and dark mode support
