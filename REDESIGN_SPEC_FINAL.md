@@ -2440,7 +2440,7 @@ To ensure smooth development and maintain clear accountability throughout the im
 
 > Record every pull request chronologically with the newest entry at the top. Use UTC timestamps in ISO 8601 format.
 
-## YYYY-MM-DDTHH:MM:SSZ - Agent: [Agent Role/Name]
+## YYYY-MM-DDTHH:MM:SSZ - Agent: [Agent Role/Name(Claude,Codex,or Replit)]
 
 - **Summary:** Brief description of what was accomplished
 - **Reasoning:** Why this work was necessary
@@ -2773,9 +2773,9 @@ Define each agent role with:
 
 ### Workflow Integration
 
-**Daily Development Cycle:**
+**Improvement Development Cycle:**
 
-1. **Morning**: Check `docs/ActionItems.md` for priorities and updates
+1. **First**: Check `docs/ActionItems.md` for priorities and updates
 2. **Start Work**:
    - Claim item by marking `[WIP]` with your agent role
    - Create feature branch following naming convention
